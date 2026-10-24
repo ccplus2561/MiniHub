@@ -17,6 +17,7 @@
     <aside class="rail">
       <div class="brand">
         <svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01"/></svg>
+        <b>MiniHub</b>
       </div>
       <nav class="tabs" id="sidebar" aria-label="主選單">
         <button class="nav-item active" data-view="home">
@@ -83,6 +84,10 @@
           <aside class="set-list" aria-label="設定分類">
             <button class="set-item active" data-pane="account"><b>帳號</b></button>
             <button class="set-item" data-pane="display"><b>顯示</b></button>
+            <button class="set-item" data-pane="audio"><b>音效</b></button>
+            <button class="set-item" data-pane="controls"><b>操作</b></button>
+            <button class="set-item" data-pane="notify"><b>通知與隱私</b></button>
+            <button class="set-item" data-pane="data"><b>資料</b></button>
             <button class="set-item" data-pane="language"><b>語言</b></button>
           </aside>
 
@@ -113,6 +118,67 @@
                 <i class="radio"></i>
                 <div><b>手機版 <span class="tag">不支援</span></b><p>目前尚未支援</p></div>
               </button>
+              <div class="set-label">介面</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>圖卡大小</b><small>調整首頁與遊戲庫的卡片尺寸</small></div><div class="seg" data-set="cardSize"><button data-value="s">小</button><button data-value="m">中</button><button data-value="l">大</button></div></div>
+                <div class="set-row"><div class="set-text"><b>動畫效果</b><small>卡片轉場、滑鼠停留動畫；關閉可節省效能</small></div><button class="switch" role="switch" aria-checked="false" data-set="anim" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>開啟時自動全螢幕</b><small>進入遊戲時自動切換全螢幕</small></div><button class="switch" role="switch" aria-checked="false" data-set="fsStart" aria-label="開關"><i></i></button></div>
+              </div>
+            </div>
+
+            <!-- 音效 -->
+            <div class="pane" id="pane-audio">
+              <div class="set-label">音量</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>主音量</b><small>整體音量大小</small></div><div class="range-wrap"><input class="range" type="range" min="0" max="100" data-set="volMaster"><output></output></div></div>
+                <div class="set-row"><div class="set-text"><b>音樂</b><small>背景音樂</small></div><div class="range-wrap"><input class="range" type="range" min="0" max="100" data-set="volMusic"><output></output></div></div>
+                <div class="set-row"><div class="set-text"><b>音效</b><small>按鈕與遊戲音效</small></div><div class="range-wrap"><input class="range" type="range" min="0" max="100" data-set="volSfx"><output></output></div></div>
+              </div>
+              <div class="set-label">其他</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>全部靜音</b><small>一鍵關閉所有聲音</small></div><button class="switch" role="switch" aria-checked="false" data-set="mute" aria-label="開關"><i></i></button></div>
+              </div>
+            </div>
+
+            <!-- 操作 -->
+            <div class="pane" id="pane-controls">
+              <div class="set-label">鍵盤快捷鍵</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>選擇遊戲</b><small>首頁精選列</small></div><span class="keys"><kbd>←</kbd><kbd>→</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>開始遊戲</b><small>啟動目前選中的遊戲</small></div><span class="keys"><kbd>Enter</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>離開遊戲</b><small>返回首頁</small></div><span class="keys"><kbd>Esc</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>遊戲內移動</b><small>依各遊戲而定</small></div><span class="keys"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></div>
+              </div>
+              <div class="set-label">輸入裝置</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>觸控滑動</b><small>在螢幕上滑動操作</small></div><button class="switch" role="switch" aria-checked="false" data-set="touch" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>震動回饋</b><small>支援的裝置與手把會震動</small></div><button class="switch" role="switch" aria-checked="false" data-set="rumble" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>手把</b><small>連接後按任意鍵即可偵測</small></div><span class="state" id="padState">未偵測到手把</span></div>
+              </div>
+            </div>
+
+            <!-- 通知 / 隱私 -->
+            <div class="pane" id="pane-notify">
+              <div class="set-label">通知</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>新遊戲上架</b><small>有新遊戲時提醒你</small></div><button class="switch" role="switch" aria-checked="false" data-set="nNew" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>活動與公告</b><small>限時活動、版本公告</small></div><button class="switch" role="switch" aria-checked="false" data-set="nEvent" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>更新提醒</b><small>遊戲有新版本時通知</small></div><button class="switch" role="switch" aria-checked="false" data-set="nUpdate" aria-label="開關"><i></i></button></div>
+              </div>
+              <div class="set-label">隱私</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>分享遊玩資料</b><small>匿名統計，協助改善遊戲</small></div><button class="switch" role="switch" aria-checked="false" data-set="share" aria-label="開關"><i></i></button></div>
+              </div>
+            </div>
+
+            <!-- 資料 -->
+            <div class="pane" id="pane-data">
+              <div class="set-label">本機資料</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>已使用空間</b><small><span id="usage">計算中…</span></small></div><div class="meter"><i id="usageBar"></i></div></div>
+                <div class="set-row"><div class="set-text"><b>清除快取</b><small>移除暫存資料，不影響設定與紀錄</small></div><button class="btn-ghost " data-act="cache">清除</button></div>
+                <div class="set-row"><div class="set-text"><b>重設所有設定</b><small>還原為預設值</small></div><button class="btn-ghost danger" data-act="reset">重設</button></div>
+              </div>
             </div>
 
             <!-- 語言 -->

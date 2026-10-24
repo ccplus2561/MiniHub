@@ -174,6 +174,8 @@
     timer = setTimeout(() => t.classList.remove("show"), 2200);
   }
 
+  window.MiniHubToast = toast;
+
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
   renderFeatured();
