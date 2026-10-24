@@ -46,7 +46,7 @@
     b.dataset.id = t.id;
     b.title = t.name;
     b.setAttribute("aria-label", t.name);
-    b.style.background = `linear-gradient(135deg, ${t.c[0]}, ${t.c[1]})`;
+    b.style.background = `linear-gradient(135deg, ${t.c.join(", ")})`;
     box.appendChild(b);
   });
 

@@ -16,7 +16,7 @@
     el.style.setProperty("--c1", g.colors[0]);
     el.style.setProperty("--c2", g.colors[1]);
     el.innerHTML = `
-      <div class="card-art">${g.emoji}</div>
+      <div class="card-art"><span class="emoji">${g.emoji}</span></div>
       <span class="badge">${soon ? "即將推出" : "開始"}</span>
       <div class="card-info">
         <div class="card-name">${g.title}</div>

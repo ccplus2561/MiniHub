@@ -2,30 +2,17 @@
 (() => {
   const KEY = "minihub.appearance";
 
-  // 色彩主題：id、名稱、漸層兩端顏色（第一個「default」為原本的青色）
+  // 色彩主題：id、名稱、四段幻彩漸層
   const THEMES = [
-    { id: "mint",     name: "薄荷", c: ["#9fdcb8", "#b8e2d4"] },
-    { id: "peach",    name: "蜜桃", c: ["#fbd98c", "#f7b8a0"] },
-    { id: "lavender", name: "薰衣草", c: ["#b8b8dc", "#8ec0d4"] },
-    { id: "cream",    name: "奶綠", c: ["#d6ecc8", "#f6d6c0"] },
-    { id: "berry",    name: "莓果", c: ["#c88cb0", "#d4c490"] },
-    { id: "blush",    name: "粉彩", c: ["#f8d4e0", "#d8d8f8"] },
-    { id: "sky",      name: "晴空", c: ["#d2e6fb", "#d4f0dc"] },
-    { id: "sand",     name: "米白", c: ["#f0ead0", "#ebe3c8"] },
-    { id: "dusk",     name: "暮光", c: ["#3a2a6a", "#b0703a"] },
-    { id: "aurora",   name: "極光", c: ["#1a3ad8", "#d03060"] },
-    { id: "forest",   name: "森林", c: ["#1c3a34", "#8a6a38"] },
-    { id: "ember",    name: "暗紅", c: ["#1a0000", "#a00a0a"] },
-    { id: "midnight", name: "午夜", c: ["#14102c", "#3a30a0"] },
-    { id: "rust",     name: "赭紅", c: ["#7a3a34", "#8a4a40"] },
-    { id: "slate",    name: "石板", c: ["#4a4a60", "#7a86a8"] },
-    { id: "sage",     name: "灰綠", c: ["#4a6a5c", "#4a6a60"] },
-    { id: "indigo",   name: "靛青", c: ["#4a4a80", "#2a6a8a"] },
-    { id: "lagoon",   name: "湖光", c: ["#109a9a", "#a02a8a"] },
-    { id: "sunset",   name: "日落", c: ["#a0206a", "#d09a20"] },
-    { id: "ocean",    name: "深海", c: ["#1a8a60", "#1a40a0"] },
-    { id: "olive",    name: "橄欖", c: ["#6a5a40", "#4a3a20"] },
-    { id: "royal",    name: "靛藍", c: ["#1a2ab0", "#2a2a80"] },
+    { id: "mint",     name: "薄荷",   c: ["#9fdcb8", "#8fd8e8", "#b8c8f4", "#c8f0d8"] },
+    { id: "peach",    name: "蜜桃",   c: ["#fbd98c", "#f7b8a0", "#f4a8c8", "#c8b0f0"] },
+    { id: "lavender", name: "薰衣草", c: ["#b8b8dc", "#8ec0d4", "#c8a8e8", "#a8e0d8"] },
+    { id: "cream",    name: "奶綠",   c: ["#d6ecc8", "#f6d6c0", "#f4e4a0", "#c0e4e8"] },
+    { id: "berry",    name: "莓果",   c: ["#c88cb0", "#d4c490", "#a88cd0", "#e0889c"] },
+    { id: "blush",    name: "粉彩",   c: ["#f8d4e0", "#d8d8f8", "#c8ecf4", "#f8e4c8"] },
+    { id: "sky",      name: "晴空",   c: ["#d2e6fb", "#d4f0dc", "#e4d4f8", "#bce8f0"] },
+    { id: "sand",     name: "米白",   c: ["#f0ead0", "#f2d8c4", "#d8e4d0", "#d4d8f0"] },
+    { id: "dusk",     name: "暮光",   c: ["#3a2a6a", "#b0703a", "#7a3a8a", "#2a5a8a"] },
   ];
 
   const state = { mode: "dark", color: "default" };
@@ -58,15 +45,16 @@
     return .2126 * r + .7152 * g + .0722 * b;
   };
 
-  // 由漸層取較飽和的一端作為強調色，亮度依主題模式調整以維持可讀性
-  function accentFor(theme, mode) {
-    const hsls = theme.c.map(c => rgb2hsl(hex2rgb(c)));
-    const [h, s0] = hsls.sort((a, b) => b[1] * (1 - Math.abs(2 * b[2] / 100 - 1)) - a[1] * (1 - Math.abs(2 * a[2] / 100 - 1)))[0];
-    const s = Math.max(40, Math.min(85, s0));
-    const l = mode === "dark" ? 62 : 38;
-    const rgb = hsl2rgb(h, s, l);
-    const rgb2 = hsl2rgb(h, s, l + (mode === "dark" ? -10 : -8));
-    return { accent: toHex(rgb), accent2: toHex(rgb2), on: lum(rgb) > .4 ? "#06161a" : "#ffffff" };
+  // 把漸層各段調成「與背景有足夠對比」的鮮明色：深色模式提亮、明亮模式加深，用於邊框 / 文字 / 按鈕
+  function tune(hex, mode) {
+    const [h, s, l] = rgb2hsl(hex2rgb(hex));
+    const s2 = Math.max(50, Math.min(88, s));
+    const l2 = mode === "dark" ? Math.max(62, Math.min(76, l)) : Math.max(30, Math.min(42, l));
+    return toHex(hsl2rgb(h, s2, l2));
+  }
+  function onColor(ks) {
+    const L = ks.reduce((n, k) => n + lum(hex2rgb(k)), 0) / ks.length;
+    return (1.05 / (L + .05)) > ((L + .05) / .057) ? "#ffffff" : "#06161a";
   }
 
   /* ----- 套用 ----- */
@@ -75,15 +63,17 @@
     const root = document.documentElement;
     root.dataset.theme = state.mode;
     root.dataset.color = state.color;
-    const props = ["--accent", "--accent-2", "--on-accent", "--g1", "--g2"];
+    const props = ["--accent", "--accent-2", "--on-accent", "--g1", "--g2", "--g3", "--g4", "--k1", "--k2", "--k3", "--k4"];
     const theme = THEMES.find(t => t.id === state.color);
     if (theme) {
-      const a = accentFor(theme, state.mode);
-      root.style.setProperty("--accent", a.accent);
-      root.style.setProperty("--accent-2", a.accent2);
-      root.style.setProperty("--on-accent", a.on);
-      root.style.setProperty("--g1", theme.c[0]);
-      root.style.setProperty("--g2", theme.c[1]);
+      const ks = theme.c.map(c => tune(c, state.mode));
+      root.style.setProperty("--accent", ks[1]);
+      root.style.setProperty("--accent-2", ks[2]);
+      root.style.setProperty("--on-accent", onColor(ks));
+      theme.c.forEach((c, i) => {
+        root.style.setProperty("--g" + (i + 1), c);
+        root.style.setProperty("--k" + (i + 1), ks[i]);
+      });
     } else {
       props.forEach(p => root.style.removeProperty(p));
     }
