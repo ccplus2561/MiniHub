@@ -8,16 +8,17 @@
   let category = "全部";
 
   /* ---------- 卡片 ---------- */
-  function cardEl(g, { selectable = false } = {}) {
+  function cardEl(g, idx = 0) {
     const soon = !g.path;
     const el = document.createElement("button");
     el.className = "card" + (soon ? " soon" : "");
     el.dataset.id = g.id;
+    el.style.setProperty("--i", idx);
     el.style.setProperty("--c1", g.colors[0]);
     el.style.setProperty("--c2", g.colors[1]);
     el.innerHTML = `
       <div class="card-art"><span class="emoji">${g.emoji}</span></div>
-      <span class="badge">${soon ? "即將推出" : "開始"}</span>
+      ${soon ? '<span class="badge">即將推出</span>' : ""}
       <div class="card-info">
         <div class="card-name">${g.title}</div>
         <div class="card-sub">${g.category}</div>
@@ -30,19 +31,32 @@
     const row = $("#featuredRow");
     row.innerHTML = "";
     featured.forEach((g, i) => {
-      const el = cardEl(g);
-      el.addEventListener("click", () => select(i));
-      el.addEventListener("dblclick", () => openGame(g));
-      $(".badge", el).addEventListener("click", e => { e.stopPropagation(); select(i); openGame(g); });
+      const el = cardEl(g, i);
+      el.addEventListener("click", () => (i === selected ? openGame(g, el) : select(i)));
+      el.addEventListener("dblclick", () => openGame(g, el));
       row.appendChild(el);
     });
     select(0);
+  }
+
+  /* ---------- 背景交叉淡入 ---------- */
+  let bdIdx = 0;
+  function setBackdrop(g) {
+    const bds = $$("#backdrop .bd");
+    bdIdx ^= 1;
+    const el = bds[bdIdx];
+    el.style.background =
+      `radial-gradient(1000px 700px at 75% 25%, ${g.colors[0]}, transparent 70%),` +
+      `radial-gradient(900px 700px at 0% 100%, ${g.colors[1]}, transparent 70%)`;
+    el.textContent = g.emoji;
+    bds.forEach((b, i) => b.classList.toggle("on", i === bdIdx));
   }
 
   function select(i) {
     if (!featured.length) return;
     selected = (i + featured.length) % featured.length;
     const g = featured[selected];
+    setBackdrop(g);
     $$("#featuredRow .card").forEach((c, idx) => c.classList.toggle("selected", idx === selected));
     $("#heroTitle").textContent = g.title;
     $("#heroDesc").textContent = g.desc;
@@ -53,9 +67,9 @@
   /* ---------- 遊戲庫 / 分類 ---------- */
   function renderGrid(target, list) {
     target.innerHTML = "";
-    list.forEach(g => {
-      const el = cardEl(g);
-      el.addEventListener("click", () => openGame(g));
+    list.forEach((g, i) => {
+      const el = cardEl(g, i);
+      el.addEventListener("click", () => openGame(g, el));
       target.appendChild(el);
     });
   }
@@ -81,6 +95,7 @@
   function showView(name) {
     $$(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     $$(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === name));
+    document.body.dataset.view = name;
   }
   $$(".nav-item").forEach(n => n.addEventListener("click", () => showView(n.dataset.view)));
 
@@ -88,22 +103,41 @@
   const player = $("#player"), frame = $("#frame");
   let current = null;
 
-  function openGame(g) {
+  let srcEl = null, closing = false;
+  // 從卡片位置展開 / 收回的裁切範圍
+  function clipFrom(el) {
+    const W = innerWidth, H = innerHeight;
+    let r = el && el.isConnected ? el.getBoundingClientRect() : null;
+    if (!r || !r.width) r = { top: H / 2 - 60, bottom: H / 2 + 60, left: W / 2 - 90, right: W / 2 + 90 };
+    return `inset(${r.top}px ${W - r.right}px ${H - r.bottom}px ${r.left}px round 16px)`;
+  }
+  const EASE = "cubic-bezier(.2, .8, .2, 1)";
+
+  function openGame(g, el) {
     if (!g.path) return toast("「" + g.title + "」即將推出，敬請期待！");
     current = g;
+    srcEl = el || $("#featuredRow .card.selected");
     $("#playerTitle").textContent = g.title;
     frame.src = g.path;
     player.hidden = false;
+    closing = false;
+    player.animate(
+      [{ clipPath: clipFrom(srcEl), opacity: .3 }, { clipPath: "inset(0 round 0)", opacity: 1 }],
+      { duration: 460, easing: EASE });
     history.replaceState(null, "", "#play=" + g.id);
     frame.focus();
   }
 
   function closeGame() {
-    player.hidden = true;
-    frame.src = "about:blank";
-    current = null;
-    history.replaceState(null, "", location.pathname + location.search);
+    if (!current || closing) return;
+    closing = true;
     if (document.fullscreenElement) document.exitFullscreen();
+    history.replaceState(null, "", location.pathname + location.search);
+    const done = () => { player.hidden = true; frame.src = "about:blank"; current = null; closing = false; };
+    const a = player.animate(
+      [{ clipPath: "inset(0 round 0)", opacity: 1 }, { clipPath: clipFrom(srcEl), opacity: .3 }],
+      { duration: 340, easing: EASE });
+    a.onfinish = done;
   }
 
   $("#closeBtn").addEventListener("click", closeGame);
@@ -114,11 +148,11 @@
   });
 
   /* ---------- 首頁按鈕 ---------- */
-  $("#playBtn").addEventListener("click", () => featured[selected] && openGame(featured[selected]));
+  $("#playBtn").addEventListener("click", () => featured[selected] && openGame(featured[selected], $("#featuredRow .card.selected")));
   $("#libBtn").addEventListener("click", () => showView("library"));
   $("#randBtn").addEventListener("click", () => {
     const playable = games.filter(g => g.path);
-    if (playable.length) openGame(playable[Math.floor(Math.random() * playable.length)]);
+    if (playable.length) openGame(playable[Math.floor(Math.random() * playable.length)], $("#randBtn"));
   });
 
   /* ---------- 鍵盤 ---------- */
@@ -127,7 +161,7 @@
     if (!$("#view-home").classList.contains("active")) return;
     if (e.key === "ArrowRight") { select(selected + 1); e.preventDefault(); }
     else if (e.key === "ArrowLeft") { select(selected - 1); e.preventDefault(); }
-    else if (e.key === "Enter") { featured[selected] && openGame(featured[selected]); }
+    else if (e.key === "Enter") { featured[selected] && openGame(featured[selected], $("#featuredRow .card.selected")); }
   });
 
   /* ---------- Toast ---------- */
@@ -140,7 +174,18 @@
     timer = setTimeout(() => t.classList.remove("show"), 2200);
   }
 
+  /* ---------- 時鐘 / 電量 ---------- */
+  function tick() {
+    $("#clock").textContent = new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
+  }
+  tick(); setInterval(tick, 15000);
+  if (navigator.getBattery) navigator.getBattery().then(b => {
+    const el = $("#batt"), upd = () => { el.hidden = false; el.textContent = Math.round(b.level * 100) + "%"; };
+    upd(); b.addEventListener("levelchange", upd);
+  }).catch(() => {});
+
   /* ---------- 初始化 ---------- */
+  document.body.dataset.view = "home";
   renderFeatured();
   renderGrid($("#libraryGrid"), games);
   renderChips();

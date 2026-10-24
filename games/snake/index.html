@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>貪吃蛇</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #0b0e14; color: #eef2f7;
+  html, body { margin: 0; height: 100%; background: #0e141b; color: #eef2f7;
     font-family: system-ui, "Microsoft JhengHei", sans-serif; overflow: hidden; touch-action: none; }
   body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
-  canvas { background: #10151f; border: 2px solid var(--accent, #19c7d6); border-radius: 12px; max-width: 94vw; max-height: 74vh;
-    box-shadow: 0 0 24px color-mix(in srgb, var(--accent, #19c7d6) 35%, transparent); transition: transform .25s, box-shadow .25s; }
-  canvas:hover { transform: scale(1.02); box-shadow: 0 0 36px color-mix(in srgb, var(--accent, #19c7d6) 55%, transparent); }
+  canvas { background: #16202d; border: 2px solid var(--accent, #1a9fff); border-radius: 12px; max-width: 94vw; max-height: 74vh;
+    box-shadow: 0 0 24px color-mix(in srgb, var(--accent, #1a9fff) 35%, transparent); transition: transform .25s, box-shadow .25s; }
+  canvas:hover { transform: scale(1.02); box-shadow: 0 0 36px color-mix(in srgb, var(--accent, #1a9fff) 55%, transparent); }
   #hud { font-size: 18px; }
-  #hud b { color: var(--accent, #19c7d6); }
+  #hud b { color: var(--accent, #1a9fff); }
   small { color: #a3adbd; }
 </style>
 </head>
@@ -58,7 +58,7 @@ try {
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.fillStyle = "#ff5d73";
     ctx.beginPath(); ctx.arc((food.x + .5) * S, (food.y + .5) * S, S * .38, 0, 7); ctx.fill();
-    const ac = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#19c7d6";
+    const ac = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#1a9fff";
     snake.forEach((s, i) => {
       ctx.fillStyle = i ? ac : "#ffffff";
       ctx.beginPath(); ctx.roundRect(s.x * S + 1, s.y * S + 1, S - 2, S - 2, 6); ctx.fill();
