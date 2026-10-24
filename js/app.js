@@ -125,6 +125,7 @@
       [{ clipPath: clipFrom(srcEl), opacity: .3 }, { clipPath: "inset(0 round 0)", opacity: 1 }],
       { duration: 460, easing: EASE });
     history.replaceState(null, "", "#play=" + g.id);
+    if (window.MiniHubPrefs && MiniHubPrefs().fsStart && player.requestFullscreen) player.requestFullscreen().catch(() => {});
     frame.focus();
   }
 
@@ -155,13 +156,23 @@
     if (playable.length) openGame(playable[Math.floor(Math.random() * playable.length)], $("#randBtn"));
   });
 
-  /* ---------- 鍵盤 ---------- */
+  /* ---------- 鍵盤（需在設定中允許） ---------- */
+  const kbdOn = () => !window.MiniHubPrefs || MiniHubPrefs().kbd;
+  function stepTab(d) {
+    const tabs = $$(".nav-item");
+    const cur = tabs.findIndex(n => n.classList.contains("active"));
+    showView(tabs[(cur + d + tabs.length) % tabs.length].dataset.view);
+  }
   document.addEventListener("keydown", e => {
     if (!player.hidden) { if (e.key === "Escape") closeGame(); return; }
+    if (!kbdOn() || e.ctrlKey || e.metaKey || e.altKey) return;
+    const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+    if (k === "ArrowUp" || k === "w") { stepTab(-1); e.preventDefault(); return; }
+    if (k === "ArrowDown" || k === "s") { stepTab(1); e.preventDefault(); return; }
     if (!$("#view-home").classList.contains("active")) return;
-    if (e.key === "ArrowRight") { select(selected + 1); e.preventDefault(); }
-    else if (e.key === "ArrowLeft") { select(selected - 1); e.preventDefault(); }
-    else if (e.key === "Enter") { featured[selected] && openGame(featured[selected], $("#featuredRow .card.selected")); }
+    if (k === "ArrowRight" || k === "d") { select(selected + 1); e.preventDefault(); }
+    else if (k === "ArrowLeft" || k === "a") { select(selected - 1); e.preventDefault(); }
+    else if (k === "Enter" && e.target === document.body) { featured[selected] && openGame(featured[selected], $("#featuredRow .card.selected")); }
   });
 
   /* ---------- Toast ---------- */
