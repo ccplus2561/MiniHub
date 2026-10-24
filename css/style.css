@@ -261,7 +261,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .set-item {
   width: 100%; display: block; padding: 20px 22px; margin-bottom: 8px; text-align: left;
   border-radius: 10px; background: rgba(23, 32, 45, .78); border: 1.5px solid var(--line);
-  transition: transform .22s var(--ease), background .22s, box-shadow .22s, border-color .22s;
+  transition: transform .22s var(--ease), box-shadow .22s;
 }
 .set-item b { font-size: 22px; font-weight: 700; color: var(--text); }
 .set-item:hover { background: var(--a2); border-color: var(--accent-2); transform: translateX(6px); box-shadow: 0 6px 18px var(--a2); }
@@ -290,7 +290,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
   display: flex; align-items: flex-start; gap: 14px; padding: 18px 20px;
   text-align: left; border-radius: 12px;
   background: rgba(23, 32, 45, .78); border: 1.5px solid var(--line-2);
-  transition: transform .22s var(--ease), background .22s, box-shadow .22s, border-color .22s;
+  transition: transform .22s var(--ease), box-shadow .22s;
 }
 .radio-card:hover:not(:disabled) { background: var(--a2); border-color: var(--accent-2); transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 24px var(--a2); }
 .radio-card:active:not(:disabled) { transform: scale(.97); }
