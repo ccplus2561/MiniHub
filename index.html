@@ -6,7 +6,6 @@
   <meta name="theme-color" content="#0b0e14">
   <title>MiniHub 遊戲平台</title>
   <link rel="stylesheet" href="css/style.css">
-  <script src="js/theme.js"></script>
 </head>
 <body>
   <div class="app">
@@ -80,10 +79,9 @@
 
         <div class="set-layout">
           <aside class="set-list" aria-label="設定分類">
-            <button class="set-item active" data-pane="account"><b>帳號</b><span>電子郵件 · 遊戲 UID</span></button>
-            <button class="set-item" data-pane="display"><b>顯示</b><span id="sumDisplay">電腦版</span></button>
-            <button class="set-item" data-pane="appearance"><b>外觀</b><span id="sumAppearance"></span></button>
-            <button class="set-item" data-pane="language"><b>語言</b><span>繁體中文</span></button>
+            <button class="set-item active" data-pane="account"><b>帳號</b></button>
+            <button class="set-item" data-pane="display"><b>顯示</b></button>
+            <button class="set-item" data-pane="language"><b>語言</b></button>
           </aside>
 
           <div class="set-content">
@@ -113,24 +111,6 @@
                 <i class="radio"></i>
                 <div><b>手機版 <span class="tag">不支援</span></b><p>目前尚未支援</p></div>
               </button>
-            </div>
-
-            <!-- 外觀 -->
-            <div class="pane" id="pane-appearance">
-              <div class="set-label">主題模式</div>
-              <div class="radio-row">
-                <button class="radio-card" data-group="mode" data-value="light">
-                  <i class="radio"></i>
-                  <div><b>明亮</b><p>淺色背景</p></div>
-                </button>
-                <button class="radio-card" data-group="mode" data-value="dark">
-                  <i class="radio"></i>
-                  <div><b>灰暗</b><p>深色背景</p></div>
-                </button>
-              </div>
-
-              <div class="set-label">色彩主題</div>
-              <div class="swatches" id="swatches"></div>
             </div>
 
             <!-- 語言 -->
