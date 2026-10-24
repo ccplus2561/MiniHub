@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0e14">
+  <title>MiniHub 遊戲平台</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/theme.js"></script>
+</head>
+<body>
+  <div class="app">
+
+    <!-- 左側導覽列 -->
+    <nav class="sidebar" id="sidebar" aria-label="主選單">
+      <button class="nav-item active" data-view="home">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
+        <span>首頁</span>
+      </button>
+      <button class="nav-item" data-view="library">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>遊戲庫</span>
+      </button>
+      <button class="nav-item" data-view="category">
+        <svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+        <span>分類</span>
+      </button>
+      <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>
+        <span>設定</span>
+      </button>
+      <button class="nav-item" data-view="about">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+        <span>關於</span>
+      </button>
+    </nav>
+
+    <!-- 主要內容 -->
+    <main class="main">
+
+      <!-- 首頁 -->
+      <section class="view active" id="view-home">
+        <h2 class="row-title">精選遊戲</h2>
+        <div class="card-row" id="featuredRow"></div>
+
+        <div class="hero">
+          <h1 id="heroTitle">MiniHub</h1>
+          <p id="heroDesc"></p>
+          <div class="hero-actions">
+            <button class="btn-primary" id="playBtn">
+              <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>
+              <span>開始遊戲</span>
+            </button>
+            <button class="btn-icon" id="libBtn" title="全部遊戲" aria-label="全部遊戲">
+              <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            </button>
+            <button class="btn-icon" id="randBtn" title="隨機一款" aria-label="隨機一款">
+              <svg viewBox="0 0 24 24"><path d="M3 7h4l10 10h4M3 17h4l3-3M14 10l3-3h4M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 遊戲庫 -->
+      <section class="view" id="view-library">
+        <h2 class="page-title">遊戲庫</h2>
+        <div class="grid" id="libraryGrid"></div>
+      </section>
+
+      <!-- 分類 -->
+      <section class="view" id="view-category">
+        <h2 class="page-title">分類</h2>
+        <div class="chips" id="chips"></div>
+        <div class="grid" id="categoryGrid"></div>
+      </section>
+
+      <!-- 設定 -->
+      <section class="view" id="view-settings">
+        <h2 class="page-title">設定</h2>
+
+        <div class="set-layout">
+          <aside class="set-list" aria-label="設定分類">
+            <button class="set-item active" data-pane="account"><b>帳號</b><span>電子郵件 · 遊戲 UID</span></button>
+            <button class="set-item" data-pane="display"><b>顯示</b><span id="sumDisplay">電腦版</span></button>
+            <button class="set-item" data-pane="appearance"><b>外觀</b><span id="sumAppearance"></span></button>
+            <button class="set-item" data-pane="language"><b>語言</b><span>繁體中文</span></button>
+          </aside>
+
+          <div class="set-content">
+
+            <!-- 帳號 -->
+            <div class="pane active" id="pane-account">
+              <div class="info-card">
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                  <div><small>電子郵件</small><h4 id="accEmail"></h4></div>
+                </div>
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.8-2.4 3-2.4s2.4.8 3 2.4M15 10h3M15 14h3"/></svg>
+                  <div><small>遊戲 UID</small><h4 id="accUid"></h4></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 顯示 -->
+            <div class="pane" id="pane-display">
+              <div class="set-label">顯示模式</div>
+              <button class="radio-card wide selected" data-group="display" data-value="desktop">
+                <i class="radio"></i>
+                <div><b>電腦版 <span class="tag">預設</span></b><p>適合電腦與平板的橫向版面</p></div>
+              </button>
+              <button class="radio-card wide" data-group="display" data-value="mobile" disabled>
+                <i class="radio"></i>
+                <div><b>手機版 <span class="tag">不支援</span></b><p>目前尚未支援</p></div>
+              </button>
+            </div>
+
+            <!-- 外觀 -->
+            <div class="pane" id="pane-appearance">
+              <div class="set-label">主題模式</div>
+              <div class="radio-row">
+                <button class="radio-card" data-group="mode" data-value="light">
+                  <i class="radio"></i>
+                  <div><b>明亮</b><p>淺色背景</p></div>
+                </button>
+                <button class="radio-card" data-group="mode" data-value="dark">
+                  <i class="radio"></i>
+                  <div><b>灰暗</b><p>深色背景</p></div>
+                </button>
+              </div>
+
+              <div class="set-label">色彩主題</div>
+              <div class="swatches" id="swatches"></div>
+            </div>
+
+            <!-- 語言 -->
+            <div class="pane" id="pane-language">
+              <div class="set-label">選擇語言</div>
+              <button class="radio-card wide selected" data-group="lang" data-value="zh-Hant">
+                <i class="radio"></i>
+                <div><b>繁體中文 <span class="tag">預設</span></b></div>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- 關於 -->
+      <section class="view" id="view-about">
+        <h2 class="page-title">關於</h2>
+        <div class="panel">
+          <p>MiniHub 是純 HTML / CSS / JavaScript 製作的線上遊戲中心，無需下載，打開就能玩；僅在瀏覽器記住你的外觀偏好。</p>
+          <p>新增遊戲：把遊戲資料夾放進 <code>games/</code>，再到 <code>js/games.js</code> 加一筆資料即可。</p>
+          <p class="muted">快捷鍵：← → 選擇遊戲、Enter 開始、Esc 離開遊戲。</p>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 遊戲播放層 -->
+  <div class="player" id="player" hidden>
+    <div class="player-bar">
+      <button class="btn-icon sm" id="closeBtn" aria-label="返回">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <span class="player-title" id="playerTitle"></span>
+      <button class="btn-icon sm" id="reloadBtn" aria-label="重新載入">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg>
+      </button>
+      <button class="btn-icon sm" id="fsBtn" aria-label="全螢幕">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+    <iframe id="frame" title="game" allow="fullscreen; gamepad; autoplay"
+      sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups"></iframe>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="js/games.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/settings.js"></script>
+</body>
+</html>
