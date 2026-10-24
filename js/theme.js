@@ -45,15 +45,23 @@
     return .2126 * r + .7152 * g + .0722 * b;
   };
 
-  // 把漸層各段調成「與背景有足夠對比」的鮮明色：深色模式提亮、明亮模式加深，用於邊框 / 文字 / 按鈕
-  function tune(hex, mode) {
+  // 背景色：保留色相，深色模式壓成飽和的深色調、明亮模式拉成飽和的淺色調，確保文字可讀
+  function bgTone(hex, mode) {
     const [h, s, l] = rgb2hsl(hex2rgb(hex));
-    const s2 = Math.max(50, Math.min(88, s));
-    const l2 = mode === "dark" ? Math.max(62, Math.min(76, l)) : Math.max(30, Math.min(42, l));
+    const s2 = Math.max(48, Math.min(85, s));
+    const l2 = mode === "dark" ? 22 + l * 0.16 : 78 + (100 - l) * 0 + Math.min(l, 90) * 0.12;
     return toHex(hsl2rgb(h, s2, l2));
   }
-  function onColor(ks) {
-    const L = ks.reduce((n, k) => n + lum(hex2rgb(k)), 0) / ks.length;
+  // 單一強調色（按鈕框 / 文字）：取主題中最飽和的色相，一個顏色，不用漸層
+  function accentOf(theme, mode) {
+    const best = theme.c.map(c => rgb2hsl(hex2rgb(c))).sort((a, b) => b[1] - a[1])[0];
+    const h = best[0];
+    return mode === "dark"
+      ? { a: toHex(hsl2rgb(h, 75, 70)), a2: toHex(hsl2rgb(h, 70, 58)) }
+      : { a: toHex(hsl2rgb(h, 80, 32)), a2: toHex(hsl2rgb(h, 80, 24)) };
+  }
+  function onColor(hex) {
+    const L = lum(hex2rgb(hex));
     return (1.05 / (L + .05)) > ((L + .05) / .057) ? "#ffffff" : "#06161a";
   }
 
@@ -63,17 +71,14 @@
     const root = document.documentElement;
     root.dataset.theme = state.mode;
     root.dataset.color = state.color;
-    const props = ["--accent", "--accent-2", "--on-accent", "--g1", "--g2", "--g3", "--g4", "--k1", "--k2", "--k3", "--k4"];
+    const props = ["--accent", "--accent-2", "--on-accent", "--g1", "--g2", "--g3", "--g4"];
     const theme = THEMES.find(t => t.id === state.color);
     if (theme) {
-      const ks = theme.c.map(c => tune(c, state.mode));
-      root.style.setProperty("--accent", ks[1]);
-      root.style.setProperty("--accent-2", ks[2]);
-      root.style.setProperty("--on-accent", onColor(ks));
-      theme.c.forEach((c, i) => {
-        root.style.setProperty("--g" + (i + 1), c);
-        root.style.setProperty("--k" + (i + 1), ks[i]);
-      });
+      const ac = accentOf(theme, state.mode);
+      root.style.setProperty("--accent", ac.a);
+      root.style.setProperty("--accent-2", ac.a2);
+      root.style.setProperty("--on-accent", onColor(ac.a));
+      theme.c.forEach((c, i) => root.style.setProperty("--g" + (i + 1), bgTone(c, state.mode)));
     } else {
       props.forEach(p => root.style.removeProperty(p));
     }

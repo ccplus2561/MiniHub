@@ -10,20 +10,13 @@
   --line-2: rgba(255, 255, 255, .26);
   --bar: #0f131b;
   --toast: #1b2230;
-  --accent: #4f9bff;
-  --accent-2: #9a7dff;
-  --on-accent: #06161a;
-  /* 幻彩四色（k = 鮮明色，用於邊框 / 文字 / 按鈕；g = 柔和原色，用於背景） */
-  --k1: #19c7d6; --k2: #4f9bff; --k3: #9a7dff; --k4: #e070d8;
+  --accent: #19c7d6;
+  --accent-2: #0f9fb0;
+  --on-accent: #03262b;
   --g1: #19c7d6; --g2: #4f9bff; --g3: #9a7dff; --g4: #e070d8;
-  --mix: 34%;
-  --grad: linear-gradient(135deg, var(--k1), var(--k2), var(--k3), var(--k4));
-  --tint: linear-gradient(135deg,
-    color-mix(in srgb, var(--k1) 16%, transparent),
-    color-mix(in srgb, var(--k3) 16%, transparent));
-  --tint-2: linear-gradient(135deg,
-    color-mix(in srgb, var(--k1) 28%, transparent),
-    color-mix(in srgb, var(--k4) 28%, transparent));
+  --ring: color-mix(in srgb, var(--accent) 60%, transparent);
+  --tint: color-mix(in srgb, var(--accent) 14%, transparent);
+  --tint-2: color-mix(in srgb, var(--accent) 24%, transparent);
   --a1: color-mix(in srgb, var(--accent) 10%, transparent);
   --a2: color-mix(in srgb, var(--accent) 22%, transparent);
   --a3: color-mix(in srgb, var(--accent) 34%, transparent);
@@ -42,11 +35,9 @@
   --line-2: rgba(0, 0, 0, .28);
   --bar: #ffffff;
   --toast: #ffffff;
-  --accent: #2f6fd8;
-  --accent-2: #6a4fd8;
+  --accent: #0b93a3;
+  --accent-2: #0a7886;
   --on-accent: #ffffff;
-  --k1: #0b93a3; --k2: #2f6fd8; --k3: #6a4fd8; --k4: #b040a8;
-  --mix: 42%;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -60,47 +51,30 @@ body {
     var(--bg);
   overflow: hidden;
 }
-/* 套用色彩主題：四色幻彩漸層背景，緩慢流動 */
+/* 色彩主題 = 背景：四色幻彩漸層（靜態、不搶畫面） */
 :root[data-color]:not([data-color="default"]) body {
   background:
-    linear-gradient(125deg,
-      color-mix(in srgb, var(--g1) var(--mix), var(--bg)),
-      color-mix(in srgb, var(--g2) var(--mix), var(--bg)),
-      color-mix(in srgb, var(--g3) var(--mix), var(--bg)),
-      color-mix(in srgb, var(--g4) var(--mix), var(--bg)),
-      color-mix(in srgb, var(--g1) var(--mix), var(--bg)))
-    0 0 / 300% 300% fixed;
-  animation: drift 32s ease-in-out infinite alternate;
+    radial-gradient(1000px 700px at 0% 0%, var(--g1), transparent 70%),
+    radial-gradient(1000px 700px at 100% 0%, var(--g2), transparent 70%),
+    radial-gradient(1000px 800px at 100% 100%, var(--g3), transparent 70%),
+    radial-gradient(1000px 800px at 0% 100%, var(--g4), transparent 70%),
+    linear-gradient(135deg, var(--g1), var(--g2), var(--g3), var(--g4))
+    fixed;
 }
-@keyframes drift { from { background-position: 0% 30%; } to { background-position: 100% 70%; } }
 
 button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
 svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-/* ---------- 幻彩漸層邊框（共用） ---------- */
+/* ---------- 單色邊框（共用） ---------- */
 .nav-item, .card, .btn-icon, .chip, .set-item, .radio-card, .swatch, .info-card, .panel, .toast {
-  position: relative;
+  border: 1.5px solid var(--ring);
 }
-.nav-item::before, .card::before, .btn-icon::before, .chip::before, .set-item::before,
-.radio-card::before, .swatch::before, .info-card::before, .panel::before, .toast::before {
-  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px;
-  background: var(--grad) 0 0 / 220% 220%;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor; mask-composite: exclude;
-  opacity: .62; pointer-events: none; z-index: 2;
-  transition: opacity .25s;
-}
-.info-card::before, .panel::before, .toast::before { opacity: .4; }
-.nav-item:hover::before, .card:hover::before, .btn-icon:hover::before, .chip:hover::before,
-.set-item:hover::before, .radio-card:hover:not(:disabled)::before, .swatch:hover::before {
-  opacity: 1; animation: ringflow 2.2s linear infinite alternate;
-}
-.nav-item.active::before, .card.selected::before, .chip.active::before, .set-item.active::before,
-.radio-card.selected::before, .swatch.selected::before {
-  opacity: 1; animation: ringflow 5s linear infinite alternate;
-}
-@keyframes ringflow { to { background-position: 100% 100%; } }
+.nav-item:hover, .card:hover, .btn-icon:hover, .chip:hover, .set-item:hover,
+.radio-card:hover:not(:disabled), .swatch:hover { border-color: var(--accent); }
+.nav-item.active, .card.selected, .chip.active, .set-item.active,
+.radio-card.selected, .swatch.selected { border-color: var(--accent); }
+.info-card, .panel { border-color: var(--line-2); }
 
 .app { display: flex; height: 100%; }
 
@@ -111,8 +85,9 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   padding: 26px 0;
   background: var(--ov-1);
-  border-right: 1px solid var(--line);
-  backdrop-filter: blur(6px);
+  border-right: 1px solid var(--line-2);
+  background: var(--ov-1);
+  backdrop-filter: blur(8px);
 }
 .nav-item {
   width: 68px; padding: 12px 0 10px;
@@ -137,14 +112,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
 .row-title { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: .08em; margin-bottom: 12px; }
-.page-title, .hero h1 {
-  background: var(--grad) 0 0 / 200% 100%;
-  -webkit-background-clip: text; background-clip: text;
-  color: transparent; -webkit-text-fill-color: transparent;
-  animation: textflow 8s linear infinite alternate;
-  width: fit-content;
-}
-@keyframes textflow { to { background-position: 100% 0; } }
+.page-title, .hero h1 { color: var(--text); }
 .page-title { font-size: 26px; font-weight: 800; margin-bottom: 18px; }
 
 /* ---------- 卡片 ---------- */
@@ -158,6 +126,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
   flex: none; width: 150px;
   text-align: left; overflow: hidden;
   background: var(--ov-1);
+  backdrop-filter: blur(6px);
   border-radius: var(--radius);
   scroll-snap-align: start;
   transition: transform .28s cubic-bezier(.3, 1.4, .5, 1), box-shadow .28s, background .28s;
@@ -185,7 +154,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
   position: absolute; top: 8px; right: 8px; z-index: 3;
   padding: 4px 10px; border-radius: 999px;
   font-size: 11px; font-weight: 700; color: var(--on-accent);
-  background: var(--grad);
+  background: var(--accent);
   transition: transform .2s, box-shadow .2s;
 }
 .badge:hover { transform: scale(1.12); box-shadow: 0 4px 12px var(--a3); }
@@ -206,9 +175,9 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
   display: inline-flex; align-items: center; gap: 10px;
   padding: 0 26px; height: 48px; border-radius: 12px;
   font-weight: 800; color: var(--on-accent);
-  background: var(--grad) 0 50% / 240% 100%;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
   box-shadow: 0 6px 20px var(--a3);
-  transition: transform .22s cubic-bezier(.3, 1.5, .5, 1), box-shadow .22s, background-position .6s;
+  transition: transform .22s cubic-bezier(.3, 1.5, .5, 1), box-shadow .22s, filter .22s;
 }
 .btn-primary svg { width: 16px; height: 16px; fill: currentColor; stroke: none; transition: transform .25s; }
 .btn-primary::after {
@@ -216,7 +185,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
   background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .5) 50%, transparent 65%);
   transform: translateX(-120%);
 }
-.btn-primary:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 14px 30px var(--a3); background-position: 100% 50%; }
+.btn-primary:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 14px 30px var(--a3); filter: brightness(1.08); }
 .btn-primary:hover::after { transform: translateX(120%); transition: transform .7s; }
 .btn-primary:hover svg { transform: translateX(3px) scale(1.2); }
 .btn-primary:active { transform: scale(.96); }
@@ -251,7 +220,6 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
   transition: transform .25s, box-shadow .25s;
 }
 .panel:hover { transform: translateY(-3px); box-shadow: 0 12px 30px var(--a2); }
-.panel:hover::before { opacity: .9; animation: ringflow 2.6s linear infinite alternate; }
 .panel p + p { margin-top: 10px; }
 .muted { color: var(--muted); font-size: 14px; }
 code { padding: 2px 6px; border-radius: 6px; background: var(--tint-2); color: var(--accent); font-size: .9em; }
@@ -265,7 +233,7 @@ code { padding: 2px 6px; border-radius: 6px; background: var(--tint-2); color: v
 }
 .player-title {
   flex: 1; font-weight: 800; padding-left: 4px; width: fit-content;
-  background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent;
+  color: var(--text);
 }
 .player iframe { flex: 1; width: 100%; border: 0; background: #000; }
 
@@ -321,7 +289,7 @@ code { padding: 2px 6px; border-radius: 6px; background: var(--tint-2); color: v
 }
 .radio-card:hover:not(:disabled) .radio { transform: scale(1.2); }
 .radio-card.selected .radio::after {
-  content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--grad);
+  content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--accent);
   animation: pop .3s cubic-bezier(.3, 1.8, .5, 1);
 }
 @keyframes pop { from { transform: scale(0); } to { transform: scale(1); } }
@@ -349,7 +317,6 @@ code { padding: 2px 6px; border-radius: 6px; background: var(--tint-2); color: v
   padding: 10px 20px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--accent);
   background: var(--toast); transition: .3s cubic-bezier(.3, 1.5, .5, 1);
 }
-.toast::before { opacity: .9; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---------- 手機 / 窄螢幕：側邊欄移到底部 ---------- */
