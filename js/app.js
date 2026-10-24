@@ -82,13 +82,13 @@
       const b = document.createElement("button");
       b.className = "chip" + (c === category ? " active" : "");
       b.textContent = c;
-      b.addEventListener("click", () => { category = c; renderChips(); renderCategory(); });
+      b.addEventListener("click", () => { category = c; renderChips(); renderLibrary(); });
       box.appendChild(b);
     });
   }
 
-  function renderCategory() {
-    renderGrid($("#categoryGrid"), games.filter(g => category === "全部" || g.category === category));
+  function renderLibrary() {
+    renderGrid($("#libraryGrid"), games.filter(g => category === "全部" || g.category === category));
   }
 
   /* ---------- 頁面切換 ---------- */
@@ -174,22 +174,11 @@
     timer = setTimeout(() => t.classList.remove("show"), 2200);
   }
 
-  /* ---------- 時鐘 / 電量 ---------- */
-  function tick() {
-    $("#clock").textContent = new Date().toLocaleTimeString("zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
-  }
-  tick(); setInterval(tick, 15000);
-  if (navigator.getBattery) navigator.getBattery().then(b => {
-    const el = $("#batt"), upd = () => { el.hidden = false; el.textContent = Math.round(b.level * 100) + "%"; };
-    upd(); b.addEventListener("levelchange", upd);
-  }).catch(() => {});
-
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
   renderFeatured();
-  renderGrid($("#libraryGrid"), games);
   renderChips();
-  renderCategory();
+  renderLibrary();
 
   // 分享連結：index.html#play=snake
   const m = location.hash.match(/play=([\w-]+)/);
