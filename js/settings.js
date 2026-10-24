@@ -38,7 +38,9 @@
   let prefs = { ...DEFAULTS };
   try { Object.assign(prefs, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) {} };
-  const SIZES = { s: "144px", m: "168px", l: "196px" };
+  const SIZES = { s: "132px", m: "168px", l: "212px" };
+  const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱" };
+  const say = m => window.MiniHubToast && MiniHubToast(m);
 
   function paint() {
     $$("[data-set]").forEach(el => {
@@ -57,9 +59,9 @@
 
   document.addEventListener("click", e => {
     const sw = e.target.closest(".switch");
-    if (sw) { prefs[sw.dataset.set] = !prefs[sw.dataset.set]; save(); paint(); return; }
+    if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉")); return; }
     const sb = e.target.closest(".seg button");
-    if (sb) { prefs[sb.parentElement.dataset.set] = sb.dataset.value; save(); paint(); }
+    if (sb) { const k = sb.parentElement.dataset.set; prefs[k] = sb.dataset.value; save(); paint(); say(LABELS[k] + "：" + sb.textContent); }
   });
   window.MiniHubPrefs = () => prefs;
   paint();

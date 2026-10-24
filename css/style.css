@@ -79,6 +79,26 @@ body:not([data-view="home"]) .backdrop { opacity: .28; }
 .nav-item.active { color: #fff; background: var(--a2); }
 .nav-item.active::after { transform: scaleY(1); }
 
+/* ---------- 登入按鈕 ---------- */
+.login-btn {
+  position: relative; overflow: hidden; flex: none; width: 92px; padding: 12px 0 11px; border-radius: 14px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-size: 17px; font-weight: 800; color: #fff;
+  background: linear-gradient(180deg, #2f9bff, #1a7fd8);
+  box-shadow: 0 6px 18px rgba(26, 159, 255, .35);
+  transition: transform .22s var(--ease), box-shadow .22s, filter .22s;
+}
+.login-btn svg { width: 26px; height: 26px; transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); }
+.login-btn::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .45) 50%, transparent 65%);
+  transform: translateX(-120%);
+}
+.login-btn:hover { transform: translateY(-3px) scale(1.06); box-shadow: 0 12px 26px rgba(26, 159, 255, .55); filter: brightness(1.1); }
+.login-btn:hover::after { transform: translateX(120%); transition: transform .7s; }
+.login-btn:hover svg { transform: translateX(3px) scale(1.15); }
+.login-btn:active { transform: scale(.95); }
+
 /* ---------- 底部操作提示 ---------- */
 .hints {
   flex: none; display: flex; justify-content: flex-end; gap: 28px;
@@ -381,6 +401,8 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
   .app { flex-direction: column-reverse; }
   .rail { width: 100%; flex-direction: row; padding: 6px 8px calc(6px + env(safe-area-inset-bottom)); gap: 8px; border-right: 0; border-top: 1px solid var(--line); }
   .brand { display: none; }
+  .login-btn { width: 56px; padding: 8px 0 6px; font-size: 13px; }
+  .login-btn svg { width: 22px; height: 22px; }
   .tabs { flex-direction: row; justify-content: space-around; overflow-x: auto; overflow-y: hidden; }
   .nav-item { width: 72px; padding: 8px 0 6px; font-size: 14px; }
   .nav-item svg { width: 24px; height: 24px; }

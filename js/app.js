@@ -186,6 +186,7 @@
   }
 
   window.MiniHubToast = toast;
+  $("#loginBtn").addEventListener("click", () => toast("登入功能即將推出"));
 
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
