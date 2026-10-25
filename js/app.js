@@ -371,6 +371,30 @@
     if (e.target === m || e.target.closest("[data-close]")) closeModal(m.id);
   }));
 
+  /* ---------- 滑鼠光影：全域光暈 + 按鈕 / 卡片聚光 ---------- */
+  const glow = document.createElement("div");
+  glow.className = "cursor-glow";
+  $("#backdrop").after(glow);
+  const SPOT = ".card, .set-item, .radio-card, .chip, .btn-icon, .btn-ghost, .btn-google, .btn-primary, .nav-item, .login-btn, .row-btn, .info-card";
+  let raf = 0, mx = 0, my = 0, target = null;
+  document.addEventListener("pointermove", e => {
+    if (e.pointerType !== "mouse") return;
+    mx = e.clientX; my = e.clientY; target = e.target.closest ? e.target.closest(SPOT) : null;
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      glow.style.setProperty("--mx", mx + "px");
+      glow.style.setProperty("--my", my + "px");
+      if (target) {
+        const r = target.getBoundingClientRect();
+        // 卡片被放大時，座標以元素實際大小換算
+        target.style.setProperty("--px", (mx - r.left) + "px");
+        target.style.setProperty("--py", (my - r.top) + "px");
+      }
+    });
+  }, { passive: true });
+  document.addEventListener("pointerleave", () => glow.style.setProperty("--mx", "-999px"));
+
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
   renderFeatured();

@@ -501,10 +501,47 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 
 /* ---------- 所有按鈕必須有淡色外框（辨識度） ---------- */
 :root { --btn-line: rgba(214, 230, 245, .62); }
-.nav-item, .login-btn, .btn-primary, .btn-icon, .chip, .set-item, .radio-card, .switch, .seg button,
+.login-btn, .btn-primary, .btn-icon, .chip, .set-item, .radio-card, .switch, .seg button,
 .row-btn, .modal-x, .reroll, .btn-ghost, .btn-google { border: 1.5px solid var(--btn-line); }
 .card:not(.selected) { border-color: var(--btn-line); }
 .seg { border-color: var(--btn-line); }
 .modal.bp .modal-x { border-color: var(--btn-line); }
 .bp-hints kbd, .hints kbd { border-color: var(--btn-line); }
-.nav-item.active, .set-item.active, .radio-card.selected, .chip.active { border-color: #fff; }
+.set-item.active, .radio-card.selected, .chip.active { border-color: #fff; }
+
+/* ---------- 滑鼠光影 ---------- */
+.cursor-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(460px circle at var(--mx, -999px) var(--my, -999px), rgba(102, 192, 244, .17), transparent 70%); }
+.set-item, .radio-card, .chip, .btn-icon, .btn-ghost, .btn-google, .row-btn, .info-card { position: relative; }
+.set-item, .radio-card, .info-card { overflow: hidden; }
+.card::before,
+.set-item::before,
+.radio-card::before,
+.chip::before,
+.btn-icon::before,
+.btn-ghost::before,
+.btn-google::before,
+.btn-primary::before,
+.nav-item::before,
+.login-btn::before,
+.row-btn::before,
+.info-card::before {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5;
+  opacity: 0; transition: opacity .25s;
+  background: radial-gradient(170px circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, .24), transparent 65%);
+}
+.card:hover::before,
+.set-item:hover::before,
+.radio-card:hover::before,
+.chip:hover::before,
+.btn-icon:hover::before,
+.btn-ghost:hover::before,
+.btn-google:hover::before,
+.btn-primary:hover::before,
+.nav-item:hover::before,
+.login-btn:hover::before,
+.row-btn:hover::before,
+.info-card:hover::before { opacity: 1; }
+.info-card:hover::before { opacity: .5; }
+.card.soon::before, button:disabled::before { display: none; }
+body.no-anim .cursor-glow { display: none; }
