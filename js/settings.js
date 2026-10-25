@@ -11,7 +11,43 @@
     $$(".set-item").forEach(b => b.classList.toggle("active", b === btn));
     $$(".pane").forEach(p => p.classList.toggle("active", p.id === "pane-" + btn.dataset.pane));
     $$(".help-pane").forEach(p => p.classList.toggle("active", p.id === "help-" + btn.dataset.pane));
+    if (btn.dataset.pane === "status") { paintNet(); paintAuth(); paintUsage(); if (!checked) checkServer(); }
   }));
+
+  /* ---------- 伺服器狀態 ---------- */
+  const stat = (id, text, s) => { const el = $(id); el.textContent = text; el.dataset.s = s; };
+  let authUser;   // undefined = 還沒收到 Firebase 的回報
+  const paintNet = () => stat("#stNet", navigator.onLine ? "已連線" : "離線", navigator.onLine ? "ok" : "bad");
+  const paintAuth = () => authUser === undefined
+    ? stat("#stAuth", window.MiniHubAuth ? "確認中…" : "未載入", window.MiniHubAuth ? "wait" : "bad")
+    : stat("#stAuth", authUser ? "已登入" : "未登入", authUser ? "ok" : "");
+  const paintUsage = () => {
+    const u = window.MiniHubAuth && MiniHubAuth.usage ? MiniHubAuth.usage() : { reads: 0, writes: 0 };
+    $("#stReads").textContent = u.reads; $("#stWrites").textContent = u.writes;
+  };
+  let checking = false, checked = false;
+  async function checkServer() {
+    if (checking) return;
+    checking = true; checked = true;
+    const btn = $("#stCheck"), label = $("span", btn);
+    btn.disabled = true; label.textContent = "檢查中…";
+    paintNet(); paintAuth();
+    stat("#stSrv", "檢查中…", "wait"); $("#stSrvNote").textContent = "正在連線…";
+    if (!window.MiniHubAuth || !MiniHubAuth.ping) {
+      stat("#stSrv", "未載入", "bad"); $("#stSrvNote").textContent = "登入服務載入失敗，請檢查網路後重新整理";
+    } else {
+      const r = await MiniHubAuth.ping();
+      if (r.ok) { stat("#stSrv", "運作中", "ok"); $("#stSrvNote").textContent = "回應時間 " + r.ms + " ms（" + new Date().toLocaleTimeString("zh-TW", { hour12: false }) + "）"; }
+      else { stat("#stSrv", r.code === "timeout" ? "逾時" : "無法連線", "bad"); $("#stSrvNote").textContent = "錯誤：" + r.code; }
+    }
+    btn.disabled = false; label.textContent = "重新檢查"; checking = false;
+    paintUsage();
+  }
+  $("#stCheck").addEventListener("click", checkServer);
+  document.addEventListener("minihub:usage", paintUsage);
+  document.addEventListener("minihub:auth", e => { authUser = e.detail.user; paintAuth(); });
+  addEventListener("online", paintNet); addEventListener("offline", paintNet);
+  paintNet(); paintAuth(); paintUsage();
 
   /* ---------- 帳號 ---------- */
   function fill(el, v) {

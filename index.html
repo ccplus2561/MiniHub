@@ -88,11 +88,12 @@
         <div class="set-layout">
           <aside class="set-list" aria-label="設定分類">
             <button class="set-item active" data-pane="account"><b>帳號</b></button>
+            <button class="set-item" data-pane="privacy"><b>隱私</b></button>
             <button class="set-item" data-pane="display"><b>顯示</b></button>
+            <button class="set-item" data-pane="language"><b>語言</b></button>
             <button class="set-item" data-pane="audio"><b>音效</b></button>
             <button class="set-item" data-pane="controls"><b>操作</b></button>
-            <button class="set-item" data-pane="privacy"><b>隱私</b></button>
-            <button class="set-item" data-pane="language"><b>語言</b></button>
+            <button class="set-item" data-pane="status"><b>伺服器狀態</b></button>
           </aside>
 
           <div class="set-content">
@@ -163,6 +164,22 @@
               </div>
             </div>
 
+            <!-- 伺服器狀態 -->
+            <div class="pane" id="pane-status">
+              <div class="set-label">連線狀態</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>網路</b><small>瀏覽器是否連上網路</small></div><span class="stat" id="stNet" data-s="">—</span></div>
+                <div class="set-row"><div class="set-text"><b>Firestore 伺服器</b><small id="stSrvNote">尚未檢查</small></div><span class="stat" id="stSrv" data-s="">—</span></div>
+                <div class="set-row"><div class="set-text"><b>帳號登入</b><small>Google 登入狀態</small></div><span class="stat" id="stAuth" data-s="">—</span></div>
+              </div>
+              <button class="btn-primary sm" id="stCheck" style="margin-top:16px"><span>重新檢查</span></button>
+              <div class="set-label">本次使用量</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>讀取次數</b><small>這個網頁開啟期間、這台裝置</small></div><span class="stat plain" id="stReads">0</span></div>
+                <div class="set-row"><div class="set-text"><b>寫入次數</b><small>這個網頁開啟期間、這台裝置</small></div><span class="stat plain" id="stWrites">0</span></div>
+              </div>
+            </div>
+
             <!-- 隱私 -->
             <div class="pane" id="pane-privacy">
               <div class="set-group">
@@ -214,6 +231,9 @@
             </div>
             <div class="help-pane" id="help-language">
               <div class="help-title">語言</div><p>目前僅提供繁體中文，其他語言之後再開放。</p>
+            </div>
+            <div class="help-pane" id="help-status">
+              <div class="help-title">伺服器狀態</div><p>Firestore 伺服器：實際向資料庫讀取一次，收到回應就代表連得上，並顯示來回時間；每檢查一次約計 1 次讀取。</p><p>本次使用量：只統計這個網頁開啟期間、這台裝置的讀寫次數（估算），重新整理會歸零，不是整個專案的總用量。</p><p>專案的計費指標（所有玩家合計）只能在 Firebase 主控台 &gt; Firestore &gt; 用量 查看，網頁端無法取得。</p>
             </div>
           </aside>
         </div>

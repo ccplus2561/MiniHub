@@ -176,7 +176,7 @@
     const v = document.body.dataset.view, P = ".pane.active ";
     let list = [];
     if (v === "library") list = $$("#chips .chip, #libraryGrid .card");
-    else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn");
+    else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
     return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
   }
   function move(dir) {

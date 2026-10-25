@@ -20,6 +20,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// 本次開啟網頁、這台裝置的讀寫次數（估算；不是專案總用量）
+const use = { reads: 0, writes: 0 };
+const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent(new CustomEvent("minihub:usage")); };
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
 const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt) });
@@ -29,6 +32,7 @@ try { await setPersistence(auth, browserSessionPersistence); } catch (e) {}
 
 async function loadProfile(authUid) {
   if (!SAVE_PROFILE) return null;
+  bump(1, 0);
   const snap = await getDoc(doc(db, "users", authUid));
   return snap.exists() ? norm(snap.data()) : null;
 }
@@ -38,6 +42,7 @@ async function createProfile({ name, gameUid }) {
   const user = auth.currentUser;
   if (!user) throw Object.assign(new Error("not-signed-in"), { code: "not-signed-in" });
   if (!SAVE_PROFILE) return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null };
+  bump(2, 2);
   await runTransaction(db, async tx => {
     const uRef = doc(db, "users", user.uid), idRef = doc(db, "uids", gameUid);
     if ((await tx.get(uRef)).exists()) throw Object.assign(new Error("already"), { code: "already-has-profile" });
@@ -52,16 +57,34 @@ async function createProfile({ name, gameUid }) {
 async function updateName(name, current) {
   const user = auth.currentUser;
   if (!SAVE_PROFILE) return { ...current, name, nameChangedAt: Date.now() };
+  bump(0, 1);
   await updateDoc(doc(db, "users", user.uid), { name, nameChangedAt: serverTimestamp() });
   return loadProfile(user.uid);
 }
 
+// 伺服器狀態檢查：向 Firestore 讀一次；只要伺服器有回應（含被規則拒絕）就代表連得上
+async function ping() {
+  const t0 = performance.now();
+  bump(1, 0);
+  try {
+    await Promise.race([
+      getDoc(doc(db, "uids", "_ping")),
+      new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 8000))
+    ]);
+  } catch (e) {
+    if (!e || (e.code !== "permission-denied" && e.code !== "not-found"))
+      return { ok: false, code: (e && (e.code || e.message)) || "unknown" };
+  }
+  return { ok: true, ms: Math.round(performance.now() - t0) };
+}
+
 window.MiniHubAuth = {
+  ping, usage: () => ({ ...use }),
   signIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
   signOut: () => signOut(auth),
   createProfile, updateName,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
-  isUidFree: async g => !SAVE_PROFILE || !(await getDoc(doc(db, "uids", g))).exists(),
+  isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await getDoc(doc(db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(auth.currentUser.uid)
 };
 

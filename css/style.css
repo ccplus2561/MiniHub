@@ -566,3 +566,12 @@ body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box
 .set-help #kbdPanel { margin-top: 0; }
 .set-help #kbdPanel .help-title { margin-bottom: 12px; }
 .set-help .notice[hidden] { display: none; }
+
+/* ---------- 伺服器狀態 ---------- */
+.stat { flex: none; display: inline-flex; align-items: center; gap: 9px; font-size: 18px; font-weight: 700; color: var(--text); }
+.stat::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: #8a97a6; }
+.stat.plain::before { display: none; }
+.stat[data-s="ok"]::before { background: #3ddc84; box-shadow: 0 0 10px rgba(61, 220, 132, .6); }
+.stat[data-s="bad"]::before { background: #ff6b6b; box-shadow: 0 0 10px rgba(255, 107, 107, .6); }
+.stat[data-s="wait"]::before { background: #ffcf5c; }
+.set-row:has(.stat):hover { transform: none; }
