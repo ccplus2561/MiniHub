@@ -479,3 +479,4 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .notice.warn svg { color: #ffcf5c; }
 .btn-primary.full { width: 100%; justify-content: center; }
 .btn-primary:disabled { filter: grayscale(.8) brightness(.7); cursor: not-allowed; transform: none !important; box-shadow: none; }
+.btn-ghost.full { width: 100%; margin-top: 10px; }

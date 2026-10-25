@@ -193,13 +193,19 @@
   /* ---------- 登入（僅樣式預覽，尚未串接 Google） ---------- */
   function openModal(id) { $("#" + id).hidden = false; }
   function closeModal(id) { $("#" + id).hidden = true; }
-  $("#loginBtn").addEventListener("click", () => openModal("loginModal"));
+  let signedIn = false;
+  $("#loginBtn").addEventListener("click", () => {
+    if (!signedIn) return openModal("loginModal");
+    if (window.MiniHubAuth) MiniHubAuth.signOut();
+  });
   $("#googleBtn").addEventListener("click", () => openModal("termsModal"));   // 先確認條款
   $("#termsCancel").addEventListener("click", () => closeModal("termsModal"));
   $("#termsOk").addEventListener("click", () => {
     closeModal("termsModal"); closeModal("loginModal");
-    // 預覽：假設 Google 登入成功且為首次登入 → 建立資料（正式版需向後端查詢該 email 是否已有 UID）
-    startProfile("player@example.com");
+    if (!window.MiniHubAuth) return toast("登入服務載入失敗，請檢查網路後重新整理");
+    MiniHubAuth.signIn().catch(e => {
+      if (!/popup-closed|cancelled-popup/.test(e.code || "")) toast("登入失敗：" + (e.code || e.message));
+    });
   });
 
   /* ---------- 首次登入：建立使用者名稱 / 遊戲 UID ---------- */
@@ -237,12 +243,55 @@
   }
   $("#profName").addEventListener("input", validateName);
   $("#profReroll").addEventListener("click", () => { $("#profUid").textContent = genUid(); });
-  $("#profOk").addEventListener("click", () => {
-    if ($("#profOk").disabled) return;
-    window.MiniHubAccount = { name: $("#profName").value, uid: $("#profUid").textContent, email: pEmail };
-    document.dispatchEvent(new CustomEvent("minihub:account"));
+  $("#profOk").addEventListener("click", async () => {
+    const btn = $("#profOk");
+    if (btn.disabled) return;
+    btn.disabled = true; $("span", btn).textContent = "建立中…";
+    try {
+      const p = await MiniHubAuth.createProfile({ name: $("#profName").value, gameUid: $("#profUid").textContent });
+      closeModal("profileModal");
+      setAccount(p);
+      toast("歡迎，" + p.name + "！");
+    } catch (e) {
+      if (e.code === "uid-taken") { $("#profUid").textContent = genUid(); toast("UID 已被使用，已換一組新的，請再按一次"); }
+      else if (e.code === "already-has-profile") { closeModal("profileModal"); toast("此帳號已有玩家資料"); MiniHubAuth.loadProfile().then(setAccount); }
+      else toast("建立失敗：" + (e.code || e.message));
+    }
+    $("span", btn).textContent = "建立並進入";
+    validateName();
+  });
+  $("#profCancel").addEventListener("click", () => {
     closeModal("profileModal");
-    toast("歡迎，" + MiniHubAccount.name + "！");
+    if (window.MiniHubAuth) MiniHubAuth.signOut();   // 未完成建立就取消 → 同時登出
+  });
+
+  function setAccount(p) {
+    window.MiniHubAccount = p ? { name: p.name, uid: p.gameUid || p.uid, email: p.email } : { name: "", uid: "", email: "" };
+    document.dispatchEvent(new CustomEvent("minihub:account"));
+  }
+  function paintLogin() {
+    $("#loginBtn span").textContent = signedIn ? "登出" : "登入";
+    $("#loginBtn").setAttribute("aria-label", signedIn ? "登出" : "登入");
+  }
+
+  /* ---------- Firebase 登入狀態 ---------- */
+  document.addEventListener("minihub:auth", e => {
+    const { user, profile, error } = e.detail;
+    if (error) { toast("讀取資料失敗：" + (error.code || error.message)); MiniHubAuth.signOut(); return; }
+    if (!user) {                       // 已登出
+      const wasIn = signedIn;
+      signedIn = false; setAccount(null); paintLogin(); closeModal("profileModal");
+      if (wasIn) toast("已登出");
+      return;
+    }
+    if (profile) {                     // 老玩家
+      const first = !signedIn;
+      signedIn = true; setAccount(profile); paintLogin(); closeModal("profileModal");
+      if (first) toast("歡迎回來，" + profile.name + "！");
+    } else {                           // 首次登入
+      signedIn = true; paintLogin();
+      startProfile(user.email);
+    }
   });
   $$(".modal").forEach(m => m.addEventListener("click", e => {
     if (m.hasAttribute("data-lock")) return;
