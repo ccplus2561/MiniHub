@@ -589,3 +589,12 @@ body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box
 
 .notice[hidden] { display: none; }
 #guestNote { margin-bottom: 12px; }
+
+/* ---------- 關於頁：條款分頁 / 首次登入公開名稱 ---------- */
+.legal-tabs { margin-bottom: 6px; }
+.about-legal .legal-doc { margin-top: 6px; max-width: none; }
+.about-intro { margin-top: 18px; }
+.pub-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 6px 0 4px; padding: 12px 14px; border-radius: 12px; background: var(--ov-1); border: 1px solid var(--line); }
+.pub-row small { display: block; margin-top: 3px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.pub-row b { font-size: 16px; }
+.about-legal:hover { transform: none; box-shadow: none; }

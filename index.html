@@ -232,7 +232,7 @@
               <div class="notice" id="kbdOff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>鍵盤快捷鍵已關閉。要使用鍵盤操作，請先開啟左側的「允許鍵盤快捷鍵」。</p></div>
             </div>
             <div class="help-pane" id="help-privacy">
-              <div class="help-title">隱私</div><p>允許公開使用者名稱：開啟後才能使用遊戲內的排名機制；關閉時你的名稱不會出現在排行榜。</p>
+              <div class="help-title">隱私</div><p>允許公開使用者名稱：開啟後才能使用遊戲內的排名機制；關閉時你的名稱不會出現在排行榜。</p><p>首次登入時會詢問這個選項（預設開啟）。登入後，這裡的選擇會同步到你的帳號；訪客只在本次開啟網頁期間有效。</p>
             </div>
             <div class="help-pane" id="help-language">
               <div class="help-title">語言</div><p>目前僅提供繁體中文，其他語言之後再開放。</p>
@@ -247,25 +247,13 @@
       <!-- 關於 -->
       <section class="view" id="view-about">
         <h2 class="page-title">關於</h2>
-        <div class="panel">
-          <p>MiniHub 是純 HTML / CSS / JavaScript 製作的線上遊戲中心，無需下載，打開就能玩；不保存任何設定或資料，重新開啟網頁即恢復預設。</p>
-          <p>新增遊戲：把遊戲資料夾放進 <code>games/</code>，再到 <code>js/games.js</code> 加一筆資料即可。</p>
-          <p class="muted">快捷鍵：← → 選擇遊戲、Enter 開始、Esc 離開遊戲。</p>
-          <p>法律條款：<a href="#" class="legal-link" data-legal="terms">服務條款</a>　<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>　<a href="#" class="legal-link" data-legal="rules">使用規定</a></p>
-        </div>
-      </section>
-
-      <!-- 法律條款（由「關於」或登入 / 帳號頁的連結進入） -->
-      <section class="view" id="view-legal">
-        <h2 class="page-title">法律條款</h2>
-        <div class="chips">
-          <button class="chip" id="legalBack">← 返回</button>
-          <button class="chip legal-tab active" data-tab="terms">服務條款</button>
-          <button class="chip legal-tab" data-tab="privacy">隱私權政策</button>
-          <button class="chip legal-tab" data-tab="rules">使用規定</button>
-        </div>
-
-        <div class="panel legal-doc" data-doc="terms">
+        <div class="panel about-legal">
+          <div class="chips legal-tabs">
+            <button class="chip legal-tab active" data-tab="terms">服務條款</button>
+            <button class="chip legal-tab" data-tab="privacy">隱私權政策</button>
+            <button class="chip legal-tab" data-tab="rules">使用規定</button>
+          </div>
+        <div class="legal-doc" data-doc="terms">
           <h3>服務條款</h3>
           <p class="muted">最後更新：2026 年 10 月 26 日</p>
           <h4>1. 接受條款</h4>
@@ -289,7 +277,7 @@
           <p>我們可能修訂本條款，修訂後的內容公布於本頁，並自公布時起生效。你於修訂後繼續使用，即視為同意修訂內容。</p>
         </div>
 
-        <div class="panel legal-doc" data-doc="privacy" hidden>
+        <div class="legal-doc" data-doc="privacy" hidden>
           <h3>隱私權政策</h3>
           <p class="muted">最後更新：2026 年 10 月 26 日</p>
           <h4>1. 我們收集的資料</h4>
@@ -297,6 +285,7 @@
             <li>登入時由 Google 提供的電子郵件地址。</li>
             <li>你建立的使用者名稱與系統產生的遊戲 UID。</li>
             <li>註冊時間與登入時間紀錄（用於顯示「註冊遊戲時間」與「上次登入時間」）。</li>
+            <li>你對「允許公開使用者名稱」的選擇。</li>
           </ul>
           <p>Google 大頭貼僅在登入期間用於畫面顯示，不會另外儲存。</p>
           <h4>2. 使用目的</h4>
@@ -306,14 +295,14 @@
           <h4>4. 偏好設定與登入狀態</h4>
           <p>顯示、音效、操作等偏好設定只存在於目前網頁的記憶體，不會寫入瀏覽器或伺服器，重新開啟網頁即恢復預設。登入狀態僅保留到分頁關閉為止。</p>
           <h4>5. 公開範圍</h4>
-          <p>你的電子郵件不會公開。使用者名稱預設不公開，只有在你於「設定 &gt; 隱私」開啟後，才可能出現在排行榜。</p>
+          <p>你的電子郵件不會公開。首次登入時會詢問是否允許公開使用者名稱（預設開啟），只有允許時你的名稱才可能出現在排行榜；你可隨時在「設定 &gt; 隱私」變更。</p>
           <h4>6. 資料保存與刪除</h4>
           <p>玩家資料會保存到你要求刪除或服務終止為止。如需查詢、更正或刪除資料，請透過本站公布的聯絡方式與我們聯繫。</p>
           <h4>7. 政策修改</h4>
           <p>本政策如有修訂，將公布於本頁；重大變更會於登入時另行提醒。</p>
         </div>
 
-        <div class="panel legal-doc" data-doc="rules" hidden>
+        <div class="legal-doc" data-doc="rules" hidden>
           <h3>使用規定</h3>
           <p class="muted">最後更新：2026 年 10 月 26 日</p>
           <h4>禁止行為</h4>
@@ -329,7 +318,14 @@
           <h4>違規處理</h4>
           <p>如發現違規，本站得視情節採取警告、移除排行榜紀錄、要求更改名稱、暫停或終止帳號等處置，必要時不另行通知。</p>
         </div>
+        </div>
+        <div class="panel about-intro">
+          <p>MiniHub 是純 HTML / CSS / JavaScript 製作的線上遊戲中心，無需下載，打開就能玩；不保存任何設定或資料，重新開啟網頁即恢復預設。</p>
+          <p>新增遊戲：把遊戲資料夾放進 <code>games/</code>，再到 <code>js/games.js</code> 加一筆資料即可。</p>
+          <p class="muted">快捷鍵：← → 選擇遊戲、Enter 開始、Esc 離開遊戲。</p>
+        </div>
       </section>
+
 
     </main>
 
@@ -394,6 +390,11 @@
       <label class="field-label">遊戲 UID</label>
       <div class="field uid"><b id="profUid">000000000</b><button type="button" class="reroll" id="profReroll" aria-label="重新產生"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg><span>換一組</span></button></div>
       <p class="field-hint">9 位數字，由系統產生</p>
+
+      <div class="pub-row">
+        <div class="set-text"><b>允許公開使用者名稱</b><small>開啟後，你的名稱才可出現在排行榜；之後可在「設定 &gt; 隱私」變更</small></div>
+        <button class="switch" role="switch" type="button" aria-checked="true" id="profPublic" aria-label="允許公開使用者名稱"><i></i></button>
+      </div>
 
       <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>遊戲 UID 建立後<b>無法更改</b>，且一個電子郵件只能擁有一個 UID。</p></div>
 

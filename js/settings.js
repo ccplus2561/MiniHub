@@ -140,11 +140,23 @@
   }
 
   document.addEventListener("click", e => {
-    const sw = e.target.closest(".switch");
-    if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); sfx(prefs[k] ? "on" : "off"); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉")); return; }
+    const sw = e.target.closest(".switch[data-set]");
+    if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); sfx(prefs[k] ? "on" : "off"); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉"));
+      if (k === "publicName" && window.MiniHubAccount.uid && window.MiniHubAuth) {   // 已登入：同步到帳號
+        const v = prefs[k];
+        MiniHubAuth.setPublicName(v).catch(() => { prefs[k] = !v; paint(); say("同步失敗，已還原"); });
+      }
+      return; }
     const sb = e.target.closest(".seg button");
     if (sb) { const k = sb.parentElement.dataset.set; prefs[k] = sb.dataset.value; save(); paint(); sfx("select"); say(LABELS[k] + "：" + sb.textContent); }
   });
   window.MiniHubPrefs = () => prefs;
+  // 登入後套用帳號裡的「公開使用者名稱」；登出（訪客）回到預設
+  document.addEventListener("minihub:account", () => {
+    const a = window.MiniHubAccount;
+    if (!a.uid) prefs.publicName = DEFAULTS.publicName;
+    else if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;
+    paint();
+  });
   paint();
 })();
