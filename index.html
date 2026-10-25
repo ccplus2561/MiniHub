@@ -127,6 +127,7 @@
                   </button>
                 </div>
               </div>
+              <div class="notice" id="guestNote"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p><b>目前是訪客模式</b>：不會連線到伺服器，也不會同步任何資料；登入後才會連線並同步你的玩家資料。</p></div>
               <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>登入即視同你已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p></div>
             </div>
 
@@ -237,7 +238,7 @@
               <div class="help-title">語言</div><p>目前僅提供繁體中文，其他語言之後再開放。</p>
             </div>
             <div class="help-pane" id="help-status">
-              <div class="help-title">伺服器狀態</div><p>Firestore 伺服器：實際向資料庫讀取一次，收到回應就代表連得上，並顯示來回時間；每檢查一次約計 1 次讀取。<b>未登入時不會連線到伺服器</b>，登入後才能檢查。</p><p>本次使用量：只統計這個網頁開啟期間、這台裝置的讀寫次數（估算），重新整理會歸零，不是整個專案的總用量。</p><p>專案的計費指標（所有玩家合計）只能在 Firebase 主控台 &gt; Firestore &gt; 用量 查看，網頁端無法取得。</p>
+              <div class="help-title">伺服器狀態</div><p>Firestore 伺服器：實際向資料庫讀取一次，收到回應就代表連得上，並顯示來回時間；每檢查一次約計 1 次讀取。<b>未登入的訪客不會連線到伺服器、也不同步資料</b>，登入後才會連線並可檢查。</p><p>本次使用量：只統計這個網頁開啟期間、這台裝置的讀寫次數（估算），重新整理會歸零，不是整個專案的總用量。</p><p>專案的計費指標（所有玩家合計）只能在 Firebase 主控台 &gt; Firestore &gt; 用量 查看，網頁端無法取得。</p>
             </div>
           </aside>
         </div>

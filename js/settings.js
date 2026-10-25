@@ -20,13 +20,13 @@
   const paintNet = () => stat("#stNet", navigator.onLine ? "已連線" : "離線", navigator.onLine ? "ok" : "bad");
   const paintAuth = () => authUser === undefined
     ? stat("#stAuth", window.MiniHubAuth ? "確認中…" : "未載入", window.MiniHubAuth ? "wait" : "bad")
-    : stat("#stAuth", authUser ? "已登入" : "未登入", authUser ? "ok" : "");
+    : stat("#stAuth", authUser ? "已登入" : "訪客（未登入）", authUser ? "ok" : "");
   const paintUsage = () => {
     const u = window.MiniHubAuth && MiniHubAuth.usage ? MiniHubAuth.usage() : { reads: 0, writes: 0 };
     $("#stReads").textContent = u.reads; $("#stWrites").textContent = u.writes;
   };
   let checking = false, checked = false;
-  const srvIdle = () => { stat("#stSrv", "未連線", ""); $("#stSrvNote").textContent = "未登入時不會連線到伺服器，登入後才能檢查"; };
+  const srvIdle = () => { stat("#stSrv", "未連線", ""); $("#stSrvNote").textContent = "訪客模式不會連線或同步，登入後才會連線並可檢查"; };
   async function checkServer() {
     if (checking) return;
     if (!authUser) { checked = false; paintNet(); paintAuth(); paintUsage(); srvIdle(); return; }   // 未登入：不連線
@@ -58,8 +58,8 @@
   srvIdle();   // 預設：未連線（登入後才會檢查）
 
   /* ---------- 帳號 ---------- */
-  function fill(el, v) {
-    el.textContent = v || "尚未綁定";
+  function fill(el, v, empty) {
+    el.textContent = v || empty || "尚未綁定";
     el.classList.toggle("empty", !v);
   }
   const LOCK_MS = 14 * 864e5;
@@ -74,7 +74,7 @@
   let showEmail = false;
   const paintEmail = () => {
     const a = window.MiniHubAccount;
-    fill($("#accEmail"), a.email ? (showEmail ? a.email : maskEmail(a.email)) : "");
+    fill($("#accEmail"), a.email ? (showEmail ? a.email : maskEmail(a.email)) : "", "登入後顯示");
     const eye = $("#emailEye");
     eye.hidden = !a.email;
     eye.classList.toggle("shown", showEmail);
@@ -82,11 +82,14 @@
   };
   const fillAccount = () => {
     const a = window.MiniHubAccount;
-    fill($("#accName"), a.name);
-    fill($("#accUid"), a.uid);
+    const guest = !a.uid, G = "登入後顯示";
+    $("#guestNote").hidden = !guest;
+    fill($("#accName"), a.name || (guest ? "訪客" : ""), G);
+    $("#accName").classList.toggle("empty", false);
+    fill($("#accUid"), a.uid, G);
     paintEmail();
-    fill($("#accReg"), a.createdAt ? fmtDate(a.createdAt) : "");
-    fill($("#accLast"), a.lastLoginAt ? fmtDate(a.lastLoginAt) : (a.uid ? "尚無紀錄" : ""));
+    fill($("#accReg"), a.createdAt ? fmtDate(a.createdAt) : "", G);
+    fill($("#accLast"), a.lastLoginAt ? fmtDate(a.lastLoginAt) : (a.uid ? "尚無紀錄" : ""), G);
     const until = a.nameChangedAt ? a.nameChangedAt + LOCK_MS : 0;
     const locked = until > Date.now();
     $("#accLock").hidden = !locked;
