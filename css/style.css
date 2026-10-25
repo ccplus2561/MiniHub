@@ -498,3 +498,26 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .row-btn .eye-off, .row-btn.shown .eye-on { display: none; }
 .row-btn.shown .eye-off { display: block; }
 .btn-primary.danger { background: linear-gradient(180deg, #e5546a, #b3263c); box-shadow: 0 6px 20px rgba(179, 38, 60, .45); }
+
+/* ---------- 登入：Big Picture（SteamOS）全螢幕風格 ---------- */
+.modal.bp { padding: 0; background: radial-gradient(900px 600px at 70% 20%, rgba(26, 159, 255, .22), transparent 70%),
+  radial-gradient(800px 600px at 10% 100%, rgba(102, 192, 244, .14), transparent 70%), linear-gradient(160deg, #1b2838, #0e141b 75%);
+  backdrop-filter: none; }
+.modal.bp .modal-box { width: min(560px, 92vw); padding: 0; background: none; border: 0; box-shadow: none; }
+.modal.bp .modal-logo { width: 104px; height: 104px; margin-bottom: 20px; border-radius: 28px; box-shadow: 0 0 40px var(--a2); }
+.modal.bp .modal-logo svg { width: 60px; height: 60px; }
+.modal.bp h3 { font-size: 38px; letter-spacing: .02em; }
+.modal.bp .modal-sub { font-size: 18px; margin-bottom: 8px; }
+.modal.bp .btn-google { height: 76px; margin-top: 30px; font-size: 24px; border-radius: 14px; gap: 16px; }
+.modal.bp .btn-google svg { width: 32px; height: 32px; }
+.modal.bp .btn-ghost { height: 64px; margin-top: 16px; font-size: 21px; border-radius: 14px; }
+.modal.bp .btn-google:focus-visible, .modal.bp .btn-ghost:focus-visible { outline: 4px solid #fff; outline-offset: 5px; transform: scale(1.04); box-shadow: 0 0 36px rgba(255, 255, 255, .35); }
+.modal.bp .modal-fine { margin-top: 22px; font-size: 14px; }
+.modal.bp .modal-x { top: 28px; left: 28px; right: auto; width: 56px; height: 56px; background: var(--ov-1); border: 1.5px solid var(--line-2); color: var(--text); }
+.modal.bp .modal-x svg { width: 26px; height: 26px; }
+.modal.bp .modal-x:hover { transform: scale(1.08); background: var(--a2); }
+.bp-hints { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 36px; padding: 16px;
+  background: rgba(11, 17, 24, .8); border-top: 1px solid var(--line); color: var(--text-2); font-size: 16px; }
+.bp-hints kbd { display: inline-block; min-width: 26px; margin-right: 4px; padding: 2px 7px; text-align: center; border-radius: 6px;
+  background: var(--ov-2); border: 1px solid var(--line-2); font: inherit; font-size: 14px; }
+@media (max-width: 720px) { .bp-hints { display: none; } .modal.bp h3 { font-size: 30px; } .modal.bp .btn-google { height: 64px; font-size: 20px; } }

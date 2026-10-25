@@ -168,7 +168,15 @@
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
     if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
-    if (!$("#loginModal").hidden) { if (e.key === "Escape") closeModal("loginModal"); return; }
+    if (!$("#loginModal").hidden) {
+      if (e.key === "Escape") closeModal("loginModal");
+      else if (/^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「Google 登入 / 取消」之間移動焦點
+        const b = $$(".btn-google, .btn-ghost", $("#loginModal"));
+        const up = /^(ArrowUp|w)$/i.test(e.key), i = b.indexOf(document.activeElement);
+        b[(i + (up ? -1 : 1) + b.length) % b.length].focus(); e.preventDefault();
+      }
+      return;
+    }
     if (!player.hidden) { if (e.key === "Escape") closeGame(); return; }
     if (!kbdOn() || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
@@ -193,7 +201,11 @@
   window.MiniHubToast = toast;
 
   /* ---------- 登入（僅樣式預覽，尚未串接 Google） ---------- */
-  function openModal(id) { $("#" + id).hidden = false; }
+  function openModal(id) {
+    const m = $("#" + id); m.hidden = false;
+    const f = $("[data-autofocus]", m);
+    if (f) setTimeout(() => f.focus(), 60);   // 讓鍵盤 / 手把可直接按 Enter
+  }
   function closeModal(id) { $("#" + id).hidden = true; }
   let signedIn = false;
   $("#loginBtn").addEventListener("click", () => {
@@ -288,7 +300,7 @@
   function paintLogin() {
     const btn = $("#loginBtn"), img = $("#loginAvatar");
     const name = (window.MiniHubAccount && MiniHubAccount.name) || "";
-    $("span", btn).textContent = signedIn ? (name || "帳號") : "登入";
+    $("span", btn).textContent = signedIn ? "登出" : "登入";
     btn.setAttribute("aria-label", signedIn ? "帳號（點擊登出）" : "登入");
     const show = signedIn && photo;
     if (show && img.getAttribute("src") !== photo) img.src = photo;
