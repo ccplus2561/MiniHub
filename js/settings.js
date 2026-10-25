@@ -43,7 +43,7 @@
     fill($("#accReg"), a.createdAt ? fmtDate(a.createdAt) : "");
     const until = a.nameChangedAt ? a.nameChangedAt + LOCK_MS : 0;
     const locked = until > Date.now();
-    $("#accLockRow").hidden = !locked;
+    $("#accLock").hidden = !locked;
     if (locked) $("#accLock").textContent = "將於 " + fmtDate(until) + " 後才可變更";
     $("#editNameBtn").hidden = !a.uid;
     $("#editNameBtn").disabled = locked;

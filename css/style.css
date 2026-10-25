@@ -511,7 +511,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 
 /* ---------- 滑鼠光影 ---------- */
 .cursor-glow { position: fixed; inset: 0; z-index: 0; pointer-events: none;
-  background: radial-gradient(460px circle at var(--mx, -999px) var(--my, -999px), rgba(102, 192, 244, .17), transparent 70%); }
+  background: radial-gradient(180px circle at var(--mx, -999px) var(--my, -999px), rgba(102, 192, 244, .16), transparent 70%); }
 .set-item, .radio-card, .chip, .btn-icon, .btn-ghost, .btn-google, .row-btn, .info-card { position: relative; }
 .set-item, .radio-card, .info-card { overflow: hidden; }
 .card::before,
@@ -528,7 +528,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .info-card::before {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5;
   opacity: 0; transition: opacity .25s;
-  background: radial-gradient(170px circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, .24), transparent 65%);
+  background: radial-gradient(80px circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, .22), transparent 70%);
 }
 .card:hover::before,
 .set-item:hover::before,
@@ -545,3 +545,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .info-card:hover::before { opacity: .5; }
 .card.soon::before, button:disabled::before { display: none; }
 body.no-anim .cursor-glow { display: none; }
+
+.lock-hint { display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 8px; font-size: 15px; color: var(--text);
+  background: var(--ov-1); border: 1px solid var(--btn-line); }
+.lock-hint[hidden] { display: none; }
