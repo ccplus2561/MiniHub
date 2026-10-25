@@ -161,18 +161,6 @@
                 <div class="set-row"><div class="set-text"><b>允許鍵盤快捷鍵</b><small>開啟後可用鍵盤操作大廳</small></div><button class="switch" role="switch" aria-checked="false" data-set="kbd" aria-label="開關"><i></i></button></div>
                 <div class="set-row"><div class="set-text"><b>允許觸控滑動</b><small>關閉後，滑鼠與觸控點擊皆無效</small></div><button class="switch" role="switch" aria-checked="false" data-set="touch" aria-label="開關"><i></i></button></div>
               </div>
-              <div id="kbdPanel">
-              <div class="set-label">鍵盤快捷鍵</div>
-              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>僅適用於 MiniHub 大廳；遊戲內的快捷鍵由各遊戲開發者自行設計。</p></div>
-              <div class="set-group">
-                <div class="set-row"><div class="set-text"><b>上</b><small>切換到上一個分頁</small></div><span class="keys"><kbd>↑</kbd><kbd>W</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>下</b><small>切換到下一個分頁</small></div><span class="keys"><kbd>↓</kbd><kbd>S</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>左</b><small>選擇上一款遊戲；已在最左邊則回到分頁</small></div><span class="keys"><kbd>←</kbd><kbd>A</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>右</b><small>選擇下一款遊戲；在分頁時進入中間內容</small></div><span class="keys"><kbd>→</kbd><kbd>D</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>確認</b><small>進入內容 / 開始遊戲 / 啟用項目</small></div><span class="keys"><kbd>Enter</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>返回</b><small>從中間內容回到最左側分頁</small></div><span class="keys"><kbd>Esc</kbd></span></div>
-              </div>
-              </div>
             </div>
 
             <!-- 隱私 -->
@@ -193,6 +181,41 @@
             </div>
 
           </div>
+
+          <!-- 說明（右側）：隨左側分類切換 -->
+          <aside class="set-help" id="setHelp" aria-label="說明">
+            <div class="set-label">說明</div>
+            <div class="help-pane active" id="help-account">
+              <div class="help-title">帳號</div><p>顯示登入後的使用者名稱、遊戲 UID、註冊時間與電子郵件（預設遮罩，可按眼睛圖示顯示完整內容）。</p><p>使用者名稱每 14 天可修改一次；遊戲 UID 建立後無法更改。</p>
+            </div>
+            <div class="help-pane" id="help-display">
+              <div class="help-title">顯示</div><p>圖卡大小：調整首頁與遊戲庫的卡片尺寸。</p><p>動畫效果：關閉後減少轉場與停留動畫。</p><p>遊戲全螢幕：開始遊戲時自動進入全螢幕。</p>
+            </div>
+            <div class="help-pane" id="help-audio">
+              <div class="help-title">音效</div><p>全部靜音：關閉所有聲音。</p><p>音效：按鈕、切換、進出遊戲時的提示音，音量刻意調低、音色柔和。</p><p>音樂：預留給之後的背景音樂。</p>
+            </div>
+            <div class="help-pane" id="help-controls">
+              <div id="kbdPanel">
+              <div class="help-title">鍵盤快捷鍵</div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>僅適用於 MiniHub 大廳；遊戲內的快捷鍵由各遊戲開發者自行設計。</p></div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>上</b><small>切換到上一個分頁</small></div><span class="keys"><kbd>↑</kbd><kbd>W</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>下</b><small>切換到下一個分頁</small></div><span class="keys"><kbd>↓</kbd><kbd>S</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>左</b><small>選擇上一款遊戲；已在最左邊則回到分頁</small></div><span class="keys"><kbd>←</kbd><kbd>A</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>右</b><small>選擇下一款遊戲；在分頁時進入中間內容</small></div><span class="keys"><kbd>→</kbd><kbd>D</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>確認</b><small>進入內容 / 開始遊戲 / 啟用項目</small></div><span class="keys"><kbd>Enter</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>返回</b><small>從中間內容回到最左側分頁</small></div><span class="keys"><kbd>Esc</kbd></span></div>
+              </div>
+              </div>
+              <div class="notice" id="kbdOff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>鍵盤快捷鍵已關閉。要使用鍵盤操作，請先開啟左側的「允許鍵盤快捷鍵」。</p></div>
+            </div>
+            <div class="help-pane" id="help-privacy">
+              <div class="help-title">隱私</div><p>允許公開使用者名稱：開啟後才能使用遊戲內的排名機制；關閉時你的名稱不會出現在排行榜。</p>
+            </div>
+            <div class="help-pane" id="help-language">
+              <div class="help-title">語言</div><p>目前僅提供繁體中文，其他語言之後再開放。</p>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -325,6 +348,7 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script src="js/games.js"></script>
+  <script src="js/sfx.js"></script>
   <script src="js/app.js"></script>
   <script src="js/settings.js"></script>
   <script type="module" src="js/firebase.js"></script>

@@ -4,6 +4,7 @@
   const games = window.GAMES || [];
   const featured = games.filter(g => g.featured);
 
+  const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
   let selected = 0;
   let category = "全部";
 
@@ -115,7 +116,8 @@
   const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
   function openGame(g, el) {
-    if (!g.path) return toast("「" + g.title + "」即將推出，敬請期待！");
+    if (!g.path) { sfx("deny"); return toast("「" + g.title + "」即將推出，敬請期待！"); }
+    sfx("open");
     current = g;
     srcEl = el || $("#featuredRow .card.selected");
     $("#playerTitle").textContent = g.title;
@@ -132,7 +134,7 @@
 
   function closeGame() {
     if (!current || closing) return;
-    closing = true;
+    closing = true; sfx("close");
     if (document.fullscreenElement) document.exitFullscreen();
     history.replaceState(null, "", location.pathname + location.search);
     const done = () => { player.hidden = true; frame.src = "about:blank"; current = null; closing = false; };
@@ -166,6 +168,7 @@
   function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; }
   function setK(el, quiet) {
     clearK(); kEl = el; el.classList.add("kfocus");
+    if (!quiet) sfx("move");
     el.scrollIntoView({ block: "nearest", inline: "nearest" });
     if (!quiet && el.classList.contains("set-item") && !el.classList.contains("active")) el.click();   // 設定左側分類：移到哪就顯示哪一頁
   }
@@ -198,11 +201,13 @@
   function activate() {
     if (!kEl || !kEl.isConnected) return;
     const txt = kEl.classList.contains("chip") ? kEl.textContent : null;
+    if (!kEl.matches(".switch, .seg button")) sfx("confirm");   // 開關 / 分段選項的聲音由設定頁自己處理
     kEl.click();
     if (txt) { const n = $$("#chips .chip").find(c => c.textContent === txt); if (n) setK(n, true); }   // 分類按鈕會重繪
   }
   function setZone(z, byKey) {
     zone = z; document.body.dataset.zone = z; clearK();
+    if (byKey) sfx(z === "mid" ? "confirm" : "back");
     if (z === "mid" && byKey && document.body.dataset.view !== "home") {
       const items = midItems();
       const first = document.body.dataset.view === "settings" ? $(".set-item.active") : items[0];
@@ -226,6 +231,7 @@
   function stepTab(d) {
     const tabs = $$(".nav-item");
     const cur = tabs.findIndex(n => n.classList.contains("active"));
+    sfx("move");
     showView(tabs[(cur + d + tabs.length) % tabs.length].dataset.view);
   }
   const DIRS = { ArrowUp: "up", w: "up", ArrowDown: "down", s: "down", ArrowLeft: "left", a: "left", ArrowRight: "right", d: "right" };
@@ -257,15 +263,22 @@
       else if (dir === "right" || enter) setZone("mid", true);
       return;
     }
-    if (esc) return setZone("nav");             // 中間：Esc 回最左側
+    if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
     if (document.body.dataset.view === "home") {
-      if (dir === "right") select(selected + 1);
-      else if (dir === "left") { if (selected === 0) setZone("nav"); else select(selected - 1); }
+      if (dir === "right") { sfx("move"); select(selected + 1); }
+      else if (dir === "left") { if (selected === 0) setZone("nav", true); else { sfx("move"); select(selected - 1); } }
       else if (enter && featured[selected]) openGame(featured[selected], $("#featuredRow .card.selected"));
       return;
     }
-    if (dir) { if (!move(dir) && dir === "left") setZone("nav"); }   // 已在最左邊再按 ← / A → 回最左側
+    if (dir) { if (!move(dir) && dir === "left") setZone("nav", true); }   // 已在最左邊再按 ← / A → 回最左側
     else if (enter) activate();
+  });
+
+  // 滑鼠 / 觸控點按鈕的提示音（已被封鎖的點擊不會走到這裡；若同一下已有專屬音效就不重複）
+  document.addEventListener("click", e => {
+    if (e.detail === 0 || !e.target.closest) return;
+    const b = e.target.closest("button");
+    if (b && !b.disabled && !b.matches(".switch, .seg button") && !(window.MiniHubSfx && MiniHubSfx.recent())) sfx("click");
   });
 
   /* ---------- 滑鼠 / 觸控：點到哪一區，快捷鍵就跟著切到哪一區 ---------- */

@@ -255,7 +255,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .player iframe { flex: 1; width: 100%; border: 0; background: #000; }
 
 /* ---------- 設定頁（Steam 設定清單風） ---------- */
-.set-layout { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: start; }
+.set-layout { display: grid; grid-template-columns: 300px minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
 .set-label { font-size: 16px; font-weight: 700; color: var(--text); letter-spacing: .08em; margin: 22px 0 10px; }
 .set-content > .pane > .set-label:first-child { margin-top: 0; }
 .set-item {
@@ -554,3 +554,15 @@ body.no-anim .cursor-glow { display: none; }
 body.kb:not(.no-kbd)[data-zone="nav"] .nav-item.active { outline: 3px solid #fff; outline-offset: 2px; }
 body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 0 22px rgba(255, 255, 255, .35); }
 .no-touch button { cursor: default; }
+
+/* ---------- 設定頁右側說明 ---------- */
+.set-help { position: sticky; top: 0; max-height: calc(100vh - 170px); overflow-y: auto; scrollbar-width: thin; padding: 0 4px 12px; }
+.set-help > .set-label { margin-top: 0; }
+.help-pane { display: none; }
+.help-pane.active { display: block; animation: viewIn .38s cubic-bezier(.2, .8, .2, 1); }
+.help-title { font-size: 22px; font-weight: 800; margin-bottom: 12px; color: var(--text); }
+.help-pane > p { font-size: 17px; line-height: 1.7; color: var(--text-2); }
+.help-pane > p + p { margin-top: 8px; }
+.set-help #kbdPanel { margin-top: 0; }
+.set-help #kbdPanel .help-title { margin-bottom: 12px; }
+.set-help .notice[hidden] { display: none; }

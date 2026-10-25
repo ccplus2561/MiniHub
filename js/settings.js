@@ -10,6 +10,7 @@
   $$(".set-item").forEach(btn => btn.addEventListener("click", () => {
     $$(".set-item").forEach(b => b.classList.toggle("active", b === btn));
     $$(".pane").forEach(p => p.classList.toggle("active", p.id === "pane-" + btn.dataset.pane));
+    $$(".help-pane").forEach(p => p.classList.toggle("active", p.id === "help-" + btn.dataset.pane));
   }));
 
   /* ---------- 帳號 ---------- */
@@ -70,6 +71,7 @@
   const save = () => {};
   const SIZES = { s: "132px", m: "168px", l: "212px" };
   const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱" };
+  const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
   const say = m => window.MiniHubToast && MiniHubToast(m);
 
   function paint() {
@@ -82,6 +84,7 @@
     $$("[data-dep]").forEach(r => r.classList.toggle("off", !!prefs[r.dataset.dep]));
     // 允許鍵盤快捷鍵 → 才顯示快捷鍵介面與底部提示
     $("#kbdPanel").hidden = !prefs.kbd;
+    $("#kbdOff").hidden = prefs.kbd;
     document.body.classList.toggle("no-kbd", !prefs.kbd);
     document.body.classList.toggle("no-anim", !prefs.anim);
     document.body.classList.toggle("no-touch", !prefs.touch);
@@ -90,9 +93,9 @@
 
   document.addEventListener("click", e => {
     const sw = e.target.closest(".switch");
-    if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉")); return; }
+    if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); sfx(prefs[k] ? "on" : "off"); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉")); return; }
     const sb = e.target.closest(".seg button");
-    if (sb) { const k = sb.parentElement.dataset.set; prefs[k] = sb.dataset.value; save(); paint(); say(LABELS[k] + "：" + sb.textContent); }
+    if (sb) { const k = sb.parentElement.dataset.set; prefs[k] = sb.dataset.value; save(); paint(); sfx("select"); say(LABELS[k] + "：" + sb.textContent); }
   });
   window.MiniHubPrefs = () => prefs;
   paint();
