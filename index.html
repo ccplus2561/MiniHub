@@ -115,6 +115,10 @@
                   <div class="grow"><small>註冊遊戲時間</small><h4 id="accReg"></h4></div>
                 </div>
                 <div class="info-row">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <div class="grow"><small>上次登入時間</small><h4 id="accLast"></h4></div>
+                </div>
+                <div class="info-row">
                   <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
                   <div class="grow"><small>電子郵件</small><h4 id="accEmail"></h4></div>
                   <button class="row-btn" id="emailEye" aria-label="顯示完整電子郵件" hidden>
@@ -123,7 +127,7 @@
                   </button>
                 </div>
               </div>
-              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>登入即視同你已閱讀並同意 MiniHub 服務條款、隱私權政策及相關使用規定。</p></div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>登入即視同你已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p></div>
             </div>
 
             <!-- 顯示 -->
@@ -246,6 +250,83 @@
           <p>MiniHub 是純 HTML / CSS / JavaScript 製作的線上遊戲中心，無需下載，打開就能玩；不保存任何設定或資料，重新開啟網頁即恢復預設。</p>
           <p>新增遊戲：把遊戲資料夾放進 <code>games/</code>，再到 <code>js/games.js</code> 加一筆資料即可。</p>
           <p class="muted">快捷鍵：← → 選擇遊戲、Enter 開始、Esc 離開遊戲。</p>
+          <p>法律條款：<a href="#" class="legal-link" data-legal="terms">服務條款</a>　<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>　<a href="#" class="legal-link" data-legal="rules">使用規定</a></p>
+        </div>
+      </section>
+
+      <!-- 法律條款（由「關於」或登入 / 帳號頁的連結進入） -->
+      <section class="view" id="view-legal">
+        <h2 class="page-title">法律條款</h2>
+        <div class="chips">
+          <button class="chip" id="legalBack">← 返回</button>
+          <button class="chip legal-tab active" data-tab="terms">服務條款</button>
+          <button class="chip legal-tab" data-tab="privacy">隱私權政策</button>
+          <button class="chip legal-tab" data-tab="rules">使用規定</button>
+        </div>
+
+        <div class="panel legal-doc" data-doc="terms">
+          <h3>服務條款</h3>
+          <p class="muted">最後更新：2026 年 10 月 26 日</p>
+          <h4>1. 接受條款</h4>
+          <p>歡迎使用 MiniHub（以下稱「本站」）。當你登入或繼續使用本站，即表示你已閱讀、了解並同意本服務條款、隱私權政策及使用規定。若不同意，請停止使用。</p>
+          <h4>2. 帳號與遊戲資料</h4>
+          <ul>
+            <li>本站使用 Google 帳號登入；首次登入時需建立使用者名稱，並由系統產生 9 位數遊戲 UID。</li>
+            <li>遊戲 UID 建立後無法更改，且一個電子郵件只能擁有一個 UID。</li>
+            <li>使用者名稱每 14 天僅能變更一次。</li>
+            <li>你應妥善保管自己的 Google 帳號，並對以該帳號進行的行為負責。</li>
+          </ul>
+          <h4>3. 使用者責任</h4>
+          <p>你同意依照本站的使用規定使用服務，不得從事任何違法、侵害他人權益或干擾服務運作的行為。</p>
+          <h4>4. 服務變更與中止</h4>
+          <p>本站為免費提供的服務，我們可能隨時新增、修改、暫停或終止部分或全部功能，也可能因維護而暫時無法使用，並將盡力減少影響。</p>
+          <h4>5. 免責聲明</h4>
+          <p>本站以「現狀」提供，不保證服務不中斷、無錯誤，或遊戲資料永久保存。因使用或無法使用本站所造成的損失，在法律允許的範圍內，本站不負賠償責任。</p>
+          <h4>6. 智慧財產權</h4>
+          <p>本站的程式、介面、圖像與內容之相關權利，除另有標示外，均屬本站或原權利人所有，未經同意不得擅自重製或散布。</p>
+          <h4>7. 條款修改</h4>
+          <p>我們可能修訂本條款，修訂後的內容公布於本頁，並自公布時起生效。你於修訂後繼續使用，即視為同意修訂內容。</p>
+        </div>
+
+        <div class="panel legal-doc" data-doc="privacy" hidden>
+          <h3>隱私權政策</h3>
+          <p class="muted">最後更新：2026 年 10 月 26 日</p>
+          <h4>1. 我們收集的資料</h4>
+          <ul>
+            <li>登入時由 Google 提供的電子郵件地址。</li>
+            <li>你建立的使用者名稱與系統產生的遊戲 UID。</li>
+            <li>註冊時間與登入時間紀錄（用於顯示「註冊遊戲時間」與「上次登入時間」）。</li>
+          </ul>
+          <p>Google 大頭貼僅在登入期間用於畫面顯示，不會另外儲存。</p>
+          <h4>2. 使用目的</h4>
+          <p>上述資料僅用於識別你的玩家身分、顯示帳號資訊，以及（在你允許公開使用者名稱時）提供排行榜等遊戲功能。</p>
+          <h4>3. 資料儲存與第三方服務</h4>
+          <p>登入與玩家資料由 Google Firebase（Authentication 與 Cloud Firestore）處理與儲存，適用 Google 的相關條款與隱私權政策。</p>
+          <h4>4. 偏好設定與登入狀態</h4>
+          <p>顯示、音效、操作等偏好設定只存在於目前網頁的記憶體，不會寫入瀏覽器或伺服器，重新開啟網頁即恢復預設。登入狀態僅保留到分頁關閉為止。</p>
+          <h4>5. 公開範圍</h4>
+          <p>你的電子郵件不會公開。使用者名稱預設不公開，只有在你於「設定 &gt; 隱私」開啟後，才可能出現在排行榜。</p>
+          <h4>6. 資料保存與刪除</h4>
+          <p>玩家資料會保存到你要求刪除或服務終止為止。如需查詢、更正或刪除資料，請透過本站公布的聯絡方式與我們聯繫。</p>
+          <h4>7. 政策修改</h4>
+          <p>本政策如有修訂，將公布於本頁；重大變更會於登入時另行提醒。</p>
+        </div>
+
+        <div class="panel legal-doc" data-doc="rules" hidden>
+          <h3>使用規定</h3>
+          <p class="muted">最後更新：2026 年 10 月 26 日</p>
+          <h4>禁止行為</h4>
+          <ul>
+            <li>使用外掛、腳本、修改程式或利用漏洞取得不正當利益（含刷榜）。</li>
+            <li>冒用他人身分，或註冊含有辱罵、歧視、色情、暴力、個資，或冒充官方 / 管理人員的使用者名稱。</li>
+            <li>干擾、破壞或試圖未經授權存取本站與其後端服務，包含大量自動化請求。</li>
+            <li>散布惡意程式、垃圾訊息或違法內容。</li>
+            <li>其他違反法律或侵害他人權益的行為。</li>
+          </ul>
+          <h4>使用者名稱</h4>
+          <p>名稱需為 2–12 個字，僅可使用中文、英文、數字與底線，不得包含空白，且不得使用「官方」「管理員」「客服」等保留字。</p>
+          <h4>違規處理</h4>
+          <p>如發現違規，本站得視情節採取警告、移除排行榜紀錄、要求更改名稱、暫停或終止帳號等處置，必要時不另行通知。</p>
         </div>
       </section>
 
@@ -290,7 +371,7 @@
         <span>使用 Google 登入</span>
       </button>
       <button class="btn-ghost full" data-close>取消</button>
-      <p class="modal-fine">按下登入前，需先確認服務條款</p>
+      <p class="modal-fine">按下登入前，需先確認<a href="#" class="legal-link" data-legal="terms">服務條款</a></p>
     </div>
     <div class="bp-hints"><span><kbd>↑</kbd><kbd>↓</kbd> 選擇</span><span><kbd>Enter</kbd> 確認</span><span><kbd>Esc</kbd> 返回</span></div>
   </div>
@@ -357,7 +438,7 @@
     <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="termsTitle">
       <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg></div>
       <h3 id="termsTitle">請先確認</h3>
-      <p class="modal-text">登入即視同你已閱讀並同意 MiniHub 服務條款、隱私權政策及相關使用規定。</p>
+      <p class="modal-text">登入即視同你已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p>
       <div class="modal-actions">
         <button class="btn-ghost" id="termsCancel">取消</button>
         <button class="btn-primary sm" id="termsOk"><span>同意並繼續</span></button>

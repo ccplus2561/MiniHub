@@ -575,3 +575,14 @@ body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box
 .stat[data-s="bad"]::before { background: #ff6b6b; box-shadow: 0 0 10px rgba(255, 107, 107, .6); }
 .stat[data-s="wait"]::before { background: #ffcf5c; }
 .set-row:has(.stat):hover { transform: none; }
+
+/* ---------- 法律條款 ---------- */
+.legal-link { color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-weight: 600; }
+.legal-link:hover { color: #fff; }
+.legal-doc { margin-top: 18px; max-width: 900px; }
+.legal-doc[hidden] { display: none; }
+.legal-doc h3 { font-size: 26px; margin-bottom: 6px; }
+.legal-doc h4 { font-size: 19px; margin: 20px 0 6px; color: var(--text); }
+.legal-doc p, .legal-doc li { font-size: 17px; line-height: 1.8; color: var(--text-2); }
+.legal-doc ul { padding-left: 1.4em; }
+.legal-doc:hover { transform: none; box-shadow: none; }

@@ -95,7 +95,8 @@
   /* ---------- 頁面切換 ---------- */
   function showView(name) {
     $$(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
-    $$(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === name));
+    const navName = name === "legal" ? "about" : name;   // 法律條款頁屬於「關於」
+    $$(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === navName));
     document.body.dataset.view = name;
     clearK(); paintHints();
   }
@@ -176,6 +177,8 @@
     const v = document.body.dataset.view, P = ".pane.active ";
     let list = [];
     if (v === "library") list = $$("#chips .chip, #libraryGrid .card");
+    else if (v === "about") list = $$("#view-about [data-legal]");
+    else if (v === "legal") list = $$("#legalBack, .legal-tab");
     else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
     return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
   }
@@ -304,6 +307,28 @@
     e.stopPropagation(); e.preventDefault();
   }
 
+  /* ---------- 法律條款頁（服務條款 / 隱私權政策 / 使用規定） ---------- */
+  let legalFrom = "about";
+  function legalTab(tab) {
+    $$(".legal-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+    $$(".legal-doc").forEach(d => { d.hidden = d.dataset.doc !== tab; });
+    $("#view-legal").scrollTop = 0;
+  }
+  function showLegal(tab) {
+    const cur = document.body.dataset.view;
+    if (cur !== "legal") legalFrom = cur;
+    ["loginModal", "termsModal", "logoutModal", "nameModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    legalTab(tab);
+    showView("legal");
+  }
+  document.addEventListener("click", e => {
+    const a = e.target.closest && e.target.closest("[data-legal]");
+    if (!a) return;
+    e.preventDefault(); sfx("confirm"); showLegal(a.dataset.legal);
+  });
+  $$(".legal-tab").forEach(b => b.addEventListener("click", () => legalTab(b.dataset.tab)));
+  $("#legalBack").addEventListener("click", () => showView(legalFrom === "legal" ? "about" : legalFrom));
+
   /* ---------- Toast ---------- */
   let timer;
   function toast(msg) {
@@ -408,8 +433,8 @@
 
   function setAccount(p) {
     window.MiniHubAccount = p
-      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null }
-      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null };
+      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null }
+      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
   let photo = "";

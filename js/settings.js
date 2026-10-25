@@ -78,6 +78,7 @@
     fill($("#accUid"), a.uid);
     paintEmail();
     fill($("#accReg"), a.createdAt ? fmtDate(a.createdAt) : "");
+    fill($("#accLast"), a.lastLoginAt ? fmtDate(a.lastLoginAt) : (a.uid ? "尚無紀錄" : ""));
     const until = a.nameChangedAt ? a.nameChangedAt + LOCK_MS : 0;
     const locked = until > Date.now();
     $("#accLock").hidden = !locked;

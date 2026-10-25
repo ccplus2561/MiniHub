@@ -25,7 +25,20 @@ const use = { reads: 0, writes: 0 };
 const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent(new CustomEvent("minihub:usage")); };
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
-const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt) });
+const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt) });
+
+// 「上次登入」：每次新的登入（分頁關閉後重開 / 登出後再登入）記錄一次；畫面顯示的是「這次登入之前」的那一次
+const SS = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return null; };
+const prevFromSession = uid => { const v = SS("mh_prev_" + uid); return v ? Number(v) : null; };
+async function recordLogin(uid, profile) {
+  if (SS("mh_logged_" + uid)) return prevFromSession(uid);        // 同一次登入內重新整理，不重複記錄
+  const prev = (profile && profile.lastLoginAt) || null;
+  SS("mh_logged_" + uid, "1"); SS("mh_prev_" + uid, prev ? String(prev) : "");
+  if (SAVE_PROFILE) {
+    try { bump(0, 1); await updateDoc(doc(db, "users", uid), { lastLoginAt: serverTimestamp() }); } catch (e) {}   // 規則不允許時略過，不影響登入
+  }
+  return prev;
+}
 
 // 登入狀態只保留到分頁關閉（關掉網頁再開需重新登入）
 try { await setPersistence(auth, browserSessionPersistence); } catch (e) {}
@@ -34,7 +47,10 @@ async function loadProfile(authUid) {
   if (!SAVE_PROFILE) return null;
   bump(1, 0);
   const snap = await getDoc(doc(db, "users", authUid));
-  return snap.exists() ? norm(snap.data()) : null;
+  if (!snap.exists()) return null;
+  const p = norm(snap.data());
+  p.prevLoginAt = prevFromSession(authUid);
+  return p;
 }
 
 // 建立玩家資料：users/{authUid} 與 uids/{gameUid} 在同一筆交易寫入（UID 唯一、只能建立一次）
@@ -50,6 +66,7 @@ async function createProfile({ name, gameUid }) {
     tx.set(idRef, { owner: user.uid });
     tx.set(uRef, { name, gameUid, email: user.email, createdAt: serverTimestamp() });
   });
+  await recordLogin(user.uid, null);                               // 首次登入也記一筆，下次登入時才有「上次」可顯示
   return loadProfile(user.uid);
 }
 
@@ -81,7 +98,7 @@ async function ping() {
 window.MiniHubAuth = {
   ping, usage: () => ({ ...use }),
   signIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
-  signOut: () => signOut(auth),
+  signOut: () => { const u = auth.currentUser; if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); } return signOut(auth); },
   createProfile, updateName,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await getDoc(doc(db, "uids", g))).exists(); },
@@ -91,6 +108,10 @@ window.MiniHubAuth = {
 onAuthStateChanged(auth, async user => {
   if (!user) return emit({ user: null });
   const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "" };
-  try { emit({ user: u, profile: await loadProfile(user.uid) }); }
+  try {
+    const profile = await loadProfile(user.uid);
+    if (profile) profile.prevLoginAt = await recordLogin(user.uid, profile);
+    emit({ user: u, profile });
+  }
   catch (error) { emit({ user: u, error }); }
 });
