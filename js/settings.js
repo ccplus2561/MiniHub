@@ -26,8 +26,10 @@
     $("#stReads").textContent = u.reads; $("#stWrites").textContent = u.writes;
   };
   let checking = false, checked = false;
+  const srvIdle = () => { stat("#stSrv", "未連線", ""); $("#stSrvNote").textContent = "未登入時不會連線到伺服器，登入後才能檢查"; };
   async function checkServer() {
     if (checking) return;
+    if (!authUser) { checked = false; paintNet(); paintAuth(); paintUsage(); srvIdle(); return; }   // 未登入：不連線
     checking = true; checked = true;
     const btn = $("#stCheck"), label = $("span", btn);
     btn.disabled = true; label.textContent = "檢查中…";
@@ -37,7 +39,8 @@
       stat("#stSrv", "未載入", "bad"); $("#stSrvNote").textContent = "登入服務載入失敗，請檢查網路後重新整理";
     } else {
       const r = await MiniHubAuth.ping();
-      if (r.ok) { stat("#stSrv", "運作中", "ok"); $("#stSrvNote").textContent = "回應時間 " + r.ms + " ms（" + new Date().toLocaleTimeString("zh-TW", { hour12: false }) + "）"; }
+      if (r.skipped) srvIdle();
+      else if (r.ok) { stat("#stSrv", "運作中", "ok"); $("#stSrvNote").textContent = "回應時間 " + r.ms + " ms（" + new Date().toLocaleTimeString("zh-TW", { hour12: false }) + "）"; }
       else { stat("#stSrv", r.code === "timeout" ? "逾時" : "無法連線", "bad"); $("#stSrvNote").textContent = "錯誤：" + r.code; }
     }
     btn.disabled = false; label.textContent = "重新檢查"; checking = false;
@@ -45,9 +48,14 @@
   }
   $("#stCheck").addEventListener("click", checkServer);
   document.addEventListener("minihub:usage", paintUsage);
-  document.addEventListener("minihub:auth", e => { authUser = e.detail.user; paintAuth(); });
+  document.addEventListener("minihub:auth", e => {
+    const was = !!authUser;
+    authUser = e.detail.user; paintAuth();
+    if (!!authUser !== was) { checked = false; if (!authUser) srvIdle(); }   // 登入 / 登出後，下次開啟此頁重新檢查
+  });
   addEventListener("online", paintNet); addEventListener("offline", paintNet);
   paintNet(); paintAuth(); paintUsage();
+  srvIdle();   // 預設：未連線（登入後才會檢查）
 
   /* ---------- 帳號 ---------- */
   function fill(el, v) {

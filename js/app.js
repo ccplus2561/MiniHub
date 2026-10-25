@@ -350,7 +350,7 @@
   function closeModal(id) { $("#" + id).hidden = true; }
   let signedIn = false;
   $("#loginBtn").addEventListener("click", () => {
-    if (!signedIn) return openModal("loginModal");
+    if (!signedIn) { if (window.MiniHubAuth) MiniHubAuth.preload(); return openModal("loginModal"); }   // 按登入才開始載入 Firebase
     openModal("logoutModal");
   });
   $("#logoutOk").addEventListener("click", () => {
@@ -363,7 +363,8 @@
     closeModal("termsModal"); closeModal("loginModal");
     if (!window.MiniHubAuth) return toast("登入服務載入失敗，請檢查網路後重新整理");
     MiniHubAuth.signIn().catch(e => {
-      if (!/popup-closed|cancelled-popup/.test(e.code || "")) toast("登入失敗：" + (e.code || e.message));
+      if (e.code === "sdk-load-failed") toast("無法載入登入服務，請檢查網路後再試");
+      else if (!/popup-closed|cancelled-popup/.test(e.code || "")) toast("登入失敗：" + (e.code || e.message));
     });
   });
 
