@@ -271,7 +271,14 @@
       else if (enter && featured[selected]) openGame(featured[selected], $("#featuredRow .card.selected"));
       return;
     }
-    if (dir) { if (!move(dir) && dir === "left") setZone("nav", true); }   // 已在最左邊再按 ← / A → 回最左側
+    if (dir) {
+      if (!move(dir)) {
+        if (dir === "left") setZone("nav", true);
+        else if (document.body.dataset.view === "about" && (dir === "up" || dir === "down")) {   // 條款內容：↑↓ 捲動
+          const d = $(".legal-doc:not([hidden])"); if (d) d.scrollBy({ top: dir === "up" ? -140 : 140, behavior: "smooth" });
+        }
+      }
+    }   // 已在最左邊再按 ← / A → 回最左側
     else if (enter) activate();
   });
 
@@ -309,13 +316,12 @@
   // 條款內容直接放在「關於」頁，上方三個按鈕切換（預設：服務條款）
   function legalTab(tab) {
     $$(".legal-tab").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
-    $$(".legal-doc").forEach(d => { d.hidden = d.dataset.doc !== tab; });
+    $$(".legal-doc").forEach(d => { d.hidden = d.dataset.doc !== tab; d.scrollTop = 0; });
   }
   function showLegal(tab) {
     ["loginModal", "termsModal", "logoutModal", "nameModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
-    $("#view-about").scrollTop = 0;
   }
   document.addEventListener("click", e => {
     const a = e.target.closest && e.target.closest("[data-legal]");
