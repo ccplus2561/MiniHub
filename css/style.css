@@ -549,3 +549,8 @@ body.no-anim .cursor-glow { display: none; }
 .lock-hint { display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 8px; font-size: 15px; color: var(--text);
   background: var(--ov-1); border: 1px solid var(--btn-line); }
 .lock-hint[hidden] { display: none; }
+
+/* ---------- 快捷鍵區域指示 / 關閉觸控 ---------- */
+body.kb:not(.no-kbd)[data-zone="nav"] .nav-item.active { outline: 3px solid #fff; outline-offset: 2px; }
+body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 0 22px rgba(255, 255, 255, .35); }
+.no-touch button { cursor: default; }

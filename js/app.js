@@ -96,6 +96,7 @@
     $$(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
     $$(".nav-item").forEach(n => n.classList.toggle("active", n.dataset.view === name));
     document.body.dataset.view = name;
+    clearK(); paintHints();
   }
   $$(".nav-item").forEach(n => n.addEventListener("click", () => showView(n.dataset.view)));
 
@@ -157,12 +158,77 @@
   });
 
   /* ---------- 鍵盤（需在設定中允許） ---------- */
+  // 兩個區域：nav = 最左側分頁；mid = 中間內容。預設在最左側，滑鼠點到哪一區就切到哪一區
   const kbdOn = () => !window.MiniHubPrefs || MiniHubPrefs().kbd;
+  const touchOn = () => !window.MiniHubPrefs || MiniHubPrefs().touch;
+  let zone = "nav", kEl = null;
+
+  function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; }
+  function setK(el, quiet) {
+    clearK(); kEl = el; el.classList.add("kfocus");
+    el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    if (!quiet && el.classList.contains("set-item") && !el.classList.contains("active")) el.click();   // 設定左側分類：移到哪就顯示哪一頁
+  }
+  function midItems() {
+    const v = document.body.dataset.view, P = ".pane.active ";
+    let list = [];
+    if (v === "library") list = $$("#chips .chip, #libraryGrid .card");
+    else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn");
+    return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
+  }
+  function move(dir) {
+    const items = midItems();
+    if (!items.length) return false;
+    if (!kEl || !items.includes(kEl)) { setK(items[0]); return true; }
+    const ctr = el => { const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; };
+    const c = ctr(kEl);
+    let best = null, bs = Infinity;
+    for (const el of items) {
+      if (el === kEl) continue;
+      const p = ctr(el), dx = p.x - c.x, dy = p.y - c.y;
+      const along = dir === "left" ? -dx : dir === "right" ? dx : dir === "up" ? -dy : dy;
+      const across = dir === "left" || dir === "right" ? Math.abs(dy) : Math.abs(dx);
+      if (along < 8) continue;
+      const sc = along + across * 2.5;
+      if (sc < bs) { bs = sc; best = el; }
+    }
+    if (best) setK(best);
+    return !!best;
+  }
+  function activate() {
+    if (!kEl || !kEl.isConnected) return;
+    const txt = kEl.classList.contains("chip") ? kEl.textContent : null;
+    kEl.click();
+    if (txt) { const n = $$("#chips .chip").find(c => c.textContent === txt); if (n) setK(n, true); }   // 分類按鈕會重繪
+  }
+  function setZone(z, byKey) {
+    zone = z; document.body.dataset.zone = z; clearK();
+    if (z === "mid" && byKey && document.body.dataset.view !== "home") {
+      const items = midItems();
+      const first = document.body.dataset.view === "settings" ? $(".set-item.active") : items[0];
+      if (first) setK(first, true);
+    }
+    paintHints();
+  }
+
+  // 右下角提示：依目前區域顯示「現在能按的鍵」
+  function paintHints() {
+    const K = (...a) => a.map(x => `<kbd>${x}</kbd>`).join("");
+    const home = document.body.dataset.view === "home";
+    const list = zone === "nav"
+      ? [[K("↑", "↓"), "切換分頁"], [K("Enter", "D", "→"), "進入"]]
+      : home
+        ? [[K("←", "→"), "選擇"], [K("Enter"), "開始"], [K("Esc", "A"), "返回分頁"]]
+        : [[K("↑", "↓", "←", "→"), "移動"], [K("Enter"), "確認"], [K("Esc", "A"), "返回分頁"]];
+    $(".hints").innerHTML = list.map(([k, t]) => `<span>${k} ${t}</span>`).join("");
+  }
+
   function stepTab(d) {
     const tabs = $$(".nav-item");
     const cur = tabs.findIndex(n => n.classList.contains("active"));
     showView(tabs[(cur + d + tabs.length) % tabs.length].dataset.view);
   }
+  const DIRS = { ArrowUp: "up", w: "up", ArrowDown: "down", s: "down", ArrowLeft: "left", a: "left", ArrowRight: "right", d: "right" };
   document.addEventListener("keydown", e => {
     if (!$("#profileModal").hidden) return;   // 建立資料視窗不可用 Esc 關閉
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
@@ -180,13 +246,50 @@
     if (!player.hidden) { if (e.key === "Escape") closeGame(); return; }
     if (!kbdOn() || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-    if (k === "ArrowUp" || k === "w") { stepTab(-1); e.preventDefault(); return; }
-    if (k === "ArrowDown" || k === "s") { stepTab(1); e.preventDefault(); return; }
-    if (!$("#view-home").classList.contains("active")) return;
-    if (k === "ArrowRight" || k === "d") { select(selected + 1); e.preventDefault(); }
-    else if (k === "ArrowLeft" || k === "a") { select(selected - 1); e.preventDefault(); }
-    else if (k === "Enter" && e.target === document.body) { featured[selected] && openGame(featured[selected], $("#featuredRow .card.selected")); }
+    const dir = DIRS[k], enter = k === "Enter", esc = k === "Escape";
+    if (!dir && !enter && !esc) return;
+    e.preventDefault();
+    document.body.classList.add("kb");
+
+    if (zone === "nav") {                       // 最左側：上下換分頁，Enter / D / → 進入中間
+      if (dir === "up") stepTab(-1);
+      else if (dir === "down") stepTab(1);
+      else if (dir === "right" || enter) setZone("mid", true);
+      return;
+    }
+    if (esc) return setZone("nav");             // 中間：Esc 回最左側
+    if (document.body.dataset.view === "home") {
+      if (dir === "right") select(selected + 1);
+      else if (dir === "left") { if (selected === 0) setZone("nav"); else select(selected - 1); }
+      else if (enter && featured[selected]) openGame(featured[selected], $("#featuredRow .card.selected"));
+      return;
+    }
+    if (dir) { if (!move(dir) && dir === "left") setZone("nav"); }   // 已在最左邊再按 ← / A → 回最左側
+    else if (enter) activate();
   });
+
+  /* ---------- 滑鼠 / 觸控：點到哪一區，快捷鍵就跟著切到哪一區 ---------- */
+  document.addEventListener("pointerdown", e => {
+    document.body.classList.remove("kb");
+    if (!touchOn() || !e.target.closest) return;
+    if (e.target.closest(".rail")) setZone("nav");
+    else if (e.target.closest(".main")) {
+      setZone("mid");
+      const hit = midItems().find(i => i.contains(e.target));
+      if (hit) setK(hit, true);
+    }
+  }, true);
+
+  // 設定 > 操作 > 允許觸控滑動 關閉：滑鼠與觸控的點擊全部失效（鍵盤、程式觸發的 click detail 為 0，不受影響）
+  // 例外：「鍵盤快捷鍵 / 觸控滑動」兩個開關本身仍可點，避免整個鎖死
+  document.addEventListener("click", blockPointer, true);
+  document.addEventListener("dblclick", blockPointer, true);
+  document.addEventListener("auxclick", blockPointer, true);
+  function blockPointer(e) {
+    if (touchOn() || e.detail === 0) return;
+    if (e.target.closest && e.target.closest('.switch[data-set="touch"], .switch[data-set="kbd"]')) return;
+    e.stopPropagation(); e.preventDefault();
+  }
 
   /* ---------- Toast ---------- */
   let timer;
@@ -397,6 +500,8 @@
 
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
+  document.body.dataset.zone = "nav";
+  paintHints();
   renderFeatured();
   renderChips();
   renderLibrary();

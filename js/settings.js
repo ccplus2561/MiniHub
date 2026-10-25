@@ -84,6 +84,7 @@
     $("#kbdPanel").hidden = !prefs.kbd;
     document.body.classList.toggle("no-kbd", !prefs.kbd);
     document.body.classList.toggle("no-anim", !prefs.anim);
+    document.body.classList.toggle("no-touch", !prefs.touch);
     document.documentElement.style.setProperty("--card-w", SIZES[prefs.cardSize] || SIZES.m);
   }
 

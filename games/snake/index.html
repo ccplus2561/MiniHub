@@ -88,15 +88,18 @@ try {
     else if (e.key === " ") { e.preventDefault(); if (!alive) reset(); }
   });
 
+  // 大廳關閉「允許觸控滑動」時，遊戲內也不接受觸控 / 點擊
+  const touchOK = () => { try { return parent.MiniHubPrefs().touch !== false; } catch (e) { return true; } };
   let tx, ty;
   addEventListener("touchstart", e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
   addEventListener("touchend", e => {
+    if (!touchOK()) return;
     if (!alive) return reset();
     const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
     if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0); else turn(0, dy > 0 ? 1 : -1);
   });
-  cv.addEventListener("click", () => { if (!alive) reset(); });
+  cv.addEventListener("click", () => { if (touchOK() && !alive) reset(); });
 
   reset();
 })();
