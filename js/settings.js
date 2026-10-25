@@ -17,14 +17,40 @@
     el.textContent = v || "尚未綁定";
     el.classList.toggle("empty", !v);
   }
+  const LOCK_MS = 14 * 864e5;
+  const fmtDate = t => { const d = new Date(t); return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`; };
+  // 電子郵件遮罩：開頭 1–5 碼（依長度）+ **** + @ 之後完整顯示
+  const maskEmail = m => {
+    const i = m.lastIndexOf("@");
+    if (i < 1) return m;
+    const n = i, v = n <= 3 ? 1 : n <= 5 ? 3 : n <= 7 ? 4 : 5;
+    return m.slice(0, v) + "****" + m.slice(i);
+  };
+  let showEmail = false;
+  const paintEmail = () => {
+    const a = window.MiniHubAccount;
+    fill($("#accEmail"), a.email ? (showEmail ? a.email : maskEmail(a.email)) : "");
+    const eye = $("#emailEye");
+    eye.hidden = !a.email;
+    eye.classList.toggle("shown", showEmail);
+    eye.setAttribute("aria-label", showEmail ? "隱藏電子郵件" : "顯示完整電子郵件");
+  };
   const fillAccount = () => {
     const a = window.MiniHubAccount;
     fill($("#accName"), a.name);
     fill($("#accUid"), a.uid);
-    fill($("#accEmail"), a.email);
+    paintEmail();
+    fill($("#accReg"), a.createdAt ? fmtDate(a.createdAt) : "");
+    const until = a.nameChangedAt ? a.nameChangedAt + LOCK_MS : 0;
+    const locked = until > Date.now();
+    $("#accLockRow").hidden = !locked;
+    if (locked) $("#accLock").textContent = "將於 " + fmtDate(until) + " 後才可變更";
+    $("#editNameBtn").hidden = !a.uid;
+    $("#editNameBtn").disabled = locked;
   };
   fillAccount();
-  document.addEventListener("minihub:account", fillAccount);
+  $("#emailEye").addEventListener("click", () => { showEmail = !showEmail; paintEmail(); });
+  document.addEventListener("minihub:account", () => { showEmail = false; fillAccount(); });
 
   /* ---------- 顯示 / 語言：目前只有預設項目 ---------- */
   ["display", "lang"].forEach(group => {

@@ -165,6 +165,8 @@
   }
   document.addEventListener("keydown", e => {
     if (!$("#profileModal").hidden) return;   // 建立資料視窗不可用 Esc 關閉
+    if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
+    if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
     if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
     if (!$("#loginModal").hidden) { if (e.key === "Escape") closeModal("loginModal"); return; }
     if (!player.hidden) { if (e.key === "Escape") closeGame(); return; }
@@ -196,6 +198,10 @@
   let signedIn = false;
   $("#loginBtn").addEventListener("click", () => {
     if (!signedIn) return openModal("loginModal");
+    openModal("logoutModal");
+  });
+  $("#logoutOk").addEventListener("click", () => {
+    closeModal("logoutModal");
     if (window.MiniHubAuth) MiniHubAuth.signOut();
   });
   $("#googleBtn").addEventListener("click", () => openModal("termsModal"));   // 先確認條款
@@ -266,21 +272,33 @@
   });
 
   function setAccount(p) {
-    window.MiniHubAccount = p ? { name: p.name, uid: p.gameUid || p.uid, email: p.email } : { name: "", uid: "", email: "" };
+    window.MiniHubAccount = p
+      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null }
+      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
+  let photo = "";
   function paintLogin() {
-    $("#loginBtn span").textContent = signedIn ? "登出" : "登入";
-    $("#loginBtn").setAttribute("aria-label", signedIn ? "登出" : "登入");
+    const btn = $("#loginBtn"), img = $("#loginAvatar");
+    const name = (window.MiniHubAccount && MiniHubAccount.name) || "";
+    $("span", btn).textContent = signedIn ? (name || "帳號") : "登入";
+    btn.setAttribute("aria-label", signedIn ? "帳號（點擊登出）" : "登入");
+    const show = signedIn && photo;
+    if (show && img.getAttribute("src") !== photo) img.src = photo;
+    btn.classList.toggle("has-avatar", !!show);
+    btn.classList.toggle("signed", signedIn);
   }
+  $("#loginAvatar").addEventListener("error", () => $("#loginBtn").classList.remove("has-avatar"));   // 載入失敗 → 退回預設圖示
 
   /* ---------- Firebase 登入狀態 ---------- */
   document.addEventListener("minihub:auth", e => {
     const { user, profile, error } = e.detail;
+    photo = (user && user.photoURL) || "";
     if (error) { toast("讀取資料失敗：" + (error.code || error.message)); MiniHubAuth.signOut(); return; }
     if (!user) {                       // 已登出
       const wasIn = signedIn;
-      signedIn = false; setAccount(null); paintLogin(); closeModal("profileModal");
+      signedIn = false; setAccount(null); paintLogin();
+      ["profileModal", "logoutModal", "nameModal"].forEach(closeModal);
       if (wasIn) toast("已登出");
       return;
     }
@@ -293,6 +311,42 @@
       startProfile(user.email);
     }
   });
+  /* ---------- 修改使用者名稱（14 天一次；正式限制由 Firestore 規則強制） ---------- */
+  const LOCK_MS = 14 * 864e5;
+  function nameCheckEdit() {
+    const v = $("#nameNew").value, r = checkName(v), hint = $("#nameHint");
+    $("#nameCount").textContent = Array.from(v).length + "/" + NAME_MAX;
+    const same = r === "ok" && v === MiniHubAccount.name;
+    hint.classList.toggle("bad", (r && r !== "ok") || same);
+    hint.classList.toggle("good", r === "ok" && !same);
+    hint.textContent = !r ? "可使用中文、英文、數字、底線 _" : same ? "與目前名稱相同" : r === "ok" ? "名稱可以使用" : r;
+    $("#nameOk").disabled = r !== "ok" || same;
+  }
+  $("#editNameBtn").addEventListener("click", () => {
+    const a = MiniHubAccount;
+    if (a.nameChangedAt && a.nameChangedAt + LOCK_MS > Date.now()) return;
+    $("#nameCur").textContent = a.name;
+    $("#nameNew").value = "";
+    nameCheckEdit();
+    openModal("nameModal");
+    setTimeout(() => $("#nameNew").focus(), 60);
+  });
+  $("#nameNew").addEventListener("input", nameCheckEdit);
+  $("#nameOk").addEventListener("click", async () => {
+    const btn = $("#nameOk");
+    if (btn.disabled) return;
+    btn.disabled = true; $("span", btn).textContent = "變更中…";
+    try {
+      const p = await MiniHubAuth.updateName($("#nameNew").value, { ...MiniHubAccount, gameUid: MiniHubAccount.uid });
+      closeModal("nameModal"); setAccount(p); paintLogin();
+      toast("使用者名稱已變更");
+    } catch (err) {
+      toast(err.code === "permission-denied" ? "目前無法變更使用者名稱（14 天內僅限一次）" : "變更失敗：" + (err.code || err.message));
+    }
+    $("span", btn).textContent = "確認變更";
+    nameCheckEdit();
+  });
+
   $$(".modal").forEach(m => m.addEventListener("click", e => {
     if (m.hasAttribute("data-lock")) return;
     if (e.target === m || e.target.closest("[data-close]")) closeModal(m.id);

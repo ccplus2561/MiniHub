@@ -3,7 +3,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
          setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, doc, getDoc, updateDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 // 總開關：false = 不寫入 / 不讀取 Firestore（每次登入都視為首次登入）
 const SAVE_PROFILE = true;
@@ -21,6 +21,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
+const ms = t => (t && t.toMillis ? t.toMillis() : null);
+const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt) });
 
 // 登入狀態只保留到分頁關閉（關掉網頁再開需重新登入）
 try { await setPersistence(auth, browserSessionPersistence); } catch (e) {}
@@ -28,15 +30,14 @@ try { await setPersistence(auth, browserSessionPersistence); } catch (e) {}
 async function loadProfile(authUid) {
   if (!SAVE_PROFILE) return null;
   const snap = await getDoc(doc(db, "users", authUid));
-  return snap.exists() ? snap.data() : null;
+  return snap.exists() ? norm(snap.data()) : null;
 }
 
 // 建立玩家資料：users/{authUid} 與 uids/{gameUid} 在同一筆交易寫入（UID 唯一、只能建立一次）
 async function createProfile({ name, gameUid }) {
   const user = auth.currentUser;
   if (!user) throw Object.assign(new Error("not-signed-in"), { code: "not-signed-in" });
-  const profile = { name, gameUid, email: user.email };
-  if (!SAVE_PROFILE) return profile;
+  if (!SAVE_PROFILE) return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null };
   await runTransaction(db, async tx => {
     const uRef = doc(db, "users", user.uid), idRef = doc(db, "uids", gameUid);
     if ((await tx.get(uRef)).exists()) throw Object.assign(new Error("already"), { code: "already-has-profile" });
@@ -44,19 +45,27 @@ async function createProfile({ name, gameUid }) {
     tx.set(idRef, { owner: user.uid });
     tx.set(uRef, { name, gameUid, email: user.email, createdAt: serverTimestamp() });
   });
-  return profile;
+  return loadProfile(user.uid);
+}
+
+// 變更使用者名稱：14 天限制由 Firestore 規則強制，前端只負責顯示
+async function updateName(name, current) {
+  const user = auth.currentUser;
+  if (!SAVE_PROFILE) return { ...current, name, nameChangedAt: Date.now() };
+  await updateDoc(doc(db, "users", user.uid), { name, nameChangedAt: serverTimestamp() });
+  return loadProfile(user.uid);
 }
 
 window.MiniHubAuth = {
   signIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
   signOut: () => signOut(auth),
-  createProfile,
+  createProfile, updateName,
   loadProfile: () => loadProfile(auth.currentUser.uid)
 };
 
 onAuthStateChanged(auth, async user => {
   if (!user) return emit({ user: null });
-  const u = { uid: user.uid, email: user.email };
+  const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "" };
   try { emit({ user: u, profile: await loadProfile(user.uid) }); }
   catch (error) { emit({ user: u, error }); }
 });

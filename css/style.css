@@ -480,3 +480,21 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .btn-primary.full { width: 100%; justify-content: center; }
 .btn-primary:disabled { filter: grayscale(.8) brightness(.7); cursor: not-allowed; transform: none !important; box-shadow: none; }
 .btn-ghost.full { width: 100%; margin-top: 10px; }
+
+/* ---------- 登入後頭像 / 帳號列按鈕 ---------- */
+.login-btn .avatar { display: none; width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, .9); background: #fff; }
+.login-btn.has-avatar svg { display: none; }
+.login-btn.has-avatar .avatar { display: block; }
+.login-btn span { max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.login-btn.signed { background: linear-gradient(180deg, #34475e, #243447); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.info-row[hidden], .row-btn[hidden] { display: none; }
+.info-row .grow { flex: 1; min-width: 0; }
+.row-btn { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--text-2);
+  background: var(--ov-1); transition: background .2s, transform .2s, color .2s; }
+.row-btn:hover:not(:disabled) { background: var(--a2); color: #fff; transform: scale(1.1); }
+.row-btn:disabled { opacity: .35; cursor: not-allowed; }
+.info-row > .row-btn svg { width: 22px; height: 22px; color: inherit; }
+.info-row:hover > .row-btn svg { transform: none; }
+.row-btn .eye-off, .row-btn.shown .eye-on { display: none; }
+.row-btn.shown .eye-off { display: block; }
+.btn-primary.danger { background: linear-gradient(180deg, #e5546a, #b3263c); box-shadow: 0 6px 20px rgba(179, 38, 60, .45); }
