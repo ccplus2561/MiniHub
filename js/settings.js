@@ -28,16 +28,15 @@
     }));
   });
 
-  /* ---------- 可儲存的偏好（開關 / 分段） ---------- */
-  const KEY = "minihub.settings";
+  /* ---------- 偏好（開關 / 分段）：不保存 ---------- */
   const DEFAULTS = {
     cardSize: "m", anim: true, fsStart: false,
     mute: false, music: true, sfx: true,
     kbd: true, touch: true, publicName: false
   };
   let prefs = { ...DEFAULTS };
-  try { Object.assign(prefs, JSON.parse(localStorage.getItem(KEY) || "{}")); } catch (e) {}
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) {} };
+  // 所有參數僅存在記憶體：不寫入 localStorage / cookie，重新開啟網頁即恢復預設
+  const save = () => {};
   const SIZES = { s: "132px", m: "168px", l: "212px" };
   const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱" };
   const say = m => window.MiniHubToast && MiniHubToast(m);

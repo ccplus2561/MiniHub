@@ -164,6 +164,8 @@
     showView(tabs[(cur + d + tabs.length) % tabs.length].dataset.view);
   }
   document.addEventListener("keydown", e => {
+    if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
+    if (!$("#loginModal").hidden) { if (e.key === "Escape") closeModal("loginModal"); return; }
     if (!player.hidden) { if (e.key === "Escape") closeGame(); return; }
     if (!kbdOn() || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
@@ -186,7 +188,20 @@
   }
 
   window.MiniHubToast = toast;
-  $("#loginBtn").addEventListener("click", () => toast("登入功能即將推出"));
+
+  /* ---------- 登入（僅樣式預覽，尚未串接 Google） ---------- */
+  function openModal(id) { $("#" + id).hidden = false; }
+  function closeModal(id) { $("#" + id).hidden = true; }
+  $("#loginBtn").addEventListener("click", () => openModal("loginModal"));
+  $("#googleBtn").addEventListener("click", () => openModal("termsModal"));   // 先確認條款
+  $("#termsCancel").addEventListener("click", () => closeModal("termsModal"));
+  $("#termsOk").addEventListener("click", () => {
+    closeModal("termsModal"); closeModal("loginModal");
+    toast("已同意條款（Google 登入尚未串接）");
+  });
+  $$(".modal").forEach(m => m.addEventListener("click", e => {
+    if (e.target === m || e.target.closest("[data-close]")) closeModal(m.id);
+  }));
 
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";

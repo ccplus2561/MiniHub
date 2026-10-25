@@ -422,3 +422,37 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: .01s !important; }
 }
+
+/* ---------- 登入 / 條款視窗 ---------- */
+.modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px;
+  background: rgba(5, 9, 14, .66); backdrop-filter: blur(6px); animation: mFade .22s ease; }
+.modal[hidden] { display: none; }
+.modal-box { position: relative; width: min(440px, 100%); padding: 32px 30px 26px; text-align: center;
+  background: linear-gradient(180deg, #1f2d3f, #162231); border: 1px solid var(--line-2); border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .55); animation: mPop .32s var(--ease); }
+.modal-x { position: absolute; top: 12px; right: 12px; width: 38px; height: 38px; display: grid; place-items: center;
+  border-radius: 50%; color: var(--muted); transition: background .2s, color .2s, transform .2s; }
+.modal-x:hover { background: var(--ov-2); color: #fff; transform: rotate(90deg); }
+.modal-x svg { width: 20px; height: 20px; }
+.modal-logo { width: 64px; height: 64px; margin: 0 auto 14px; display: grid; place-items: center; border-radius: 18px;
+  color: var(--accent-2); background: var(--a2); }
+.modal-logo svg { width: 36px; height: 36px; }
+.modal-logo.warn { color: #ffcf5c; background: rgba(255, 207, 92, .16); }
+.modal-box h3 { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+.modal-sub, .modal-fine { color: var(--muted); font-size: 15px; }
+.modal-fine { margin-top: 14px; font-size: 13px; }
+.modal-text { margin: 10px 0 24px; font-size: 17px; line-height: 1.7; color: var(--text-2); }
+.btn-google { width: 100%; height: 54px; margin-top: 22px; display: flex; align-items: center; justify-content: center; gap: 12px;
+  border-radius: 12px; background: #fff; color: #1f1f1f; font-size: 18px; font-weight: 700;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .3); transition: transform .22s var(--ease), box-shadow .22s, filter .22s; }
+.btn-google svg { width: 24px; height: 24px; fill: initial; stroke: none; }
+.btn-google:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(0, 0, 0, .4); filter: brightness(.97); }
+.btn-google:active { transform: scale(.97); }
+.modal-actions { display: flex; gap: 12px; }
+.modal-actions > * { flex: 1; justify-content: center; }
+.btn-ghost { height: 48px; border-radius: 10px; font-size: 17px; font-weight: 700; color: var(--text-2);
+  background: var(--ov-1); border: 1.5px solid var(--line-2); transition: background .2s, transform .2s; }
+.btn-ghost:hover { background: var(--ov-2); transform: translateY(-2px); }
+.btn-primary.sm { height: 48px; padding: 0 18px; font-size: 17px; }
+@keyframes mFade { from { opacity: 0; } }
+@keyframes mPop { from { opacity: 0; transform: translateY(16px) scale(.94); } }
