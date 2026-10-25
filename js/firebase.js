@@ -60,6 +60,8 @@ window.MiniHubAuth = {
   signIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
   signOut: () => signOut(auth),
   createProfile, updateName,
+  // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
+  isUidFree: async g => !SAVE_PROFILE || !(await getDoc(doc(db, "uids", g))).exists(),
   loadProfile: () => loadProfile(auth.currentUser.uid)
 };
 

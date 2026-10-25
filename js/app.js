@@ -219,7 +219,14 @@
   const NAME_RE = /^[\u4e00-\u9fffA-Za-z0-9_]+$/;
   const BANNED = ["官方", "管理員", "客服", "admin", "gm", "minihub", "system"];
   const genUid = () => String(Math.floor(1e8 + Math.random() * 9e8));   // 9 位、首位不為 0
-  let pEmail = "";
+  let pEmail = "", picking = false;
+  // 產生 UID 並先向資料庫確認沒人用（最多重試 5 次）
+  async function pickUid() {
+    picking = true; $("#profOk").disabled = true; $("#profUid").textContent = "產生中…";
+    let uid = genUid();
+    try { for (let i = 0; i < 5 && !(await MiniHubAuth.isUidFree(uid)); i++) uid = genUid(); } catch (e) {}
+    $("#profUid").textContent = uid; picking = false; validateName();
+  }
   function checkName(v) {
     const n = Array.from(v).length;
     if (!n) return "";
@@ -234,8 +241,8 @@
     pEmail = email;
     $("#profEmail").textContent = email;
     $("#profName").value = "";
-    $("#profUid").textContent = genUid();
     validateName();
+    pickUid();
     openModal("profileModal");
     setTimeout(() => $("#profName").focus(), 60);
   }
@@ -245,10 +252,10 @@
     hint.classList.toggle("bad", r && r !== "ok");
     hint.classList.toggle("good", r === "ok");
     hint.textContent = !r ? "可使用中文、英文、數字、底線 _" : r === "ok" ? "名稱可以使用" : r;
-    $("#profOk").disabled = r !== "ok";
+    $("#profOk").disabled = r !== "ok" || picking;
   }
   $("#profName").addEventListener("input", validateName);
-  $("#profReroll").addEventListener("click", () => { $("#profUid").textContent = genUid(); });
+  $("#profReroll").addEventListener("click", () => { if (!picking) pickUid(); });
   $("#profOk").addEventListener("click", async () => {
     const btn = $("#profOk");
     if (btn.disabled) return;
@@ -259,7 +266,7 @@
       setAccount(p);
       toast("歡迎，" + p.name + "！");
     } catch (e) {
-      if (e.code === "uid-taken") { $("#profUid").textContent = genUid(); toast("UID 已被使用，已換一組新的，請再按一次"); }
+      if (e.code === "uid-taken") { pickUid(); toast("UID 已被使用，已換一組新的，請再按一次"); }
       else if (e.code === "already-has-profile") { closeModal("profileModal"); toast("此帳號已有玩家資料"); MiniHubAuth.loadProfile().then(setAccount); }
       else toast("建立失敗：" + (e.code || e.message));
     }
