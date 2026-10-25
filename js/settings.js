@@ -17,9 +17,14 @@
     el.textContent = v || "尚未綁定";
     el.classList.toggle("empty", !v);
   }
-  fill($("#accName"), MiniHubAccount.name);
-  fill($("#accUid"), MiniHubAccount.uid);
-  fill($("#accEmail"), MiniHubAccount.email);
+  const fillAccount = () => {
+    const a = window.MiniHubAccount;
+    fill($("#accName"), a.name);
+    fill($("#accUid"), a.uid);
+    fill($("#accEmail"), a.email);
+  };
+  fillAccount();
+  document.addEventListener("minihub:account", fillAccount);
 
   /* ---------- 顯示 / 語言：目前只有預設項目 ---------- */
   ["display", "lang"].forEach(group => {

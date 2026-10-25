@@ -164,6 +164,7 @@
     showView(tabs[(cur + d + tabs.length) % tabs.length].dataset.view);
   }
   document.addEventListener("keydown", e => {
+    if (!$("#profileModal").hidden) return;   // 建立資料視窗不可用 Esc 關閉
     if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
     if (!$("#loginModal").hidden) { if (e.key === "Escape") closeModal("loginModal"); return; }
     if (!player.hidden) { if (e.key === "Escape") closeGame(); return; }
@@ -197,9 +198,54 @@
   $("#termsCancel").addEventListener("click", () => closeModal("termsModal"));
   $("#termsOk").addEventListener("click", () => {
     closeModal("termsModal"); closeModal("loginModal");
-    toast("已同意條款（Google 登入尚未串接）");
+    // 預覽：假設 Google 登入成功且為首次登入 → 建立資料（正式版需向後端查詢該 email 是否已有 UID）
+    startProfile("player@example.com");
+  });
+
+  /* ---------- 首次登入：建立使用者名稱 / 遊戲 UID ---------- */
+  const NAME_MIN = 2, NAME_MAX = 12;
+  const NAME_RE = /^[\u4e00-\u9fffA-Za-z0-9_]+$/;
+  const BANNED = ["官方", "管理員", "客服", "admin", "gm", "minihub", "system"];
+  const genUid = () => String(Math.floor(1e8 + Math.random() * 9e8));   // 9 位、首位不為 0
+  let pEmail = "";
+  function checkName(v) {
+    const n = Array.from(v).length;
+    if (!n) return "";
+    if (v !== v.trim() || /\s/.test(v)) return "不可包含空白";
+    if (n < NAME_MIN) return "至少 " + NAME_MIN + " 個字";
+    if (n > NAME_MAX) return "最多 " + NAME_MAX + " 個字";
+    if (!NAME_RE.test(v)) return "只能使用中文、英文、數字、底線";
+    if (BANNED.some(w => v.toLowerCase().includes(w))) return "名稱含有保留字，請換一個";
+    return "ok";
+  }
+  function startProfile(email) {
+    pEmail = email;
+    $("#profEmail").textContent = email;
+    $("#profName").value = "";
+    $("#profUid").textContent = genUid();
+    validateName();
+    openModal("profileModal");
+    setTimeout(() => $("#profName").focus(), 60);
+  }
+  function validateName() {
+    const v = $("#profName").value, r = checkName(v), hint = $("#profHint");
+    $("#profCount").textContent = Array.from(v).length + "/" + NAME_MAX;
+    hint.classList.toggle("bad", r && r !== "ok");
+    hint.classList.toggle("good", r === "ok");
+    hint.textContent = !r ? "可使用中文、英文、數字、底線 _" : r === "ok" ? "名稱可以使用" : r;
+    $("#profOk").disabled = r !== "ok";
+  }
+  $("#profName").addEventListener("input", validateName);
+  $("#profReroll").addEventListener("click", () => { $("#profUid").textContent = genUid(); });
+  $("#profOk").addEventListener("click", () => {
+    if ($("#profOk").disabled) return;
+    window.MiniHubAccount = { name: $("#profName").value, uid: $("#profUid").textContent, email: pEmail };
+    document.dispatchEvent(new CustomEvent("minihub:account"));
+    closeModal("profileModal");
+    toast("歡迎，" + MiniHubAccount.name + "！");
   });
   $$(".modal").forEach(m => m.addEventListener("click", e => {
+    if (m.hasAttribute("data-lock")) return;
     if (e.target === m || e.target.closest("[data-close]")) closeModal(m.id);
   }));
 
