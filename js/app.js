@@ -605,19 +605,25 @@
     if (m2 && player.hidden) { const g = add.find(x => x.id === m2[1]); if (g) openGame(g); }
   };
   let notices = [];
+  const ICON_WARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg>';
+  const ICON_ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
   function renderNotices() {
     const box = $("#noticeList"); box.innerHTML = "";
-    notices.forEach(n => {
-      const it = document.createElement("article"); it.className = "ann" + (n.hot ? " hot" : "");
-      const head = document.createElement("div"); head.className = "ann-head";
-      if (n.hot) { const t = document.createElement("span"); t.className = "ann-tag"; t.textContent = "重要"; head.appendChild(t); }
-      const h = document.createElement("b"); h.textContent = n.title; head.appendChild(h);
-      if (n.date) { const d = document.createElement("small"); d.textContent = n.date; head.appendChild(d); }
-      it.appendChild(head);
+    $("#annMeta").textContent = "共 " + notices.length + " 則公告";
+    const fresh = d => { const t = Date.parse(d); return t && Date.now() - t < 7 * 864e5; };   // 7 天內顯示「新」
+    notices.forEach((n, i) => {
+      const it = document.createElement("article"); it.className = "ann" + (n.hot ? " hot" : ""); it.style.setProperty("--i", i);
+      const meta = document.createElement("div"); meta.className = "ann-meta";
+      if (n.hot) { const t = document.createElement("span"); t.className = "ann-tag hot"; t.innerHTML = ICON_WARN + "重要"; meta.appendChild(t); }
+      if (fresh(n.date)) { const t = document.createElement("span"); t.className = "ann-tag new"; t.textContent = "新"; meta.appendChild(t); }
+      if (n.date) { const d = document.createElement("span"); d.className = "ann-date"; d.textContent = n.date; meta.appendChild(d); }
+      it.appendChild(meta);
+      const h = document.createElement("h4"); h.textContent = n.title; it.appendChild(h);
       if (n.body) { const p = document.createElement("p"); p.textContent = n.body; it.appendChild(p); }
-      if (n.link) { const a = document.createElement("a"); a.href = n.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = "了解更多"; it.appendChild(a); }
+      if (n.link) { const a = document.createElement("a"); a.className = "ann-link"; a.href = n.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.innerHTML = "<span>了解更多</span>" + ICON_ARROW; it.appendChild(a); }
       box.appendChild(it);
     });
+    box.scrollTop = 0;
   }
   window.MiniHubSetNotices = (list, autoOpen) => {
     notices = list || [];
