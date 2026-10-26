@@ -409,8 +409,9 @@
     delOk.disabled = delInput.value.trim() !== "刪除";
   });
 
-  $("#logoutOk").addEventListener("click", () => {
+  $("#logoutOk").addEventListener("click", async () => {
     closeModal("logoutModal");
+    if (window.MiniHubFlushPrefs) { try { await MiniHubFlushPrefs(); } catch (e) {} }   // 登出前先把還沒送出的設定存起來
     if (window.MiniHubAuth) MiniHubAuth.signOut();
   });
   const PNAME = { google: "Google", github: "GitHub" };
@@ -500,7 +501,7 @@
     if (btn.disabled) return;
     btn.disabled = true; $("span", btn).textContent = "建立中…";
     try {
-      const p = await MiniHubAuth.createProfile({ name: $("#profName").value, gameUid: $("#profUid").textContent, publicName: $("#profPublic").getAttribute("aria-checked") === "true", joinRank: $("#profJoin").getAttribute("aria-checked") === "true" });
+      const p = await MiniHubAuth.createProfile({ name: $("#profName").value, gameUid: $("#profUid").textContent, publicName: $("#profPublic").getAttribute("aria-checked") === "true", joinRank: $("#profJoin").getAttribute("aria-checked") === "true", prefs: window.MiniHubSyncedPrefs && MiniHubSyncedPrefs() });
       closeModal("profileModal");
       setAccount(p);
       toast("歡迎，" + p.name + "！");
@@ -519,8 +520,8 @@
 
   function setAccount(p) {
     window.MiniHubAccount = p
-      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null }
-      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null };
+      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null }
+      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null, prefs: null };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
   let photo = "";

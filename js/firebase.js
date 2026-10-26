@@ -1,5 +1,5 @@
 // Firebase 整合：Google / GitHub 登入（含同 email 帳號連結）+ 玩家資料（使用者名稱 / 遊戲 UID）
-// 注意：偏好設定（顯示、音效…）仍不保存；這裡只保存「帳號資料」。
+// 登入後會保存：帳號資料、隱私設定，以及 prefs（動畫效果、遊戲全螢幕、語言、音效、操作）；圖卡大小、顯示模式不保存。
 // 未登入時完全不連線：Firebase SDK 只在「按下登入」或「分頁內已有登入狀態」時才載入。
 
 // 總開關：false = 不寫入 / 不讀取 Firestore（每次登入都視為首次登入）
@@ -20,7 +20,7 @@ const use = { reads: 0, writes: 0 };
 const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent(new CustomEvent("minihub:usage")); };
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
-const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null });
+const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null, prefs: d.prefs && typeof d.prefs === "object" ? d.prefs : null });
 
 // 「上次登入」：每次新的登入（分頁關閉後重開 / 登出後再登入）記錄一次；畫面顯示的是「這次登入之前」的那一次
 const SS = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return null; };
@@ -103,7 +103,7 @@ async function loadProfile(authUid) {
 }
 
 // 建立玩家資料：users/{authUid} 與 uids/{gameUid} 在同一筆交易寫入（UID 唯一、只能建立一次）
-async function createProfile({ name, gameUid, publicName, joinRank }) {
+async function createProfile({ name, gameUid, publicName, joinRank, prefs }) {
   const user = F && F.auth.currentUser;
   if (!user) throw Object.assign(new Error("not-signed-in"), { code: "not-signed-in" });
   if (!SAVE_PROFILE) return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null };
@@ -113,7 +113,7 @@ async function createProfile({ name, gameUid, publicName, joinRank }) {
     if ((await tx.get(uRef)).exists()) throw Object.assign(new Error("already"), { code: "already-has-profile" });
     if ((await tx.get(idRef)).exists()) throw Object.assign(new Error("taken"), { code: "uid-taken" });
     tx.set(idRef, { owner: user.uid });
-    tx.set(uRef, { name, gameUid, email: user.email, createdAt: F.serverTimestamp(), publicName: !!publicName, joinRank: !!joinRank });
+    tx.set(uRef, { name, gameUid, email: user.email, createdAt: F.serverTimestamp(), publicName: !!publicName, joinRank: !!joinRank, ...(prefs ? { prefs } : {}) });
   });
   await recordLogin(user.uid, null);                               // 首次登入也記一筆，下次登入時才有「上次」可顯示
   return loadProfile(user.uid);
@@ -134,6 +134,14 @@ async function setPublicName(v) {
   if (!user || !SAVE_PROFILE) return;
   bump(0, 1);
   await F.updateDoc(F.doc(F.db, "users", user.uid), { publicName: !!v });
+}
+
+// 同步偏好設定（動畫 / 全螢幕 / 語言 / 音效 / 操作）；僅登入後寫入，訪客不連線
+async function savePrefs(prefs) {
+  const user = F && F.auth.currentUser;
+  if (!user || !SAVE_PROFILE) return;
+  bump(0, 1);
+  await F.updateDoc(F.doc(F.db, "users", user.uid), { prefs });
 }
 
 // 設定 > 隱私：允許加入排行榜（僅登入後同步；訪客不連線）
@@ -221,7 +229,7 @@ window.MiniHubAuth = {
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
-  createProfile, updateName, setPublicName, setJoinRank, deleteAccount,
+  createProfile, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await F.getDoc(F.doc(F.db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(F.auth.currentUser.uid)

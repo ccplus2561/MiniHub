@@ -112,8 +112,12 @@
   const DEFAULTS = {
     cardSize: "m", anim: true, fsStart: false,
     mute: false, music: true, sfx: true,
-    kbd: true, touch: true, publicName: false, joinRank: false
+    kbd: true, touch: true, publicName: false, joinRank: false,
+    lang: "zh-Hant"
   };
+  // 登入後同步到帳號的項目（動畫 / 全螢幕 / 語言 / 音效 / 操作；隱私與帳號另外同步）。圖卡大小、顯示模式不保存
+  const SYNC = ["anim", "fsStart", "lang", "mute", "music", "sfx", "kbd", "touch"];
+  const LANGS = ["zh-Hant"];
   let prefs = { ...DEFAULTS };
   // 所有參數僅存在記憶體：不寫入 localStorage / cookie，重新開啟網頁即恢復預設
   const save = () => {};
@@ -137,6 +141,7 @@
     document.body.classList.toggle("no-anim", !prefs.anim);
     document.body.classList.toggle("no-touch", !prefs.touch);
     document.documentElement.style.setProperty("--card-w", SIZES[prefs.cardSize] || SIZES.m);
+    $$('[data-group="lang"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.lang));
     const pv = $("#rankPreview");
     if (pv) pv.textContent = !window.MiniHubAccount.uid ? "登入後顯示" : !prefs.joinRank ? "不加入排行榜" : rankName();
   }
@@ -160,24 +165,49 @@
     e.source.postMessage({ type: "minihub:player", canRank: ok, name: ok ? rankName() : "", uid: ok ? window.MiniHubAccount.uid : "" }, e.origin === "null" ? "*" : e.origin);
   });
 
+  /* ---------- 同步偏好到帳號（登入後；停手 1 秒才寫入，避免頻繁讀寫） ---------- */
+  const syncedPrefs = () => { const o = {}; SYNC.forEach(k => o[k] = prefs[k]); return o; };
+  window.MiniHubSyncedPrefs = syncedPrefs;
+  let saveT = 0, dirty = false;
+  const flush = () => {
+    clearTimeout(saveT);
+    if (!dirty) return Promise.resolve();
+    dirty = false;
+    return MiniHubAuth.savePrefs(syncedPrefs()).catch(() => say("設定同步失敗"));
+  };
+  window.MiniHubFlushPrefs = flush;
+  const queueSave = k => {
+    if (!SYNC.includes(k) || !window.MiniHubAccount.uid || !window.MiniHubAuth) return;   // 訪客：不連線、不保存
+    dirty = true; clearTimeout(saveT); saveT = setTimeout(flush, 1000);
+  };
+  addEventListener("pagehide", flush);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+
   document.addEventListener("click", e => {
+    const lg = e.target.closest('[data-group="lang"]:not(:disabled)');
+    if (lg && LANGS.includes(lg.dataset.value)) { prefs.lang = lg.dataset.value; paint(); queueSave("lang"); }
     const sw = e.target.closest(".switch[data-set]");
-    if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); sfx(prefs[k] ? "on" : "off"); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉"));
+    if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); queueSave(k); sfx(prefs[k] ? "on" : "off"); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉"));
       if ((k === "publicName" || k === "joinRank") && window.MiniHubAccount.uid && window.MiniHubAuth) {   // 已登入：同步到帳號
         const v = prefs[k];
         MiniHubAuth[k === "publicName" ? "setPublicName" : "setJoinRank"](v).catch(() => { prefs[k] = !v; paint(); say("同步失敗，已還原"); });
       }
       return; }
     const sb = e.target.closest(".seg button");
-    if (sb) { const k = sb.parentElement.dataset.set; prefs[k] = sb.dataset.value; save(); paint(); sfx("select"); say(LABELS[k] + "：" + sb.textContent); }
+    if (sb) { const k = sb.parentElement.dataset.set; prefs[k] = sb.dataset.value; save(); paint(); queueSave(k); sfx("select"); say(LABELS[k] + "：" + sb.textContent); }
   });
   window.MiniHubPrefs = () => prefs;
   // 登入後套用帳號裡的「公開使用者名稱」；登出（訪客）回到預設
   document.addEventListener("minihub:account", () => {
     const a = window.MiniHubAccount;
     $("#delAccBox").hidden = !a.uid;   // 只有登入後才顯示「刪除帳號」
-    if (!a.uid) { prefs.publicName = DEFAULTS.publicName; prefs.joinRank = DEFAULTS.joinRank; }
+    if (!a.uid) {   // 登出 / 訪客：回到預設，不留下上一位玩家的設定
+      prefs.publicName = DEFAULTS.publicName; prefs.joinRank = DEFAULTS.joinRank;
+      SYNC.forEach(k => prefs[k] = DEFAULTS[k]);
+      dirty = false; clearTimeout(saveT);
+    }
     else {
+      if (a.prefs) SYNC.forEach(k => { const v = a.prefs[k]; if (typeof v === typeof DEFAULTS[k] && (k !== "lang" || LANGS.includes(v))) prefs[k] = v; });
       if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;
       if (typeof a.joinRank === "boolean") prefs.joinRank = a.joinRank;
     }
