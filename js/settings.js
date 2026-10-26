@@ -113,7 +113,7 @@
     cardSize: "m", anim: true, fsStart: false,
     mute: false, music: true, sfx: true,
     kbd: true, touch: true, publicName: false, joinRank: false,
-    lang: "zh-Hant"
+    lang: "zh-Hant", display: "auto"
   };
   // 登入後同步到帳號的項目（動畫 / 全螢幕 / 語言 / 音效 / 操作；隱私與帳號另外同步）。圖卡大小、顯示模式不保存
   const SYNC = ["anim", "fsStart", "lang", "mute", "music", "sfx", "kbd", "touch"];
@@ -126,6 +126,9 @@
   const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
   const say = m => window.MiniHubToast && MiniHubToast(m);
 
+  // 顯示模式：auto = 螢幕寬度 ≤ 820px 用手機版；也可手動指定。只影響版面（body.m），不保存
+  const narrow = matchMedia("(max-width: 820px)");
+  narrow.addEventListener && narrow.addEventListener("change", () => paint());
   function paint() {
     $$("[data-set]").forEach(el => {
       const v = prefs[el.dataset.set];
@@ -141,6 +144,8 @@
     document.body.classList.toggle("no-anim", !prefs.anim);
     document.body.classList.toggle("no-touch", !prefs.touch);
     document.documentElement.style.setProperty("--card-w", SIZES[prefs.cardSize] || SIZES.m);
+    document.body.classList.toggle("m", prefs.display === "mobile" || (prefs.display === "auto" && narrow.matches));
+    $$('[data-group="display"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.display));
     $$('[data-group="lang"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.lang));
     const pv = $("#rankPreview");
     if (pv) pv.textContent = !window.MiniHubAccount.uid ? "登入後顯示" : !prefs.joinRank ? "不加入排行榜" : rankName();
@@ -184,6 +189,8 @@
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
 
   document.addEventListener("click", e => {
+    const dm = e.target.closest('[data-group="display"]:not(:disabled)');
+    if (dm) { prefs.display = dm.dataset.value; paint(); }
     const lg = e.target.closest('[data-group="lang"]:not(:disabled)');
     if (lg && LANGS.includes(lg.dataset.value)) { prefs.lang = lg.dataset.value; paint(); queueSave("lang"); }
     const sw = e.target.closest(".switch[data-set]");

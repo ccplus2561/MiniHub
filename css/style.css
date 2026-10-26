@@ -685,3 +685,82 @@ img { -webkit-user-drag: none; }
 
 #deleteModal .modal-actions { margin-top: 18px; }
 #deleteModal .modal-text + .modal-text { margin-top: 8px; }
+
+/* ====================================================================
+   手機版（body.m）：頂部列 + 底部分頁列 + 單欄版面
+   自動模式在螢幕寬度 ≤ 820px 啟用；也可在 設定 > 顯示 手動指定
+   ==================================================================== */
+body.m, body.m .app { height: 100dvh; }
+body.m .rail { display: contents; }
+body.m .app::before { content: ""; position: fixed; z-index: 20; top: 0; left: 0; right: 0; height: 54px;
+  background: linear-gradient(180deg, rgba(11, 17, 24, .96), rgba(11, 17, 24, .8)); border-bottom: 1px solid var(--line); backdrop-filter: blur(10px); }
+body.m .content { padding-top: 54px; padding-bottom: calc(62px + env(safe-area-inset-bottom)); }
+/* 頂部列 */
+body.m .brand { position: fixed; z-index: 21; top: 0; left: 6px; height: 54px; flex-direction: row; gap: 8px; padding: 0 10px; }
+body.m .brand svg { width: 28px; height: 28px; }
+body.m .brand b { font-size: 19px; }
+body.m .login-btn { position: fixed; z-index: 21; top: 9px; right: 12px; width: auto; height: 36px; padding: 0 14px; flex-direction: row; gap: 6px; font-size: 15px; border-radius: 999px; }
+body.m .login-btn svg { width: 18px; height: 18px; }
+body.m .login-btn .avatar { width: 24px; height: 24px; }
+body.m .login-btn span { max-width: 96px; }
+/* 底部分頁列 */
+body.m .tabs { position: fixed; z-index: 21; left: 0; right: 0; bottom: 0; width: auto; flex: none; flex-direction: row; justify-content: space-around; align-items: stretch; gap: 0;
+  padding: 0 6px env(safe-area-inset-bottom); height: calc(62px + env(safe-area-inset-bottom)); overflow: visible;
+  background: linear-gradient(0deg, rgba(11, 17, 24, .97), rgba(11, 17, 24, .86)); border-top: 1px solid var(--line); backdrop-filter: blur(10px); }
+body.m .nav-item { flex: 1; width: auto; gap: 3px; padding: 8px 0 6px; font-size: 13px; border-radius: 12px; margin: 4px 2px; }
+body.m .nav-item svg { width: 24px; height: 24px; }
+body.m .nav-item::after { left: 28%; right: 28%; top: -5px; bottom: auto; width: auto; height: 3px; transform: scaleX(0); }
+body.m .nav-item.active::after { transform: scaleX(1); }
+body.m .nav-item:hover, body.m .set-item:hover, body.m .set-row:hover, body.m .info-row:hover { transform: none; box-shadow: none; }
+body.m .hints, body.m .bp-hints { display: none; }
+/* 內容 */
+body.m .view { padding: 14px 16px 20px; }
+body.m .page-title { font-size: 26px; margin-bottom: 12px; }
+body.m .chips { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px 6px; padding: 2px 16px 6px; scrollbar-width: none; }
+body.m .chips::-webkit-scrollbar { display: none; }
+body.m .chip { flex: none; padding: 8px 16px; font-size: 15px; }
+body.m .card-row { margin: 0 -16px; padding: 22px 24px 24px; gap: 16px; }
+body.m .card { width: calc(var(--card-w, 168px) * .8); border-radius: 12px; }
+body.m .card-name { font-size: 16px; }
+body.m .card-sub { font-size: 12px; }
+body.m .badge { top: 8px; left: 8px; padding: 2px 9px; font-size: 11px; }
+body.m .hero { flex-direction: column; align-items: stretch; gap: 14px; padding: 8px 2px 4px; }
+body.m .hero h1 { font-size: 30px; }
+body.m .hero p { font-size: 15px; margin-top: 4px; }
+body.m .hero-actions .btn-primary { width: 100%; justify-content: center; height: 52px; font-size: 18px; }
+/* 設定：單欄，分類改成橫向捲動 */
+body.m .set-layout { display: block; }
+body.m .set-list { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 14px; padding: 2px 16px 6px; scrollbar-width: none; }
+body.m .set-list::-webkit-scrollbar { display: none; }
+body.m .set-item { flex: none; width: auto; margin: 0; padding: 9px 18px; border-radius: 999px; }
+body.m .set-item b { font-size: 16px; white-space: nowrap; }
+body.m .set-help { display: none; }
+body.m .set-group, body.m .info-card { max-width: none; padding: 2px 16px; }
+body.m .set-row { gap: 12px; padding: 14px 0; }
+body.m .set-text b { font-size: 17px; }
+body.m .set-text small { font-size: 13px; }
+body.m .info-row { gap: 14px; padding: 14px 0; }
+body.m .info-row h4 { font-size: 18px; }
+body.m .radio-card.wide { max-width: none; padding: 14px 16px; }
+body.m .radio-card b { font-size: 18px; }
+body.m .notice { max-width: none; font-size: 14px; padding: 12px 14px; }
+body.m .seg button { padding: 6px 14px; font-size: 15px; }
+body.m .set-label { font-size: 14px; }
+body.m .stat { font-size: 16px; }
+/* 關於 / 條款 */
+body.m .about-legal { padding: 14px 14px; font-size: 16px; }
+body.m .legal-doc h3 { font-size: 22px; }
+body.m .legal-doc p, body.m .legal-doc li { font-size: 15px; line-height: 1.75; }
+/* 視窗、遊戲播放層、提示 */
+body.m .modal { padding: 14px; }
+body.m .modal-box { padding: 26px 20px 20px; }
+body.m .modal.bp .modal-box { width: 100%; padding: 0 6px; }
+body.m .modal.bp h3 { font-size: 30px; }
+body.m .modal.bp .btn-google { height: 64px; font-size: 20px; }
+body.m .modal.bp .modal-x { top: 14px; left: 14px; }
+body.m .ann-top { padding: 18px 64px 16px 18px; }
+body.m .ann-list { padding: 14px 14px 6px; }
+body.m .ann-foot { padding: 12px 14px 16px; }
+body.m .ann-hint { display: none; }
+body.m .player-title { font-size: 17px; }
+body.m .toast { bottom: calc(78px + env(safe-area-inset-bottom)); max-width: calc(100vw - 32px); font-size: 16px; padding: 10px 18px; text-align: center; }
