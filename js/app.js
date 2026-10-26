@@ -163,7 +163,7 @@
   const touchOn = () => !window.MiniHubPrefs || MiniHubPrefs().touch;
   let zone = "nav", kEl = null;
 
-  function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; document.body.classList.remove("login-k"); }
+  function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; document.body.classList.remove("login-k", "brand-k"); }
   function setK(el, quiet) {
     clearK(); kEl = el; el.classList.add("kfocus");
     if (!quiet) sfx("move");
@@ -177,8 +177,7 @@
   function midItems() {
     const v = document.body.dataset.view, P = ".pane.active ";
     let list = [];
-    if (v === "home") list = $$("#homeAnnList .home-ann-item");
-    else if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
+    if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
     else if (v === "about") list = $$("#view-about .legal-tab");
     else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
     return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
@@ -217,7 +216,7 @@
   function setZone(z, byKey) {
     zone = z; document.body.dataset.zone = z; clearK();
     if (byKey) sfx(z === "mid" ? "confirm" : "back");
-    if (z === "mid" && byKey) {
+    if (z === "mid" && byKey && document.body.dataset.view !== "home") {
       const items = midItems();
       const first = document.body.dataset.view === "settings" ? $(".set-item.active") : items[0];
       if (first) setK(first, true);
@@ -230,7 +229,10 @@
     const K = (...a) => a.map(x => `<kbd>${x}</kbd>`).join("");
     const home = false;
     const onLogin = document.body.classList.contains("login-k");
-    const list = zone === "nav" && onLogin
+    const onBrand = document.body.classList.contains("brand-k");
+    const list = zone === "nav" && onBrand
+      ? [[K("↑", "↓"), "切換"], [K("Enter"), "公告"]]
+      : zone === "nav" && onLogin
       ? [[K("↑", "↓"), "切換"], [K("Enter"), signedIn ? "登出" : "登入"]]
       : zone === "nav"
       ? [[K("↑", "↓"), "切換分頁"], [K("Enter", "D", "→"), "進入"]]
@@ -272,23 +274,30 @@
     document.body.classList.add("kb");
 
     if (zone === "nav") {                       // 最左側：上下換分頁（最後一個分頁再往下 / 第一個再往上 = 登入、登出按鈕），Enter / D / → 進入中間
-      const tabs = $$(".nav-item"), login = $("#loginBtn");
+      const tabs = $$(".nav-item"), login = $("#loginBtn"), brand = $("#brandBtn");
       const cur = tabs.findIndex(n => n.classList.contains("active"));
-      const focusLogin = () => { sfx("move"); clearK(); kEl = login; login.classList.add("kfocus"); document.body.classList.add("login-k"); paintHints(); };
-      if (kEl === login) {                      // 目前停在登入 / 登出按鈕
-        if (dir === "up" || dir === "down") { sfx("move"); clearK(); showView(tabs[dir === "up" ? tabs.length - 1 : 0].dataset.view); paintHints(); }
-        else if (enter) { sfx("confirm"); login.click(); }
+      // 左側導覽順序：MiniHub（公告）→ 各分頁 → 登入 / 登出，上下循環
+      const focusSpecial = el => { sfx("move"); clearK(); kEl = el; el.classList.add("kfocus"); document.body.classList.add(el === login ? "login-k" : "brand-k"); paintHints(); };
+      if (kEl === login || kEl === brand) {     // 目前停在 MiniHub 或登入 / 登出按鈕
+        const isBrand = kEl === brand;
+        if (dir === "up" || dir === "down") {
+          if (isBrand) { if (dir === "up") focusSpecial(login); else { sfx("move"); clearK(); showView(tabs[0].dataset.view); paintHints(); } }
+          else if (dir === "up") { sfx("move"); clearK(); showView(tabs[tabs.length - 1].dataset.view); paintHints(); }
+          else focusSpecial(brand);
+        }
+        else if (enter) { sfx("confirm"); kEl.click(); }   // MiniHub = 跳出公告視窗
         else if (esc) { clearK(); paintHints(); }
         return;
       }
-      if (dir === "down" && cur === tabs.length - 1) focusLogin();
-      else if (dir === "up" && cur === 0) focusLogin();
+      if (dir === "down" && cur === tabs.length - 1) focusSpecial(login);
+      else if (dir === "up" && cur === 0) focusSpecial(brand);
       else if (dir === "up") stepTab(-1);
       else if (dir === "down") stepTab(1);
       else if (dir === "right" || enter) setZone("mid", true);
       return;
     }
     if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
+    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); return; }   // 首頁暫時清空
     if (dir) {
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);
@@ -639,26 +648,6 @@
       box.appendChild(it);
     });
     box.scrollTop = 0;
-    renderHomeNotices(fresh);
-  }
-  // 首頁最右側公告欄：鍵盤可選取，Enter / 點擊 = 開啟公告視窗並捲到該則
-  function renderHomeNotices(fresh) {
-    const list = $("#homeAnnList"); list.innerHTML = "";
-    notices.forEach((n, i) => {
-      const b = document.createElement("button"); b.className = "home-ann-item" + (n.hot ? " hot" : "");
-      const meta = document.createElement("div"); meta.className = "ann-meta";
-      if (n.hot) { const t = document.createElement("span"); t.className = "ann-tag hot"; t.innerHTML = ICON_WARN + "重要"; meta.appendChild(t); }
-      if (fresh(n.date)) { const t = document.createElement("span"); t.className = "ann-tag new"; t.textContent = "新"; meta.appendChild(t); }
-      if (n.date) { const d = document.createElement("span"); d.className = "ann-date"; d.textContent = n.date; meta.appendChild(d); }
-      const h = document.createElement("h4"); h.textContent = n.title;
-      b.append(meta, h);
-      if (n.body) { const p = document.createElement("p"); p.textContent = n.body; b.appendChild(p); }
-      b.addEventListener("click", () => {
-        sfx("open"); openModal("noticeModal");
-        const a = $$("#noticeList .ann")[i]; if (a) a.scrollIntoView({ block: "start" });
-      });
-      list.appendChild(b);
-    });
   }
   window.MiniHubSetNotices = (list, autoOpen) => {
     notices = list || [];
