@@ -119,24 +119,40 @@
   const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
   /* ---------- 未登入：開始 / 繼續遊玩前需同意條款 ---------- */
-  let authReady = false, consent = null, consentAt = 0;
+  let authReady = false, consent = null;
   document.addEventListener("minihub:auth", () => { authReady = true; });
   function askConsent(yes, no) {
     if (consent) return false;                                  // 已在詢問中
     const wasFs = !!document.fullscreenElement;
     if (wasFs) document.exitFullscreen().catch(() => {});       // 全螢幕時視窗會被蓋住，先退出
-    consent = { yes, no, wasFs }; consentAt = Date.now();
+    consent = { yes, no, wasFs }; cRun(0, 5);
     try { document.activeElement && document.activeElement.blur(); } catch (e) {}   // 把鍵盤焦點從遊戲拿回來
     sfx("open"); openModal("playConsentModal");
     return true;
   }
   function settleConsent(ok) {
     if (!consent) return;
-    const c = consent; consent = null; closeModal("playConsentModal");
+    const c = consent; consent = null; clearInterval(cTick); closeModal("playConsentModal");
     if (ok && c.wasFs && !player.hidden && player.requestFullscreen) player.requestFullscreen().catch(() => {});
     (ok ? c.yes : c.no)();
   }
-  $("#consentOk").addEventListener("click", () => { if (Date.now() - consentAt < 350) return; sfx("confirm"); settleConsent(true); });   // 避免遊戲裡按的空白鍵直接觸發同意
+  // 同意鈕：開啟後等 5 秒才能按 → 按一次變「再次確認」（5 秒內不按就恢復）→ 再按才真正同意
+  const cBtn = $("#consentOk"), cLbl = $("span", cBtn);
+  let cStage = 0, cTick = null;      // 0 = 等待、1 = 可按、2 = 再次確認
+  function cPaint(left) {
+    cBtn.disabled = cStage === 0;
+    cBtn.classList.toggle("reconfirm", cStage === 2);
+    cLbl.textContent = cStage === 0 ? "同意並遊玩（" + left + "）" : cStage === 1 ? "同意並遊玩" : "再次確認（" + left + "）";
+  }
+  function cRun(stage, secs) {
+    clearInterval(cTick); cStage = stage; let left = secs; cPaint(left);
+    cTick = setInterval(() => { left--; if (left <= 0) { clearInterval(cTick); cStage = 1; cPaint(0); } else cPaint(left); }, 1000);
+  }
+  cBtn.addEventListener("click", () => {
+    if (cStage === 0) return;
+    if (cStage === 1) { sfx("confirm"); cRun(2, 5); return; }
+    clearInterval(cTick); sfx("confirm"); settleConsent(true);
+  });
   $("#consentNo").addEventListener("click", () => { sfx("close"); settleConsent(false); });
   // 遊戲「下一局」前呼叫：已登入直接 true；未登入需同意，不同意則回首頁並回傳 false
   window.MiniHubRequestNext = () => new Promise(res => {

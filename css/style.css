@@ -788,3 +788,5 @@ body.m #profileModal .field-label:first-child { margin-top: 10px; }
 /* 登入視窗：服務條款連結可用鍵盤選取 */
 .legal-link:focus-visible { outline: 3px solid #fff; outline-offset: 4px; border-radius: 4px; color: #fff; }
 #playConsentModal .modal-text { margin-bottom: 20px; }
+#consentOk.reconfirm { background: linear-gradient(180deg, #ffb347, #d9822b); box-shadow: 0 6px 20px rgba(217, 130, 43, .45); }
+#consentOk span { white-space: nowrap; }
