@@ -682,3 +682,6 @@ img { -webkit-user-drag: none; }
 @keyframes splashPulse { 50% { transform: scale(1.1); filter: drop-shadow(0 0 30px var(--accent-2)); } }
 @keyframes splashDot { 40% { opacity: 1; } }
 
+
+#deleteModal .modal-actions { margin-top: 18px; }
+#deleteModal .modal-text + .modal-text { margin-top: 8px; }

@@ -144,6 +144,24 @@ async function setJoinRank(v) {
   await F.updateDoc(F.doc(F.db, "users", user.uid), { joinRank: !!v });
 }
 
+// 刪除帳號：先重新驗證（刪除帳號需要「最近登入」）→ 刪 Firestore 玩家資料（users + uids）→ 刪登入帳號
+async function deleteAccount() {
+  const user = F && F.auth.currentUser;
+  if (!user) throw Object.assign(new Error("not-signed-in"), { code: "not-signed-in" });
+  const pid = ((user.providerData[0] || {}).providerId) || "google.com";
+  await F.reauthenticateWithPopup(user, makeProvider(F, pid === "github.com" ? "github" : "google"));   // 需在點擊後立即呼叫，才不會被瀏覽器擋彈窗
+  if (SAVE_PROFILE) {
+    bump(1, 2);
+    const snap = await F.getDoc(F.doc(F.db, "users", user.uid));
+    const batch = F.writeBatch(F.db);
+    if (snap.exists() && snap.data().gameUid) batch.delete(F.doc(F.db, "uids", snap.data().gameUid));
+    batch.delete(F.doc(F.db, "users", user.uid));
+    await batch.commit();
+  }
+  SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
+  await F.deleteUser(user);   // 之後 onAuthStateChanged 會回報已登出
+}
+
 // 伺服器狀態檢查：向 Firestore 讀一次；只要伺服器有回應（含被規則拒絕）就代表連得上。未登入不連線。
 async function ping() {
   if (!F || !F.auth.currentUser) return { skipped: true };
@@ -203,7 +221,7 @@ window.MiniHubAuth = {
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
-  createProfile, updateName, setPublicName, setJoinRank,
+  createProfile, updateName, setPublicName, setJoinRank, deleteAccount,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await F.getDoc(F.doc(F.db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(F.auth.currentUser.uid)

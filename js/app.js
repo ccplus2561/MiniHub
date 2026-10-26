@@ -253,6 +253,7 @@
     if (!$("#profileModal").hidden) return;   // 建立資料視窗不可用 Esc 關閉
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
+    if (!$("#deleteModal").hidden) { if (e.key === "Escape" && !deleting) closeModal("deleteModal"); return; }
     if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
     if (!$("#noticeModal").hidden) { if (e.key === "Escape" || e.key === "Enter") { closeModal("noticeModal"); e.preventDefault(); } return; }
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
@@ -346,7 +347,7 @@
     $$(".legal-doc").forEach(d => { d.hidden = d.dataset.doc !== tab; d.scrollTop = 0; });
   }
   function showLegal(tab) {
-    ["loginModal", "termsModal", "logoutModal", "nameModal", "linkModal", "noticeModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "termsModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -381,6 +382,33 @@
     if (!signedIn) { if (window.MiniHubAuth) MiniHubAuth.preload(); return openModal("loginModal"); }   // 按登入才開始載入 Firebase
     openModal("logoutModal");
   });
+  /* ---------- 刪除帳號（設定 > 隱私） ---------- */
+  let deleting = false;
+  const delOk = $("#delOk"), delInput = $("#delInput");
+  $("#delAccBtn").addEventListener("click", () => {
+    delInput.value = ""; delOk.disabled = true;
+    openModal("deleteModal");
+    setTimeout(() => delInput.focus(), 60);
+  });
+  delInput.addEventListener("input", () => { delOk.disabled = deleting || delInput.value.trim() !== "刪除"; });
+  delInput.addEventListener("keydown", e => { if (e.key === "Enter" && !delOk.disabled) delOk.click(); });
+  delOk.addEventListener("click", async () => {
+    if (delOk.disabled || deleting || !window.MiniHubAuth) return;
+    deleting = true; delOk.disabled = true; $("span", delOk).textContent = "刪除中…";
+    try {
+      await MiniHubAuth.deleteAccount();
+      closeModal("deleteModal");
+      toast("帳號已刪除，所有資料已清空");
+    } catch (e) {
+      const c = e.code || "";
+      if (/popup-closed|cancelled-popup|popup-blocked/.test(c)) toast("未完成身分驗證，帳號沒有被刪除");
+      else if (c === "permission-denied") toast("伺服器規則不允許刪除，帳號沒有被刪除");
+      else toast("刪除失敗：" + (c || e.message));
+    }
+    deleting = false; $("span", delOk).textContent = "永久刪除";
+    delOk.disabled = delInput.value.trim() !== "刪除";
+  });
+
   $("#logoutOk").addEventListener("click", () => {
     closeModal("logoutModal");
     if (window.MiniHubAuth) MiniHubAuth.signOut();
@@ -516,7 +544,7 @@
     if (!user) {                       // 已登出
       const wasIn = signedIn;
       signedIn = false; setAccount(null); paintLogin();
-      ["profileModal", "logoutModal", "nameModal", "linkModal"].forEach(closeModal);
+      ["profileModal", "logoutModal", "nameModal", "linkModal", "deleteModal"].forEach(closeModal);
       if (wasIn) toast("已登出");
       return;
     }
@@ -566,7 +594,7 @@
   });
 
   $$(".modal").forEach(m => m.addEventListener("click", e => {
-    if (m.hasAttribute("data-lock")) return;
+    if (m.hasAttribute("data-lock") || (m.id === "deleteModal" && deleting)) return;
     if (e.target === m || e.target.closest("[data-close]")) closeModal(m.id);
   }));
 

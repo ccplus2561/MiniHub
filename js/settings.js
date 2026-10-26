@@ -175,6 +175,7 @@
   // 登入後套用帳號裡的「公開使用者名稱」；登出（訪客）回到預設
   document.addEventListener("minihub:account", () => {
     const a = window.MiniHubAccount;
+    $("#delAccBox").hidden = !a.uid;   // 只有登入後才顯示「刪除帳號」
     if (!a.uid) { prefs.publicName = DEFAULTS.publicName; prefs.joinRank = DEFAULTS.joinRank; }
     else {
       if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;

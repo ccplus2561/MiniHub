@@ -197,6 +197,12 @@
                 <div class="set-row"><div class="set-text"><b>排行榜上的顯示名稱</b><small>依目前設定預覽</small></div><span class="stat plain" id="rankPreview">—</span></div>
               </div>
               <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>需登入並開啟「允許加入排行榜」，才能在遊戲中進行排名比較；關閉時不會出現在任何排行榜。</p></div>
+              <div id="delAccBox" hidden>
+                <div class="set-label">危險區域</div>
+                <div class="set-group">
+                  <div class="set-row"><div class="set-text"><b>刪除帳號</b><small>刪除後所有資料將清空，需重新註冊</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>刪除帳號</span></button></div>
+                </div>
+              </div>
             </div>
 
             <!-- 語言 -->
@@ -305,7 +311,7 @@
           <h4>5. 公開範圍</h4>
           <p>你的電子郵件不會公開。首次登入時會詢問是否允許加入排行榜與公開使用者名稱（預設開啟）。只有允許加入排行榜時你才可能出現在排行榜；允許公開使用者名稱時顯示完整名稱，否則只顯示部分字元（其餘以 * 取代）。你可隨時在「設定 &gt; 隱私」變更。</p>
           <h4>6. 資料保存與刪除</h4>
-          <p>玩家資料會保存到你要求刪除或服務終止為止。如需查詢、更正或刪除資料，請透過本站公布的聯絡方式與我們聯繫。</p>
+          <p>玩家資料會保存到你要求刪除或服務終止為止。你可隨時在「設定 &gt; 隱私 &gt; 刪除帳號」自行刪除帳號：使用者名稱、遊戲 UID 與相關設定會從伺服器清除且無法復原，之後需重新註冊。如需查詢或更正資料，請透過本站公布的聯絡方式與我們聯繫。</p>
           <h4>7. 政策修改</h4>
           <p>本政策如有修訂，將公布於本頁；重大變更會於登入時另行提醒。</p>
         </div>
@@ -425,6 +431,22 @@
       <div class="modal-actions">
         <button class="btn-ghost" data-close>取消</button>
         <button class="btn-primary sm danger" id="logoutOk"><span>登出</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 刪除帳號 -->
+  <div class="modal" id="deleteModal" hidden>
+    <div class="modal-box left" role="alertdialog" aria-modal="true" aria-labelledby="delTitle">
+      <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg></div>
+      <h3 id="delTitle" class="c">刪除帳號</h3>
+      <p class="modal-text">刪除後，你的使用者名稱、遊戲 UID 與所有玩家資料都會<b>永久清除、無法復原</b>，之後需要重新註冊。</p>
+      <p class="modal-text">為了安全，系統會請你再登入一次確認身分。</p>
+      <label class="field-label" for="delInput">請輸入「刪除」以確認</label>
+      <div class="field"><input id="delInput" type="text" maxlength="4" autocomplete="off" placeholder="刪除" spellcheck="false"></div>
+      <div class="modal-actions">
+        <button class="btn-ghost" data-close>取消</button>
+        <button class="btn-primary sm danger" id="delOk" disabled><span>永久刪除</span></button>
       </div>
     </div>
   </div>
