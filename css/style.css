@@ -37,7 +37,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 .backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: opacity .5s; }
 .bd {
   position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease;
-  display: grid; place-items: center end; padding-right: 18vw;
+  display: grid; place-items: center end; padding-right: 26vw; padding-top: 14vh;
   font-style: normal; font-size: min(46vh, 380px);
 }
 .bd > * { opacity: .6; filter: blur(3px); }
@@ -817,5 +817,12 @@ body.m #profileModal .field-label:first-child { margin-top: 10px; }
 #consentOk span { white-space: nowrap; }
 
 /* 手機版：背景圖淡一點、置中 */
-body.m .bd { padding-right: 0; place-items: center; }
+body.m .bd { padding-right: 0; padding-top: 0; place-items: center; }
 body.m .bd > * { opacity: .25; filter: blur(5px); }
+
+/* 手機版：避免區塊在直向 flex 內被壓扁（分類按鈕被切、卡片重疊） */
+body.m .view > * { flex-shrink: 0; }
+body.m .hero { min-height: 0; margin-top: 8px; }
+body.m .hero-text { align-self: stretch; }
+body.m .game-tags { grid-template-columns: 1fr 1fr; width: 100%; }
+body.m #playBtn { min-width: 0; width: 100%; height: 56px; font-size: 20px; }
