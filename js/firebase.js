@@ -1,4 +1,4 @@
-// Firebase 整合：Google 登入 + 玩家資料（使用者名稱 / 遊戲 UID）
+// Firebase 整合：Google / GitHub / Microsoft 登入（含同 email 帳號連結）+ 玩家資料（使用者名稱 / 遊戲 UID）
 // 注意：偏好設定（顯示、音效…）仍不保存；這裡只保存「帳號資料」。
 // 未登入時完全不連線：Firebase SDK 只在「按下登入」或「分頁內已有登入狀態」時才載入。
 
@@ -32,6 +32,24 @@ const hasSession = () => {
   return false;
 };
 
+/* ---------- 登入供應商 ---------- */
+const PROV = {
+  google:    { label: "Google" },
+  github:    { label: "GitHub" },
+  microsoft: { label: "Microsoft" }
+};
+function makeProvider(f, key) {
+  if (key === "github") { const p = new f.GithubAuthProvider(); p.addScope("user:email"); return p; }
+  if (key === "microsoft") { const p = new f.OAuthProvider("microsoft.com"); p.addScope("email"); p.addScope("profile"); p.setCustomParameters({ prompt: "select_account" }); return p; }
+  return new f.GoogleAuthProvider();
+}
+function credFromError(f, key, e) {
+  const C = key === "github" ? f.GithubAuthProvider : key === "microsoft" ? f.OAuthProvider : f.GoogleAuthProvider;
+  return C.credentialFromError(e);
+}
+let pending = null;   // 等待連結的憑證（只存在記憶體）
+const load = async () => { try { return await boot(); } catch (e) { throw Object.assign(new Error("sdk-load-failed"), { code: "sdk-load-failed" }); } };
+
 /* ---------- 延遲載入 SDK ---------- */
 let F = null, bootP = null;
 function boot() {
@@ -46,6 +64,12 @@ function boot() {
     F = { auth, db, ...S, ...FS };
     S.onAuthStateChanged(auth, async user => {
       if (!user) return emit({ user: null });
+      if (!user.email) {   // 帳號必須有電子郵件（例如 GitHub 設為私人且無公開信箱時會沒有）
+        emit({ user: null });
+        try { await S.signOut(auth); } catch (e) {}
+        if (window.MiniHubToast) window.MiniHubToast("此帳號沒有可用的電子郵件，無法登入，請改用其他方式");
+        return;
+      }
       const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "" };
       try {
         const profile = await loadProfile(user.uid);
@@ -135,10 +159,37 @@ window.MiniHubAuth = {
   hasSession,
   preload: () => boot().catch(() => {}),     // 按下「登入」時預先載入，之後彈出視窗才不會被瀏覽器擋
   ping, usage: () => ({ ...use }),
-  signIn: async () => {
-    let f;
-    try { f = await boot(); } catch (e) { throw Object.assign(new Error("sdk-load-failed"), { code: "sdk-load-failed" }); }
-    return f.signInWithPopup(f.auth, new f.GoogleAuthProvider());
+  // key: "google" | "github" | "microsoft"
+  // 若該 email 已用「另一種方式」註冊過，會丟出 code = "needs-link"（附 email 與 provider），
+  // 畫面請使用者改用原本的方式登入，再呼叫 linkPending(原本的方式) 把新方式連結到同一個帳號。
+  signIn: async key => {
+    const f = await load();
+    try { return await f.signInWithPopup(f.auth, makeProvider(f, key || "google")); }
+    catch (e) {
+      if (e && e.code === "auth/account-exists-with-different-credential") {
+        const cred = credFromError(f, key, e);
+        pending = cred ? { cred, key, email: (e.customData && e.customData.email) || "" } : null;
+        throw Object.assign(new Error("needs-link"), { code: "needs-link", email: pending && pending.email, provider: key });
+      }
+      throw e;
+    }
+  },
+  hasPending: () => !!pending,
+  clearPending: () => { pending = null; },
+  linkPending: async key => {
+    if (!pending) throw Object.assign(new Error("no-pending"), { code: "no-pending" });
+    const f = await load();
+    const res = await f.signInWithPopup(f.auth, makeProvider(f, key));   // 用原本的方式登入
+    const mail = (res.user.email || "").toLowerCase();
+    if (pending.email && mail && mail !== pending.email.toLowerCase()) {
+      await f.signOut(f.auth);
+      throw Object.assign(new Error("email-mismatch"), { code: "link-email-mismatch" });
+    }
+    const label = PROV[pending.key].label;
+    try { await f.linkWithCredential(res.user, pending.cred); }
+    catch (e) { if (!e || e.code !== "auth/provider-already-linked") throw e; }
+    pending = null;
+    return label;
   },
   signOut: async () => {
     if (!F) return;

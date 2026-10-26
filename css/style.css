@@ -425,6 +425,11 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .btn-google svg { width: 24px; height: 24px; fill: initial; stroke: none; }
 .btn-google:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(0, 0, 0, .4); filter: brightness(.97); }
 .btn-google:active { transform: scale(.97); }
+.btn-google + .btn-google { margin-top: 12px; }
+.modal.bp .btn-google + .btn-google { margin-top: 14px; }
+#linkModal .btn-google[hidden] { display: none; }
+#linkModal .btn-google { height: 48px; font-size: 16px; margin-top: 10px; }
+#linkModal .btn-ghost.full { margin-top: 14px; }
 .modal-actions { display: flex; gap: 12px; }
 .modal-actions > * { flex: 1; justify-content: center; }
 .btn-ghost { height: 48px; border-radius: 10px; font-size: 17px; font-weight: 700; color: var(--text-2);

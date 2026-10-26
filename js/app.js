@@ -241,9 +241,10 @@
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
     if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
+    if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
-      else if (/^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「Google 登入 / 取消」之間移動焦點
+      else if (/^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「登入方式 / 取消」之間移動焦點
         const b = $$(".btn-google, .btn-ghost", $("#loginModal"));
         const up = /^(ArrowUp|w)$/i.test(e.key), i = b.indexOf(document.activeElement);
         b[(i + (up ? -1 : 1) + b.length) % b.length].focus(); e.preventDefault();
@@ -319,7 +320,7 @@
     $$(".legal-doc").forEach(d => { d.hidden = d.dataset.doc !== tab; d.scrollTop = 0; });
   }
   function showLegal(tab) {
-    ["loginModal", "termsModal", "logoutModal", "nameModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "termsModal", "logoutModal", "nameModal", "linkModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -342,7 +343,7 @@
 
   window.MiniHubToast = toast;
 
-  /* ---------- 登入（僅樣式預覽，尚未串接 Google） ---------- */
+  /* ---------- 登入（Google / GitHub / Microsoft） ---------- */
   function openModal(id) {
     const m = $("#" + id); m.hidden = false;
     const f = $("[data-autofocus]", m);
@@ -358,16 +359,39 @@
     closeModal("logoutModal");
     if (window.MiniHubAuth) MiniHubAuth.signOut();
   });
-  $("#googleBtn").addEventListener("click", () => openModal("termsModal"));   // 先確認條款
+  const PNAME = { google: "Google", github: "GitHub", microsoft: "Microsoft" };
+  let chosen = "google";
+  $$("#loginModal [data-provider]").forEach(b => b.addEventListener("click", () => { chosen = b.dataset.provider; openModal("termsModal"); }));   // 先確認條款
   $("#termsCancel").addEventListener("click", () => closeModal("termsModal"));
+  function signInFail(e) {
+    const c = e.code || "";
+    if (c === "sdk-load-failed") toast("無法載入登入服務，請檢查網路後再試");
+    else if (c === "needs-link") {
+      const bad = e.provider;
+      $("#linkText").textContent = (e.email ? e.email + " " : "此電子郵件") + "已經用其他方式註冊過。請先用原本的登入方式登入，系統會自動把 " + (PNAME[bad] || "新的方式") + " 連結到同一個帳號。";
+      $$("#linkModal [data-link]").forEach(b => b.hidden = b.dataset.link === bad);   // 不列出剛剛失敗的那一種
+      openModal("linkModal");
+    }
+    else if (c === "auth/popup-blocked") toast("登入視窗被瀏覽器擋住，請允許彈出視窗後再試");
+    else if (c === "auth/account-exists-with-different-credential") toast("此電子郵件已用其他方式註冊，請改用原本的登入方式");
+    else if (!/popup-closed|cancelled-popup/.test(c)) toast("登入失敗：" + (c || e.message));
+  }
   $("#termsOk").addEventListener("click", () => {
     closeModal("termsModal"); closeModal("loginModal");
     if (!window.MiniHubAuth) return toast("登入服務載入失敗，請檢查網路後重新整理");
-    MiniHubAuth.signIn().catch(e => {
-      if (e.code === "sdk-load-failed") toast("無法載入登入服務，請檢查網路後再試");
-      else if (!/popup-closed|cancelled-popup/.test(e.code || "")) toast("登入失敗：" + (e.code || e.message));
-    });
+    MiniHubAuth.signIn(chosen).catch(signInFail);
   });
+  // 連結：用原本的方式登入，成功後把剛才的新方式連到同一個帳號
+  $$("#linkModal [data-link]").forEach(b => b.addEventListener("click", () => {
+    closeModal("linkModal");
+    MiniHubAuth.linkPending(b.dataset.link)
+      .then(label => toast("已連結 " + label + "，之後兩種方式都能登入"))
+      .catch(e => {
+        if (e.code === "link-email-mismatch") toast("登入的帳號與原本註冊的電子郵件不同，無法連結");
+        else signInFail(e);
+      });
+  }));
+  $("#linkModal").addEventListener("click", e => { if (e.target.id === "linkModal" || e.target.closest("[data-close]")) MiniHubAuth.clearPending(); });
 
   /* ---------- 首次登入：建立使用者名稱 / 遊戲 UID ---------- */
   const NAME_MIN = 2, NAME_MAX = 12;
@@ -465,7 +489,7 @@
     if (!user) {                       // 已登出
       const wasIn = signedIn;
       signedIn = false; setAccount(null); paintLogin();
-      ["profileModal", "logoutModal", "nameModal"].forEach(closeModal);
+      ["profileModal", "logoutModal", "nameModal", "linkModal"].forEach(closeModal);
       if (wasIn) toast("已登出");
       return;
     }
