@@ -2,17 +2,17 @@
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
   const games = window.GAMES || [];
-  const featured = games.filter(g => g.featured);
-
+  
   const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
-  let selected = 0;
+  let selected = -1;
+  let shown = [];
   let category = "全部";
 
   /* ---------- 卡片 ---------- */
   const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function cardEl(g, idx = 0) {
     const soon = !g.path;
-    const badge = g.badge || (soon ? "即將推出" : "");
+    const badge = g.badge || (soon ? "封測中" : "");
     const el = document.createElement("button");
     el.className = "card" + (soon ? " soon" : "");
     el.dataset.id = g.id;
@@ -31,19 +31,6 @@
     return el;
   }
 
-  /* ---------- 首頁 ---------- */
-  function renderFeatured() {
-    const row = $("#featuredRow");
-    row.innerHTML = "";
-    featured.forEach((g, i) => {
-      const el = cardEl(g, i);
-      el.addEventListener("click", () => (i === selected ? openGame(g, el) : select(i)));
-      el.addEventListener("dblclick", () => openGame(g, el));
-      row.appendChild(el);
-    });
-    select(0);
-  }
-
   /* ---------- 背景交叉淡入 ---------- */
   let bdIdx = 0;
   function setBackdrop(g) {
@@ -57,16 +44,24 @@
     bds.forEach((b, i) => b.classList.toggle("on", i === bdIdx));
   }
 
-  function select(i) {
-    if (!featured.length) return;
-    selected = (i + featured.length) % featured.length;
-    const g = featured[selected];
+  function select(i, quiet) {
+    const hero = $("#hero");
+    if (!shown.length || i < 0) {
+      selected = -1; hero.hidden = true;
+      $$("#libraryRow .card").forEach(c => c.classList.remove("selected"));
+      return;
+    }
+    selected = (i + shown.length) % shown.length;
+    const g = shown[selected];
     setBackdrop(g);
-    $$("#featuredRow .card").forEach((c, idx) => c.classList.toggle("selected", idx === selected));
+    const cards = $$("#libraryRow .card");
+    cards.forEach((c, idx) => c.classList.toggle("selected", idx === selected));
     $("#heroTitle").textContent = g.title;
-    $("#heroDesc").textContent = g.desc;
-    $("#playBtn span").textContent = g.path ? "開始遊戲" : "即將推出";
-    $$("#featuredRow .card")[selected].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    $("#heroDesc").textContent = g.desc || g.category;
+    $("#playBtn span").textContent = g.path ? "開始遊戲" : "封測中";
+    hero.hidden = false;
+    hero.classList.remove("pop"); void hero.offsetWidth; hero.classList.add("pop");   // 每次選擇都從底部跳出
+    cards[selected].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
   }
 
   /* ---------- 遊戲庫 / 分類 ---------- */
@@ -74,7 +69,7 @@
     target.innerHTML = "";
     list.forEach((g, i) => {
       const el = cardEl(g, i);
-      el.addEventListener("click", () => openGame(g, el));
+      el.addEventListener("click", () => { if (i !== selected) select(i); });   // 只選取，不直接進入遊戲
       target.appendChild(el);
     });
   }
@@ -93,7 +88,11 @@
   }
 
   function renderLibrary() {
-    renderGrid($("#libraryGrid"), games.filter(g => category === "全部" || g.category === category));
+    const keep = shown[selected] && shown[selected].id;
+    shown = games.filter(g => category === "全部" || g.category === category);
+    renderGrid($("#libraryRow"), shown);
+    const i = shown.findIndex(g => g.id === keep);
+    select(i);   // 原本選的還在清單裡就維持選取，否則收起底部資訊
   }
 
   /* ---------- 頁面切換 ---------- */
@@ -120,10 +119,10 @@
   const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
   function openGame(g, el) {
-    if (!g.path) { sfx("deny"); return toast("「" + g.title + "」即將推出，敬請期待！"); }
+    if (!g.path) { sfx("deny"); return toast("「" + g.title + "」封測中，敬請期待！"); }
     sfx("open");
     current = g;
-    srcEl = el || $("#featuredRow .card.selected");
+    srcEl = el || $("#libraryRow .card.selected");
     $("#playerTitle").textContent = g.title;
     frame.src = g.path;
     player.hidden = false;
@@ -155,13 +154,8 @@
     else player.requestFullscreen && player.requestFullscreen();
   });
 
-  /* ---------- 首頁按鈕 ---------- */
-  $("#playBtn").addEventListener("click", () => featured[selected] && openGame(featured[selected], $("#featuredRow .card.selected")));
-  $("#libBtn").addEventListener("click", () => showView("library"));
-  $("#randBtn").addEventListener("click", () => {
-    const playable = games.filter(g => g.path);
-    if (playable.length) openGame(playable[Math.floor(Math.random() * playable.length)], $("#randBtn"));
-  });
+  /* ---------- 遊戲庫：開始遊戲按鈕 ---------- */
+  $("#playBtn").addEventListener("click", () => shown[selected] && openGame(shown[selected], $("#libraryRow .card.selected")));
 
   /* ---------- 鍵盤（需在設定中允許） ---------- */
   // 兩個區域：nav = 最左側分頁；mid = 中間內容。預設在最左側，滑鼠點到哪一區就切到哪一區
@@ -179,7 +173,7 @@
   function midItems() {
     const v = document.body.dataset.view, P = ".pane.active ";
     let list = [];
-    if (v === "library") list = $$("#chips .chip, #libraryGrid .card");
+    if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
     else if (v === "about") list = $$("#view-about .legal-tab");
     else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
     return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
@@ -224,7 +218,7 @@
   // 右下角提示：依目前區域顯示「現在能按的鍵」
   function paintHints() {
     const K = (...a) => a.map(x => `<kbd>${x}</kbd>`).join("");
-    const home = document.body.dataset.view === "home";
+    const home = false;
     const onLogin = document.body.classList.contains("login-k");
     const list = zone === "nav" && onLogin
       ? [[K("↑", "↓"), "切換"], [K("Enter"), signedIn ? "登出" : "登入"]]
@@ -285,12 +279,7 @@
       return;
     }
     if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
-    if (document.body.dataset.view === "home") {
-      if (dir === "right") { sfx("move"); select(selected + 1); }
-      else if (dir === "left") { if (selected === 0) setZone("nav", true); else { sfx("move"); select(selected - 1); } }
-      else if (enter && featured[selected]) openGame(featured[selected], $("#featuredRow .card.selected"));
-      return;
-    }
+    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); return; }   // 首頁暫時清空
     if (dir) {
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);
@@ -586,11 +575,18 @@
   }, { passive: true });
   document.addEventListener("pointerleave", () => glow.style.setProperty("--mx", "-999px"));
 
+  /* ---------- 禁止複製文字（輸入框除外） ---------- */
+  const isField = e => e.target && e.target.closest && e.target.closest("input, textarea");
+  ["copy", "cut", "dragstart", "selectstart", "contextmenu"].forEach(t =>
+    document.addEventListener(t, e => { if (!isField(e)) e.preventDefault(); }));
+  document.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && /^[acxsu]$/i.test(e.key) && !isField(e)) e.preventDefault();
+  }, true);
+
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
   document.body.dataset.zone = "nav";
   paintHints();
-  renderFeatured();
   renderChips();
   renderLibrary();
 

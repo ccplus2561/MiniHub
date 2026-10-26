@@ -6,7 +6,7 @@
  *   category  分類（會自動產生分類按鈕）
  *   emoji     卡片圖示（之後可改成 icon: "games/xxx/icon.png"）
  *   colors    卡片漸層 [起, 終]
- *   path      遊戲入口；留空 = 顯示「即將推出」
+ *   path      遊戲入口；留空 = 顯示「封測中」
  *   desc      一句話介紹
  *   featured  是否顯示在首頁精選
  */

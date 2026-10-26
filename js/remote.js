@@ -32,7 +32,7 @@
         id: "ext-" + (Number(r["_row"]) || i + 2), title: name, category: str(r["分類"], 8) || "其他",
         emoji: "🎮", icon: img ? img.href : "",
         colors: ["hsl(" + h + ",55%,38%)", "hsl(" + h + ",60%,16%)"],
-        path, badge: path ? "開發中" : "即將推出", desc: "", featured: false
+        path, badge: path ? "開發中" : "封測中", desc: "", featured: false
       };
     });
   }
