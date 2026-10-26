@@ -167,6 +167,10 @@
   function setK(el, quiet) {
     clearK(); kEl = el; el.classList.add("kfocus");
     if (!quiet) sfx("move");
+    if (el.matches("#libraryRow .card")) {   // 鍵盤移到哪張圖卡，就放大並跳出標題與按鈕
+      const i = Array.prototype.indexOf.call(el.parentNode.children, el);
+      if (i !== selected) select(i);
+    }
     el.scrollIntoView({ block: "nearest", inline: "nearest" });
     if (!quiet && el.classList.contains("set-item") && !el.classList.contains("active")) el.click();   // 設定左側分類：移到哪就顯示哪一頁
   }
