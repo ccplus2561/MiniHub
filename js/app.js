@@ -209,7 +209,15 @@
     a.onfinish = done;
   }
 
-  $("#closeBtn").addEventListener("click", () => closeGame());
+  // 返回鍵 / Esc：先暫停並詢問是否退出遊戲
+  function askExit() {
+    if (!current || closing || leaveTo) return;
+    pauseGame();
+    try { document.activeElement && document.activeElement.blur(); } catch (x) {}
+    leaveTo = () => closeGame();
+    sfx("open"); openModal("exitModal");
+  }
+  $("#closeBtn").addEventListener("click", askExit);
 
   /* ---------- 遊戲中點左側導覽（只接受滑鼠 / 觸控）：立即暫停並詢問是否退出 ---------- */
   // 退出時本局不另外計入成績；若已刷新個人最高紀錄，遊戲離開時會直接更新（由遊戲自己處理）
@@ -370,7 +378,7 @@
       }
       return;
     }
-    if (!player.hidden) { if (e.key === "Escape") closeGame(); return; }
+    if (!player.hidden) { if (e.key === "Escape") askExit(); return; }
     if (!kbdOn() || e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
     const dir = DIRS[k], enter = k === "Enter", esc = k === "Escape";
