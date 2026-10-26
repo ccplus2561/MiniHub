@@ -15,6 +15,28 @@
   #hud { font-size: 26px; font-weight: 700; letter-spacing: .04em; }
   #hud b { color: var(--accent, #1a9fff); }
   small { color: #a3adbd; font-size: 15px; text-align: center; padding: 0 12px; }
+  #under { display: flex; flex-direction: column; align-items: center; gap: 10px; max-width: 100%; }
+  #btns { display: flex; gap: 10px; }
+  #btns button { font: 700 16px system-ui, "Microsoft JhengHei", sans-serif; min-width: 96px; padding: 8px 22px; border-radius: 12px; cursor: pointer;
+    color: #eef2f7; background: #16202d; border: 1px solid #2b3a4f; }
+  #btns button.main { background: var(--accent, #1a9fff); border-color: transparent; color: #04121f; }
+  #btns button:hover:not(:disabled) { filter: brightness(1.15); }
+  #btns button:disabled { opacity: .4; cursor: default; }
+  #info { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 10px; }
+  #info .box { background: #16202d; border: 1px solid #263447; border-radius: 12px; padding: 8px 14px; min-width: 150px; }
+  #info h4 { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: #a3adbd; letter-spacing: .06em; }
+  #meBest { font-size: 26px; color: var(--accent, #1a9fff); }
+  #rankBox { min-width: 230px; }
+  #rankList { list-style: none; margin: 0; padding: 0; font-size: 15px; }
+  #rankList li { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; padding: 2px 0; }
+  #rankList li.me { color: var(--accent, #1a9fff); font-weight: 700; }
+  #rankList li.empty { color: #5d6b80; }
+  #rankList li.gap { display: block; text-align: center; color: #5d6b80; line-height: 8px; }
+  #rankList .sc { font-weight: 700; }
+  #kbd { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; color: #a3adbd; font-size: 14px; }
+  #kbd kbd { display: inline-block; min-width: 22px; padding: 1px 6px; margin: 0 1px; text-align: center; border-radius: 6px; font: 700 13px/20px system-ui, sans-serif;
+    color: #0e141b; background: #a3adbd; }
+  [hidden] { display: none !important; }
 </style>
 <style>html,body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}</style>
 <script>["copy","cut","dragstart","selectstart","contextmenu"].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()})})</script>
@@ -22,7 +44,18 @@
 <body>
   <div id="hud">分數 <b id="score">0</b>　最高 <b id="best">0</b></div>
   <canvas id="c" width="800" height="800"></canvas>
-  <small>方向鍵 / WASD 或滑動操作・按任意方向開始・空白鍵重來</small>
+  <div id="under">
+    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">再一次</button></div>
+    <div id="info">
+      <div class="box" id="meBox" hidden><h4>個人最高</h4><b id="meBest">0</b></div>
+      <div class="box" id="rankBox" hidden><h4>排行榜</h4><ol id="rankList"></ol></div>
+    </div>
+    <div id="kbd" hidden>
+      <span>移動 <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+      <span>開始 / 重來 <kbd>空白</kbd></span>
+    </div>
+    <small id="tip"></small>
+  </div>
 <script>
 // 同步主頁的幻彩主題色（同源時才讀得到）
 try {
@@ -33,20 +66,22 @@ try {
   const cv = document.getElementById("c"), ctx = cv.getContext("2d");
   const N = 20, S = cv.width / N, K = cv.width / 400;   // K：文字 / 圓角依解析度縮放
   // 依視窗大小把畫布放到最大（保持正方形，扣掉上方分數與下方說明的高度）
-  const hud = document.getElementById("hud"), tip = document.querySelector("small");
+  const $ = id => document.getElementById(id);
+  const hud = $("hud"), under = $("under");
   function fit() {
-    const used = hud.offsetHeight + tip.offsetHeight + 28 + 24;
+    const used = hud.offsetHeight + under.offsetHeight + 28 + 24;
     const size = Math.max(200, Math.floor(Math.min(innerWidth - 24, innerHeight - used)));
     cv.style.width = cv.style.height = size + "px";
   }
   addEventListener("resize", fit); fit();
+  try { new ResizeObserver(fit).observe(under); } catch (e) {}
   let snake, dir, next, food, score, best = 0, alive, started, timer;
 
   function reset() {
     snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
     dir = next = { x: 1, y: 0 };
     score = 0; alive = true; started = false;
-    place(); draw(); updateHud();
+    place(); draw(); updateHud(); updateBtns();
     clearInterval(timer);
   }
   function place() {
@@ -56,13 +91,18 @@ try {
   // 下一局：未登入時由大廳詢問是否同意條款（不同意會回首頁）；單獨開啟本頁時直接重來
   let asking = false;
   const askNext = () => { try { return parent !== window && parent.MiniHubRequestNext ? parent.MiniHubRequestNext() : Promise.resolve(true); } catch (e) { return Promise.resolve(true); } };
-  const again = () => { if (alive || asking) return; asking = true; askNext().then(ok => { asking = false; if (ok) reset(); }); };
-  function start() { if (!started) { started = true; timer = setInterval(step, 110); } }
+  const again = () => { if (alive || asking) return; restart(); };
+  // 「再一次」按鈕：進行中也可重來（先送出目前分數）
+  function restart() { if (asking) return; asking = true; askNext().then(ok => { asking = false; if (ok) { submit(); reset(); } }); }
+  function start() { if (!started && alive) { started = true; timer = setInterval(step, 110); updateBtns(); } }
+  function updateBtns() { $("startBtn").disabled = started || !alive; $("againBtn").classList.toggle("main", !alive); }
+  $("startBtn").addEventListener("click", start);
+  $("againBtn").addEventListener("click", restart);
   function step() {
     dir = next;
     const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
     if (h.x < 0 || h.y < 0 || h.x >= N || h.y >= N || snake.some(s => s.x === h.x && s.y === h.y)) {
-      alive = false; clearInterval(timer); draw(); return;
+      alive = false; clearInterval(timer); draw(); updateBtns(); submit(); updateHud(); return;
     }
     snake.unshift(h);
     if (h.x === food.x && h.y === food.y) { score++; best = Math.max(best, score); place(); updateHud(); }
@@ -86,8 +126,9 @@ try {
     }
   }
   function updateHud() {
-    document.getElementById("score").textContent = score;
-    document.getElementById("best").textContent = best;
+    $("score").textContent = score;
+    $("best").textContent = logged ? Math.max(best, serverBest, score) : best;
+    paintMe();
   }
   function turn(x, y) {
     if (!alive) return;
@@ -100,7 +141,7 @@ try {
   addEventListener("keydown", e => {
     const k = keys[e.key] || keys[e.key.toLowerCase()];
     if (k) { e.preventDefault(); turn(k[0], k[1]); }
-    else if (e.key === " ") { e.preventDefault(); again(); }
+    else if (e.key === " ") { e.preventDefault(); if (alive && !started) start(); else again(); }
   });
 
   // 大廳關閉「允許觸控滑動」時，遊戲內也不接受觸控 / 點擊
@@ -108,6 +149,7 @@ try {
   let tx, ty;
   addEventListener("touchstart", e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
   addEventListener("touchend", e => {
+    if (e.target.closest && e.target.closest("#btns")) return;   // 按鈕自己處理
     if (!touchOK()) return;
     if (!alive) return again();
     const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
@@ -116,7 +158,113 @@ try {
   });
   cv.addEventListener("click", () => { if (touchOK()) again(); });
 
+  /* ---------- 個人最高 / 排行榜（登入後；與大廳設定同步） ---------- */
+  const GAME = "snake";
+  let logged = false, rankOn = false, myName = "", serverBest = 0, bestDoc = null, top = [], myRank = 0, busy = false;
+  let bestKey = "", topKey = false, offBest = null, offTop = null, lastKbd = null, rankSeq = 0, rankT = 0;
+  const env = () => {
+    try {
+      if (parent === window) return {};
+      const A = parent.MiniHubAuth && parent.MiniHubAuth.scores;
+      return { P: parent, A, acc: parent.MiniHubAccount, R: parent.MiniHubRank };
+    } catch (e) { return {}; }
+  };
+  const myUid = () => { const { A } = env(); try { return A ? A.uid() : ""; } catch (e) { return ""; } };
+
+  function paintMe() {
+    $("meBox").hidden = !logged;
+    $("meBest").textContent = Math.max(serverBest, score);   // 遊戲中即時顯示
+  }
+  function paintRank() {
+    const box = $("rankBox"), ul = $("rankList");
+    box.hidden = !(logged && rankOn);
+    if (box.hidden) return;
+    ul.textContent = "";
+    const me = myUid();
+    const add = (rank, name, sc, cls) => {
+      const li = document.createElement("li"); if (cls) li.className = cls;
+      [rank, name, sc].forEach((t, i) => { const e = document.createElement("span"); if (i === 2) e.className = "sc"; e.textContent = t; li.appendChild(e); });
+      ul.appendChild(li);
+    };
+    for (let i = 0; i < 3; i++) {
+      const r = top[i];
+      if (!r) add("#" + (i + 1), "—", "", "empty");
+      else if (r.uid === me) add("#" + (i + 1), myName, r.score, "me");
+      else add("#" + (i + 1), r.name || "*", r.score);
+    }
+    if (!top.some(r => r.uid === me)) {   // 沒進前 3：多顯示自己目前的名次
+      const g = document.createElement("li"); g.className = "gap"; g.textContent = "⋯"; ul.appendChild(g);
+      if (serverBest > 0) add(myRank ? "#" + myRank : "#?", myName, serverBest, "me");
+      else add("—", myName, "尚無成績", "me");
+    }
+  }
+  function calcRank() {
+    clearTimeout(rankT);
+    rankT = setTimeout(async () => {
+      const { A } = env();
+      if (!A || !rankOn || serverBest <= 0 || top.some(r => r.uid === myUid())) { myRank = 0; return paintRank(); }
+      const n = ++rankSeq;
+      try { const r = await A.rankOf(GAME, serverBest); if (n === rankSeq) { myRank = r; paintRank(); } } catch (e) {}
+    }, 300);
+  }
+  // 讓雲端資料跟目前設定一致（加入 / 退出排行榜、名稱遮蔽改變）
+  function reconcile() {
+    const { A } = env();
+    if (!A || !logged || !bestDoc || bestDoc.score <= 0 || busy) return;
+    const nm = rankOn ? myName : "";
+    if (bestDoc.inRank === rankOn && (!rankOn || bestDoc.name === nm)) return;
+    busy = true;
+    A.saveScore(GAME, bestDoc.score, { rank: rankOn, name: nm }).catch(() => {}).then(() => { busy = false; });
+  }
+  function submit() {
+    const { A } = env();
+    if (!A || !logged || score <= serverBest) return;
+    serverBest = score; paintMe();
+    A.saveScore(GAME, score, { rank: rankOn, name: rankOn ? myName : "" }).catch(() => {});
+  }
+  function stopSubs() { if (offBest) offBest(); if (offTop) offTop(); offBest = offTop = null; bestKey = ""; topKey = false; }
+
+  function refresh() {
+    const { A, acc, R } = env();
+    const kbdOn = (() => { try { return parent === window ? true : parent.MiniHubPrefs().kbd !== false; } catch (e) { return true; } })();
+    $("kbd").hidden = !kbdOn;
+    $("tip").textContent = kbdOn ? "也可以用滑動操作" : "滑動螢幕或點上方按鈕操作";
+    lastKbd = kbdOn;
+    const uid = A && acc && acc.uid ? A.uid() : "";
+    logged = !!uid;
+    rankOn = logged && !!(R && R.canRank());
+    myName = rankOn ? R.displayName() : (R && acc ? R.maskName(acc.name) : "");
+    if (!logged) { stopSubs(); serverBest = 0; bestDoc = null; top = []; myRank = 0; }
+    else {
+      if (bestKey !== uid) {
+        if (offBest) offBest();
+        bestKey = uid;
+        offBest = A.watchBest(GAME, d => {
+          bestDoc = d; serverBest = d ? d.score : 0;
+          best = Math.max(best, serverBest);
+          updateHud(); calcRank(); reconcile();
+        });
+      }
+      if (topKey !== rankOn) {
+        if (offTop) offTop(); offTop = null; topKey = rankOn;
+        if (rankOn) offTop = A.watchTop(GAME, 3, rows => { top = rows; paintRank(); calcRank(); });
+        else { top = []; myRank = 0; }
+      }
+      reconcile();
+    }
+    updateHud(); paintRank(); fit();
+  }
+  try {
+    parent.document.addEventListener("minihub:prefs", refresh);
+    parent.document.addEventListener("minihub:account", refresh);
+    addEventListener("pagehide", () => {
+      try { if (alive && started) submit(); parent.document.removeEventListener("minihub:prefs", refresh); parent.document.removeEventListener("minihub:account", refresh); } catch (e) {}
+      stopSubs();
+    });
+  } catch (e) {}
+
   reset();
+  refresh();
 })();
 </script>
 </body>

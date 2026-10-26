@@ -189,8 +189,50 @@ async function ping() {
   return { ok: true, ms: Math.round(performance.now() - t0) };
 }
 
+/* ---------- 遊戲成績 / 排行榜 ----------
+   games/{game}/bests/{uid}  個人最高（只有本人可讀寫）：{ score, inRank, name }
+   games/{game}/ranks/{uid}  排行榜（登入者可讀、本人可寫）：{ score, name, updatedAt }；name 寫入時就已依「公開使用者名稱」遮蔽 */
+const NOP = () => {};
+const colB = g => F.collection(F.db, "games", g, "bests");
+const colR = g => F.collection(F.db, "games", g, "ranks");
+const scoreUid = () => (F && F.auth.currentUser ? F.auth.currentUser.uid : "");
+const scores = {
+  uid: scoreUid,
+  // 個人最高（即時）：cb({ score, inRank, name } | null)
+  watchBest(game, cb) {
+    const u = scoreUid();
+    if (!u || !SAVE_PROFILE) return NOP;
+    return F.onSnapshot(F.doc(colB(game), u), s => { bump(1, 0); const d = s.exists() ? s.data() : null; cb(d ? { score: Number(d.score) || 0, inRank: !!d.inRank, name: String(d.name || "") } : null); }, NOP);
+  },
+  // 排行榜前 n 名（即時）：cb([{ uid, name, score }])
+  watchTop(game, n, cb) {
+    if (!scoreUid() || !SAVE_PROFILE) return NOP;
+    return F.onSnapshot(F.query(colR(game), F.orderBy("score", "desc"), F.limit(n)), s => {
+      bump(s.size || 1, 0);
+      cb(s.docs.map(d => ({ uid: d.id, name: String(d.data().name || "").slice(0, 40), score: Number(d.data().score) || 0 })));
+    }, NOP);
+  },
+  // 目前名次 = 分數比我高的人數 + 1
+  async rankOf(game, score) {
+    bump(1, 0);
+    const c = await F.getCountFromServer(F.query(colR(game), F.where("score", ">", score)));
+    return c.data().count + 1;
+  },
+  // 寫入個人最高；rank = true 同步寫進排行榜（name 為已處理好的顯示名稱），false 則自排行榜移除
+  async saveScore(game, score, { rank, name }) {
+    const u = scoreUid();
+    if (!u || !SAVE_PROFILE) return;
+    bump(0, 2);
+    const b = F.writeBatch(F.db);
+    b.set(F.doc(colB(game), u), { score, inRank: !!rank, name: rank ? String(name || "").slice(0, 40) : "" });
+    if (rank) b.set(F.doc(colR(game), u), { score, name: String(name || "").slice(0, 40), updatedAt: F.serverTimestamp() });
+    else b.delete(F.doc(colR(game), u));
+    await b.commit();
+  }
+};
+
 window.MiniHubAuth = {
-  hasSession,
+  hasSession, scores,
   preload: () => boot().catch(() => {}),     // 按下「登入」時預先載入，之後彈出視窗才不會被瀏覽器擋
   ping, usage: () => ({ ...use }),
   // key: "google" | "github"

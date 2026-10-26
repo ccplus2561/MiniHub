@@ -156,6 +156,7 @@
     $$('[data-group="lang"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.lang));
     const pv = $("#rankPreview");
     if (pv) pv.textContent = !window.MiniHubAccount.uid ? "登入後顯示" : !prefs.joinRank ? "不加入排行榜" : rankName();
+    document.dispatchEvent(new CustomEvent("minihub:prefs"));   // 通知遊戲（快捷鍵介面 / 排行榜）設定已變
   }
 
   /* ---------- 排行榜：名稱遮蔽 / 資格（供遊戲查詢） ---------- */
