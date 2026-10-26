@@ -15,10 +15,10 @@
 
     <!-- 左側導覽軌（橫向平板：左手拇指導覽） -->
     <aside class="rail">
-      <div class="brand">
+      <button class="brand" id="brandBtn" aria-label="公告">
         <svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01"/></svg>
         <b>MiniHub</b>
-      </div>
+      </button>
       <nav class="tabs" id="sidebar" aria-label="主選單">
         <button class="nav-item active" data-view="home">
         <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
@@ -291,6 +291,7 @@
           <h4>2. 使用目的</h4>
           <p>上述資料僅用於識別你的玩家身分、顯示帳號資訊，以及（在你允許公開使用者名稱時）提供排行榜等遊戲功能。</p>
           <h4>3. 資料儲存與第三方服務</h4>
+          <p>本站會向 Google Apps Script 讀取公告與開發中遊戲清單；這個請求不含你的帳號資料，但 Google 可能記錄 IP 等一般連線資訊。</p>
           <p>登入與玩家資料由 Google Firebase（Authentication 與 Cloud Firestore）處理與儲存；你選擇的登入供應商（Google、GitHub）亦適用其各自的條款與隱私權政策。</p>
           <h4>4. 偏好設定與登入狀態</h4>
           <p>顯示、音效、操作等偏好設定只存在於目前網頁的記憶體，不會寫入瀏覽器或伺服器，重新開啟網頁即恢復預設。登入狀態僅保留到分頁關閉為止。</p>
@@ -447,6 +448,16 @@
     </div>
   </div>
 
+  <!-- 公告（資料來自 Google 試算表；進站自動彈出，點左上角 MiniHub 可再開） -->
+  <div class="modal" id="noticeModal" hidden>
+    <div class="modal-box left" role="dialog" aria-modal="true" aria-labelledby="noticeTitle">
+      <div class="modal-logo"><svg viewBox="0 0 24 24"><path d="M4 10v4h3l5 4V6L7 10H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg></div>
+      <h3 id="noticeTitle" class="c">公告</h3>
+      <div class="ann-list" id="noticeList"></div>
+      <button class="btn-primary sm ann-ok" data-close data-autofocus><span>我知道了</span></button>
+    </div>
+  </div>
+
   <!-- 同 email 已用其他方式註冊：請用原本的方式登入以連結 -->
   <div class="modal" id="linkModal" hidden>
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="linkTitle">
@@ -465,6 +476,7 @@
   <script src="js/sfx.js"></script>
   <script src="js/app.js"></script>
   <script src="js/settings.js"></script>
+  <script src="js/remote.js"></script>
   <script type="module" src="js/firebase.js"></script>
 </body>
 </html>

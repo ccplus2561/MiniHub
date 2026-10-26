@@ -9,8 +9,10 @@
   let category = "全部";
 
   /* ---------- 卡片 ---------- */
+  const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function cardEl(g, idx = 0) {
     const soon = !g.path;
+    const badge = g.badge || (soon ? "即將推出" : "");
     const el = document.createElement("button");
     el.className = "card" + (soon ? " soon" : "");
     el.dataset.id = g.id;
@@ -18,12 +20,14 @@
     el.style.setProperty("--c1", g.colors[0]);
     el.style.setProperty("--c2", g.colors[1]);
     el.innerHTML = `
-      <div class="card-art"><span class="emoji">${g.emoji}</span></div>
-      ${soon ? '<span class="badge">即將推出</span>' : ""}
+      <div class="card-art">${g.icon ? `<img class="icon" src="${esc(g.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="emoji">${esc(g.emoji)}</span>`}</div>
+      ${badge ? `<span class="badge">${esc(badge)}</span>` : ""}
       <div class="card-info">
-        <div class="card-name">${g.title}</div>
-        <div class="card-sub">${g.category}</div>
+        <div class="card-name">${esc(g.title)}</div>
+        <div class="card-sub">${esc(g.category)}</div>
       </div>`;
+    const img = $("img.icon", el);
+    if (img) img.addEventListener("error", () => { const s = document.createElement("span"); s.className = "emoji"; s.textContent = g.emoji || "🎮"; img.replaceWith(s); });
     return el;
   }
 
@@ -244,6 +248,7 @@
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
     if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
+    if (!$("#noticeModal").hidden) { if (e.key === "Escape" || e.key === "Enter") { closeModal("noticeModal"); e.preventDefault(); } return; }
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
@@ -334,7 +339,7 @@
     $$(".legal-doc").forEach(d => { d.hidden = d.dataset.doc !== tab; d.scrollTop = 0; });
   }
   function showLegal(tab) {
-    ["loginModal", "termsModal", "logoutModal", "nameModal", "linkModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "termsModal", "logoutModal", "nameModal", "linkModal", "noticeModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -512,7 +517,7 @@
       signedIn = true; setAccount(profile); paintLogin(); closeModal("profileModal");
       if (first) toast("歡迎回來，" + profile.name + "！");
     } else {                           // 首次登入
-      signedIn = true; paintLogin();
+      signedIn = true; paintLogin(); closeModal("noticeModal");
       startProfile(user.email);
     }
   });
@@ -588,6 +593,43 @@
   renderFeatured();
   renderChips();
   renderLibrary();
+
+  /* ---------- 遠端內容（公告 / 開發中遊戲，由 js/remote.js 呼叫） ---------- */
+  window.MiniHubAddGames = list => {
+    const have = new Set(games.map(g => g.id));
+    const add = list.filter(g => !have.has(g.id));
+    if (!add.length) return;
+    games.push(...add);
+    renderChips(); renderLibrary();
+    const m2 = location.hash.match(/play=([\w-]+)/);   // 分享連結指向外部遊戲
+    if (m2 && player.hidden) { const g = add.find(x => x.id === m2[1]); if (g) openGame(g); }
+  };
+  let notices = [];
+  function renderNotices() {
+    const box = $("#noticeList"); box.innerHTML = "";
+    notices.forEach(n => {
+      const it = document.createElement("article"); it.className = "ann" + (n.hot ? " hot" : "");
+      const head = document.createElement("div"); head.className = "ann-head";
+      if (n.hot) { const t = document.createElement("span"); t.className = "ann-tag"; t.textContent = "重要"; head.appendChild(t); }
+      const h = document.createElement("b"); h.textContent = n.title; head.appendChild(h);
+      if (n.date) { const d = document.createElement("small"); d.textContent = n.date; head.appendChild(d); }
+      it.appendChild(head);
+      if (n.body) { const p = document.createElement("p"); p.textContent = n.body; it.appendChild(p); }
+      if (n.link) { const a = document.createElement("a"); a.href = n.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = "了解更多"; it.appendChild(a); }
+      box.appendChild(it);
+    });
+  }
+  window.MiniHubSetNotices = (list, autoOpen) => {
+    notices = list || [];
+    if (!notices.length) return;
+    renderNotices();
+    // 進站時自動彈出一次（其他視窗、遊戲、建立資料視窗開著時不打擾）
+    if (autoOpen && player.hidden && !$$(".modal:not([hidden])").length) { sfx("open"); openModal("noticeModal"); }
+  };
+  $("#brandBtn").addEventListener("click", () => {
+    if (!notices.length) return toast("目前沒有公告");
+    sfx("open"); openModal("noticeModal");
+  });
 
   // 分享連結：index.html#play=snake
   const m = location.hash.match(/play=([\w-]+)/);
