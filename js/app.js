@@ -177,7 +177,8 @@
   function midItems() {
     const v = document.body.dataset.view, P = ".pane.active ";
     let list = [];
-    if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
+    if (v === "home") list = $$("#homeAnnList .home-ann-item");
+    else if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
     else if (v === "about") list = $$("#view-about .legal-tab");
     else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
     return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
@@ -216,7 +217,7 @@
   function setZone(z, byKey) {
     zone = z; document.body.dataset.zone = z; clearK();
     if (byKey) sfx(z === "mid" ? "confirm" : "back");
-    if (z === "mid" && byKey && document.body.dataset.view !== "home") {
+    if (z === "mid" && byKey) {
       const items = midItems();
       const first = document.body.dataset.view === "settings" ? $(".set-item.active") : items[0];
       if (first) setK(first, true);
@@ -288,7 +289,6 @@
       return;
     }
     if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
-    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); return; }   // 首頁暫時清空
     if (dir) {
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);
@@ -639,6 +639,26 @@
       box.appendChild(it);
     });
     box.scrollTop = 0;
+    renderHomeNotices(fresh);
+  }
+  // 首頁最右側公告欄：鍵盤可選取，Enter / 點擊 = 開啟公告視窗並捲到該則
+  function renderHomeNotices(fresh) {
+    const list = $("#homeAnnList"); list.innerHTML = "";
+    notices.forEach((n, i) => {
+      const b = document.createElement("button"); b.className = "home-ann-item" + (n.hot ? " hot" : "");
+      const meta = document.createElement("div"); meta.className = "ann-meta";
+      if (n.hot) { const t = document.createElement("span"); t.className = "ann-tag hot"; t.innerHTML = ICON_WARN + "重要"; meta.appendChild(t); }
+      if (fresh(n.date)) { const t = document.createElement("span"); t.className = "ann-tag new"; t.textContent = "新"; meta.appendChild(t); }
+      if (n.date) { const d = document.createElement("span"); d.className = "ann-date"; d.textContent = n.date; meta.appendChild(d); }
+      const h = document.createElement("h4"); h.textContent = n.title;
+      b.append(meta, h);
+      if (n.body) { const p = document.createElement("p"); p.textContent = n.body; b.appendChild(p); }
+      b.addEventListener("click", () => {
+        sfx("open"); openModal("noticeModal");
+        const a = $$("#noticeList .ann")[i]; if (a) a.scrollIntoView({ block: "start" });
+      });
+      list.appendChild(b);
+    });
   }
   window.MiniHubSetNotices = (list, autoOpen) => {
     notices = list || [];
