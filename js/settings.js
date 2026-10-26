@@ -110,18 +110,20 @@
 
   /* ---------- 偏好（開關 / 分段）：不保存 ---------- */
   const DEFAULTS = {
-    cardSize: "m", anim: true, fsStart: false,
+    cardSizeD: "m", cardSizeM: "m", anim: true, fsStart: false,   // 圖卡大小：電腦版 / 手機版各自保存
     mute: false, music: true, sfx: true,
     kbd: true, touch: true, publicName: false, joinRank: false,
     lang: "zh-Hant", display: "auto"
   };
   // 登入後同步到帳號的項目（動畫 / 全螢幕 / 語言 / 音效 / 操作；隱私與帳號另外同步）。圖卡大小、顯示模式不保存
-  const SYNC = ["anim", "fsStart", "lang", "mute", "music", "sfx", "kbd", "touch"];
+  const SYNC = ["anim", "fsStart", "lang", "mute", "music", "sfx", "kbd", "touch", "cardSizeD", "cardSizeM"];
   const LANGS = ["zh-Hant"];
   let prefs = { ...DEFAULTS };
   // 所有參數僅存在記憶體：不寫入 localStorage / cookie，重新開啟網頁即恢復預設
   const save = () => {};
   const SIZES = { s: "132px", m: "168px", l: "212px" };
+  const SIZES_M = { s: "112px", m: "140px", l: "172px" };   // 手機版圖卡較小
+  const SIZE_KEYS = ["s", "m", "l"];
   const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱", joinRank: "加入排行榜" };
   const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
   const say = m => window.MiniHubToast && MiniHubToast(m);
@@ -129,22 +131,27 @@
   // 顯示模式：auto = 螢幕寬度 ≤ 820px 用手機版；也可手動指定。只影響版面（body.m），不保存
   const narrow = matchMedia("(max-width: 820px)");
   narrow.addEventListener && narrow.addEventListener("change", () => paint());
+  // 手機版：鍵盤快捷鍵固定關閉、觸控滑動固定開啟（只改實際效果，不動已保存的電腦版設定）
+  const isMobile = () => prefs.display === "mobile" || (prefs.display === "auto" && narrow.matches);
+  const sizeKey = () => isMobile() ? "cardSizeM" : "cardSizeD";
+  const eff = k => isMobile() && k === "kbd" ? false : isMobile() && k === "touch" ? true : prefs[k];
   function paint() {
+    const mob = isMobile();
     $$("[data-set]").forEach(el => {
-      const v = prefs[el.dataset.set];
-      if (el.classList.contains("switch")) el.setAttribute("aria-checked", !!v);
+      const k = el.dataset.set, v = k === "cardSize" ? prefs[sizeKey()] : eff(k);
+      if (el.classList.contains("switch")) { el.setAttribute("aria-checked", !!v); el.disabled = mob && (k === "kbd" || k === "touch"); }
       else if (el.classList.contains("seg")) $$("button", el).forEach(b => b.classList.toggle("on", b.dataset.value === v));
     });
     // 全部靜音時，音樂 / 音效列變暗
     $$("[data-dep]").forEach(r => r.classList.toggle("off", !!prefs[r.dataset.dep]));
     // 允許鍵盤快捷鍵 → 才顯示快捷鍵介面與底部提示
-    $("#kbdPanel").hidden = !prefs.kbd;
-    $("#kbdOff").hidden = prefs.kbd;
-    document.body.classList.toggle("no-kbd", !prefs.kbd);
+    $("#kbdPanel").hidden = !eff("kbd");
+    $("#kbdOff").hidden = eff("kbd");
+    document.body.classList.toggle("no-kbd", !eff("kbd"));
     document.body.classList.toggle("no-anim", !prefs.anim);
-    document.body.classList.toggle("no-touch", !prefs.touch);
-    document.documentElement.style.setProperty("--card-w", SIZES[prefs.cardSize] || SIZES.m);
-    document.body.classList.toggle("m", prefs.display === "mobile" || (prefs.display === "auto" && narrow.matches));
+    document.body.classList.toggle("no-touch", !eff("touch"));
+    document.documentElement.style.setProperty("--card-w", (mob ? SIZES_M : SIZES)[prefs[sizeKey()]] || (mob ? SIZES_M : SIZES).m);
+    document.body.classList.toggle("m", mob);
     $$('[data-group="display"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.display));
     $$('[data-group="lang"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.lang));
     const pv = $("#rankPreview");
@@ -201,9 +208,9 @@
       }
       return; }
     const sb = e.target.closest(".seg button");
-    if (sb) { const k = sb.parentElement.dataset.set; prefs[k] = sb.dataset.value; save(); paint(); queueSave(k); sfx("select"); say(LABELS[k] + "：" + sb.textContent); }
+    if (sb) { let k = sb.parentElement.dataset.set; const label = LABELS[k]; if (k === "cardSize") k = sizeKey(); prefs[k] = sb.dataset.value; save(); paint(); queueSave(k); sfx("select"); say(label + "：" + sb.textContent); }
   });
-  window.MiniHubPrefs = () => prefs;
+  window.MiniHubPrefs = () => ({ ...prefs, kbd: eff("kbd"), touch: eff("touch"), cardSize: prefs[sizeKey()] });   // 供大廳 / 音效使用的「實際生效」設定
   // 登入後套用帳號裡的「公開使用者名稱」；登出（訪客）回到預設
   document.addEventListener("minihub:account", () => {
     const a = window.MiniHubAccount;
@@ -214,7 +221,7 @@
       dirty = false; clearTimeout(saveT);
     }
     else {
-      if (a.prefs) SYNC.forEach(k => { const v = a.prefs[k]; if (typeof v === typeof DEFAULTS[k] && (k !== "lang" || LANGS.includes(v))) prefs[k] = v; });
+      if (a.prefs) SYNC.forEach(k => { const v = a.prefs[k]; if (typeof v === typeof DEFAULTS[k] && (k !== "lang" || LANGS.includes(v)) && (!/^cardSize/.test(k) || SIZE_KEYS.includes(v))) prefs[k] = v; });
       if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;
       if (typeof a.joinRank === "boolean") prefs.joinRank = a.joinRank;
     }

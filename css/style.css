@@ -720,7 +720,7 @@ body.m .chips { flex-wrap: nowrap; overflow-x: auto; margin: 0 -16px 6px; paddin
 body.m .chips::-webkit-scrollbar { display: none; }
 body.m .chip { flex: none; padding: 8px 16px; font-size: 15px; }
 body.m .card-row { margin: 0 -16px; padding: 22px 24px 24px; gap: 16px; }
-body.m .card { width: calc(var(--card-w, 168px) * .8); border-radius: 12px; }
+body.m .card { width: var(--card-w, 140px); border-radius: 12px; }
 body.m .card-name { font-size: 16px; }
 body.m .card-sub { font-size: 12px; }
 body.m .badge { top: 8px; left: 8px; padding: 2px 9px; font-size: 11px; }
@@ -764,3 +764,7 @@ body.m .ann-foot { padding: 12px 14px 16px; }
 body.m .ann-hint { display: none; }
 body.m .player-title { font-size: 17px; }
 body.m .toast { bottom: calc(78px + env(safe-area-inset-bottom)); max-width: calc(100vw - 32px); font-size: 16px; padding: 10px 18px; text-align: center; }
+
+.switch:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
+.m-only { display: none !important; }
+body.m .m-only { display: flex !important; }
