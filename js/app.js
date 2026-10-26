@@ -12,7 +12,7 @@
   const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   function cardEl(g, idx = 0) {
     const soon = !g.path;
-    const badge = g.badge || (soon ? "封測中" : "");
+    const badge = g.badge || (soon ? "即將推出" : "");
     const el = document.createElement("button");
     el.className = "card" + (soon ? " soon" : "");
     el.dataset.id = g.id;
@@ -58,7 +58,7 @@
     cards.forEach((c, idx) => c.classList.toggle("selected", idx === selected));
     $("#heroTitle").textContent = g.title;
     $("#heroDesc").textContent = g.desc || g.category;
-    $("#playBtn span").textContent = g.path ? "開始遊戲" : "封測中";
+    $("#playBtn span").textContent = g.path ? "開始遊戲" : (g.badge || "即將推出");
     hero.hidden = false;
     hero.classList.remove("pop"); void hero.offsetWidth; hero.classList.add("pop");   // 每次選擇都從底部跳出
     cards[selected].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
@@ -119,7 +119,7 @@
   const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
   function openGame(g, el) {
-    if (!g.path) { sfx("deny"); return toast("「" + g.title + "」封測中，敬請期待！"); }
+    if (!g.path) { sfx("deny"); return toast("「" + g.title + "」" + (g.badge || "即將推出") + "，敬請期待！"); }
     sfx("open");
     current = g;
     srcEl = el || $("#libraryRow .card.selected");
