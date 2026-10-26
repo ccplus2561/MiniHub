@@ -134,6 +134,10 @@
             <!-- 顯示 -->
             <div class="pane" id="pane-display">
               <div class="set-label">顯示模式</div>
+              <button class="radio-card wide" data-group="display" data-value="auto">
+                <i class="radio"></i>
+                <div><b>自動</b><p>依裝置與螢幕大小自動選擇版面</p></div>
+              </button>
               <button class="radio-card wide selected" data-group="display" data-value="desktop">
                 <i class="radio"></i>
                 <div><b>電腦版 <span class="tag">預設</span></b><p>適合電腦與平板的橫向版面</p></div>
@@ -188,9 +192,11 @@
             <!-- 隱私 -->
             <div class="pane" id="pane-privacy">
               <div class="set-group">
-                <div class="set-row"><div class="set-text"><b>允許公開使用者名稱</b></div><button class="switch" role="switch" aria-checked="false" data-set="publicName" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許加入排行榜</b><small>開啟後才能在遊戲中進行排名比較</small></div><button class="switch" role="switch" aria-checked="false" data-set="joinRank" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許公開使用者名稱</b><small>開啟顯示完整名稱，關閉則部分以 * 遮蔽</small></div><button class="switch" role="switch" aria-checked="false" data-set="publicName" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>排行榜上的顯示名稱</b><small>依目前設定預覽</small></div><span class="stat plain" id="rankPreview">—</span></div>
               </div>
-              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>允許後才可以在遊戲中使用排名機制；關閉時你的名稱不會出現在排行榜。</p></div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>需登入並開啟「允許加入排行榜」，才能在遊戲中進行排名比較；關閉時不會出現在任何排行榜。</p></div>
             </div>
 
             <!-- 語言 -->
@@ -232,7 +238,7 @@
               <div class="notice" id="kbdOff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>鍵盤快捷鍵已關閉。要使用鍵盤操作，請先開啟左側的「允許鍵盤快捷鍵」。</p></div>
             </div>
             <div class="help-pane" id="help-privacy">
-              <div class="help-title">隱私</div><p>允許公開使用者名稱：開啟後才能使用遊戲內的排名機制；關閉時你的名稱不會出現在排行榜。</p><p>首次登入時會詢問這個選項（預設開啟）。登入後，這裡的選擇會同步到你的帳號；訪客只在本次開啟網頁期間有效。</p>
+              <div class="help-title">隱私</div><p>允許加入排行榜：開啟後才能在遊戲中進行排名比較；關閉時你不會出現在任何排行榜。</p><p>允許公開使用者名稱：開啟時排行榜顯示完整名稱；關閉時只顯示部分字元，其餘以 * 取代（例如「王*明」）。</p><p>首次登入時會詢問這兩個選項（預設開啟）。登入後，這裡的選擇會同步到你的帳號；訪客無法加入排行榜。</p>
             </div>
             <div class="help-pane" id="help-language">
               <div class="help-title">語言</div><p>目前僅提供繁體中文，其他語言之後再開放。</p>
@@ -285,11 +291,11 @@
             <li>登入時由 Google 或 GitHub 提供的電子郵件地址。</li>
             <li>你建立的使用者名稱與系統產生的遊戲 UID。</li>
             <li>註冊時間與登入時間紀錄（用於顯示「註冊遊戲時間」與「上次登入時間」）。</li>
-            <li>你對「允許公開使用者名稱」的選擇。</li>
+            <li>你對「允許加入排行榜」與「允許公開使用者名稱」的選擇。</li>
           </ul>
           <p>登入供應商提供的大頭貼僅在登入期間用於畫面顯示，不會另外儲存。</p>
           <h4>2. 使用目的</h4>
-          <p>上述資料僅用於識別你的玩家身分、顯示帳號資訊，以及（在你允許公開使用者名稱時）提供排行榜等遊戲功能。</p>
+          <p>上述資料僅用於識別你的玩家身分、顯示帳號資訊，以及（在你允許加入排行榜時）提供排行榜等遊戲功能。</p>
           <h4>3. 資料儲存與第三方服務</h4>
           <p>本站會向 Google Apps Script 讀取公告與開發中遊戲清單；這個請求不含你的帳號資料，但 Google 可能記錄 IP 等一般連線資訊。</p>
           <p>登入與玩家資料由 Google Firebase（Authentication 與 Cloud Firestore）處理與儲存；你選擇的登入供應商（Google、GitHub）亦適用其各自的條款與隱私權政策。</p>
@@ -297,7 +303,7 @@
           <p>顯示、音效、操作等偏好設定只存在於目前網頁的記憶體，不會寫入瀏覽器或伺服器，重新開啟網頁即恢復預設。登入狀態僅保留到分頁關閉為止。</p>
           <p>為了加快開啟速度，本站會把公開的公告與遊戲清單暫存在你的瀏覽器，下次開啟時先顯示、再於背景更新；其中不含任何帳號資料，清除瀏覽器資料即可移除。</p>
           <h4>5. 公開範圍</h4>
-          <p>你的電子郵件不會公開。首次登入時會詢問是否允許公開使用者名稱（預設開啟），只有允許時你的名稱才可能出現在排行榜；你可隨時在「設定 &gt; 隱私」變更。</p>
+          <p>你的電子郵件不會公開。首次登入時會詢問是否允許加入排行榜與公開使用者名稱（預設開啟）。只有允許加入排行榜時你才可能出現在排行榜；允許公開使用者名稱時顯示完整名稱，否則只顯示部分字元（其餘以 * 取代）。你可隨時在「設定 &gt; 隱私」變更。</p>
           <h4>6. 資料保存與刪除</h4>
           <p>玩家資料會保存到你要求刪除或服務終止為止。如需查詢、更正或刪除資料，請透過本站公布的聯絡方式與我們聯繫。</p>
           <h4>7. 政策修改</h4>
@@ -393,7 +399,11 @@
       <p class="field-hint">9 位數字，由系統產生</p>
 
       <div class="pub-row">
-        <div class="set-text"><b>允許公開使用者名稱</b><small>開啟後，你的名稱才可出現在排行榜；之後可在「設定 &gt; 隱私」變更</small></div>
+        <div class="set-text"><b>允許加入排行榜</b><small>開啟後才能在遊戲中進行排名比較；之後可在「設定 &gt; 隱私」變更</small></div>
+        <button class="switch" role="switch" type="button" aria-checked="true" id="profJoin" aria-label="允許加入排行榜"><i></i></button>
+      </div>
+      <div class="pub-row">
+        <div class="set-text"><b>允許公開使用者名稱</b><small>開啟時排行榜顯示完整名稱，關閉則部分以 * 遮蔽</small></div>
         <button class="switch" role="switch" type="button" aria-checked="true" id="profPublic" aria-label="允許公開使用者名稱"><i></i></button>
       </div>
 

@@ -447,6 +447,7 @@
     $("#profEmail").textContent = email;
     $("#profName").value = "";
     $("#profPublic").setAttribute("aria-checked", "true");   // 預設開啟
+    $("#profJoin").setAttribute("aria-checked", "true");
     validateName();
     pickUid();
     openModal("profileModal");
@@ -461,17 +462,17 @@
     $("#profOk").disabled = r !== "ok" || picking;
   }
   $("#profName").addEventListener("input", validateName);
-  $("#profPublic").addEventListener("click", e => {
+  ["#profPublic", "#profJoin"].forEach(id => $(id).addEventListener("click", e => {
     const b = e.currentTarget, on = b.getAttribute("aria-checked") !== "true";
     b.setAttribute("aria-checked", on); sfx(on ? "on" : "off");
-  });
+  }));
   $("#profReroll").addEventListener("click", () => { if (!picking) pickUid(); });
   $("#profOk").addEventListener("click", async () => {
     const btn = $("#profOk");
     if (btn.disabled) return;
     btn.disabled = true; $("span", btn).textContent = "建立中…";
     try {
-      const p = await MiniHubAuth.createProfile({ name: $("#profName").value, gameUid: $("#profUid").textContent, publicName: $("#profPublic").getAttribute("aria-checked") === "true" });
+      const p = await MiniHubAuth.createProfile({ name: $("#profName").value, gameUid: $("#profUid").textContent, publicName: $("#profPublic").getAttribute("aria-checked") === "true", joinRank: $("#profJoin").getAttribute("aria-checked") === "true" });
       closeModal("profileModal");
       setAccount(p);
       toast("歡迎，" + p.name + "！");
@@ -490,8 +491,8 @@
 
   function setAccount(p) {
     window.MiniHubAccount = p
-      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null }
-      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null };
+      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null }
+      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
   let photo = "";

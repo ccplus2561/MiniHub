@@ -112,13 +112,13 @@
   const DEFAULTS = {
     cardSize: "m", anim: true, fsStart: false,
     mute: false, music: true, sfx: true,
-    kbd: true, touch: true, publicName: false
+    kbd: true, touch: true, publicName: false, joinRank: false
   };
   let prefs = { ...DEFAULTS };
   // 所有參數僅存在記憶體：不寫入 localStorage / cookie，重新開啟網頁即恢復預設
   const save = () => {};
   const SIZES = { s: "132px", m: "168px", l: "212px" };
-  const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱" };
+  const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱", joinRank: "加入排行榜" };
   const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
   const say = m => window.MiniHubToast && MiniHubToast(m);
 
@@ -137,14 +137,35 @@
     document.body.classList.toggle("no-anim", !prefs.anim);
     document.body.classList.toggle("no-touch", !prefs.touch);
     document.documentElement.style.setProperty("--card-w", SIZES[prefs.cardSize] || SIZES.m);
+    const pv = $("#rankPreview");
+    if (pv) pv.textContent = !window.MiniHubAccount.uid ? "登入後顯示" : !prefs.joinRank ? "不加入排行榜" : rankName();
   }
+
+  /* ---------- 排行榜：名稱遮蔽 / 資格（供遊戲查詢） ---------- */
+  // 遮蔽：保留頭尾，中間以 * 取代（2 字只留第一字；1 字全遮），不會整個名稱都是 *
+  const maskName = n => {
+    const c = Array.from(String(n || ""));
+    if (c.length <= 1) return "*";
+    if (c.length === 2) return c[0] + "*";
+    return c[0] + "*".repeat(c.length - 2) + c[c.length - 1];
+  };
+  const rankName = () => { const a = window.MiniHubAccount; return prefs.publicName ? a.name : maskName(a.name); };
+  const canRank = () => !!window.MiniHubAccount.uid && !!prefs.joinRank;   // 已登入且開啟「允許加入排行榜」才能進行排名比較
+  window.MiniHubRank = { canRank, displayName: rankName, maskName };
+  // 遊戲（iframe）可傳 { type: "minihub:getPlayer" } 取得排行榜資格與顯示名稱；不提供電子郵件
+  addEventListener("message", e => {
+    const fr = $("#frame");
+    if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== "minihub:getPlayer") return;
+    const ok = canRank();
+    e.source.postMessage({ type: "minihub:player", canRank: ok, name: ok ? rankName() : "", uid: ok ? window.MiniHubAccount.uid : "" }, e.origin === "null" ? "*" : e.origin);
+  });
 
   document.addEventListener("click", e => {
     const sw = e.target.closest(".switch[data-set]");
     if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); sfx(prefs[k] ? "on" : "off"); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉"));
-      if (k === "publicName" && window.MiniHubAccount.uid && window.MiniHubAuth) {   // 已登入：同步到帳號
+      if ((k === "publicName" || k === "joinRank") && window.MiniHubAccount.uid && window.MiniHubAuth) {   // 已登入：同步到帳號
         const v = prefs[k];
-        MiniHubAuth.setPublicName(v).catch(() => { prefs[k] = !v; paint(); say("同步失敗，已還原"); });
+        MiniHubAuth[k === "publicName" ? "setPublicName" : "setJoinRank"](v).catch(() => { prefs[k] = !v; paint(); say("同步失敗，已還原"); });
       }
       return; }
     const sb = e.target.closest(".seg button");
@@ -154,8 +175,11 @@
   // 登入後套用帳號裡的「公開使用者名稱」；登出（訪客）回到預設
   document.addEventListener("minihub:account", () => {
     const a = window.MiniHubAccount;
-    if (!a.uid) prefs.publicName = DEFAULTS.publicName;
-    else if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;
+    if (!a.uid) { prefs.publicName = DEFAULTS.publicName; prefs.joinRank = DEFAULTS.joinRank; }
+    else {
+      if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;
+      if (typeof a.joinRank === "boolean") prefs.joinRank = a.joinRank;
+    }
     paint();
   });
   paint();
