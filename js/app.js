@@ -197,19 +197,46 @@
     frame.focus();
   }
 
-  function closeGame() {
+  function closeGame(cb) {
     if (!current || closing) return;
     closing = true; sfx("close");
     if (document.fullscreenElement) document.exitFullscreen();
     history.replaceState(null, "", location.pathname + location.search);
-    const done = () => { player.hidden = true; frame.src = "about:blank"; current = null; closing = false; };
+    const done = () => { player.hidden = true; frame.src = "about:blank"; current = null; closing = false; if (typeof cb === "function") cb(); };
     const a = player.animate(
       [{ clipPath: "inset(0 round 0)", opacity: 1 }, { clipPath: clipFrom(srcEl), opacity: .3 }],
       { duration: 340, easing: EASE });
     a.onfinish = done;
   }
 
-  $("#closeBtn").addEventListener("click", closeGame);
+  $("#closeBtn").addEventListener("click", () => closeGame());
+
+  /* ---------- 遊戲中點左側導覽（只接受滑鼠 / 觸控）：立即暫停並詢問是否退出 ---------- */
+  // 退出時本局不另外計入成績；若已刷新個人最高紀錄，遊戲離開時會直接更新（由遊戲自己處理）
+  let leaveTo = null;
+  function pauseGame() {
+    try { frame.contentWindow.MiniHubPause && frame.contentWindow.MiniHubPause(); } catch (e) {}
+    try { frame.contentWindow.postMessage({ type: "minihub:pause" }, "*"); } catch (e) {}   // 外部遊戲可自行監聽
+  }
+  function settleLeave(ok) {
+    if (!leaveTo) return;
+    const go = leaveTo; leaveTo = null; closeModal("exitModal");
+    if (ok) { sfx("confirm"); go(); }
+    else { sfx("close"); try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} }
+  }
+  document.addEventListener("click", e => {
+    if (player.hidden || closing || !e.target.closest) return;
+    const b = e.target.closest(".rail button");
+    if (!b) return;
+    e.stopImmediatePropagation(); e.preventDefault();
+    if (e.detail === 0 || !touchOn() || leaveTo) return;   // 鍵盤 / 程式觸發一律不處理，避免與遊戲按鍵衝突
+    pauseGame();
+    try { document.activeElement && document.activeElement.blur(); } catch (x) {}
+    leaveTo = b.matches(".nav-item") ? () => { showView(b.dataset.view); closeGame(); } : () => closeGame(() => b.click());
+    sfx("open"); openModal("exitModal");
+  }, true);
+  $("#exitNo").addEventListener("click", () => settleLeave(false));
+  $("#exitOk").addEventListener("click", () => settleLeave(true));
   $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) frame.src = current.path; }); });
   $("#fsBtn").addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen();
@@ -316,6 +343,13 @@
       if (e.key === "Escape") { settleConsent(false); e.preventDefault(); }
       else if (kbdOn() && /^(Arrow(Up|Down|Left|Right)|[wasd])$/i.test(e.key)) {
         const b = [$("#consentNo"), $("#consentOk")]; b[b.indexOf(document.activeElement) === 1 ? 0 : 1].focus(); e.preventDefault();
+      }
+      return;
+    }
+    if (!$("#exitModal").hidden) {            // 退出確認：Esc = 繼續遊戲；方向鍵在兩個按鈕間移動
+      if (e.key === "Escape") { settleLeave(false); e.preventDefault(); }
+      else if (kbdOn() && /^(Arrow(Up|Down|Left|Right)|[wasd])$/i.test(e.key)) {
+        const b = [$("#exitNo"), $("#exitOk")]; b[b.indexOf(document.activeElement) === 1 ? 0 : 1].focus(); e.preventDefault();
       }
       return;
     }

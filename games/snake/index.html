@@ -22,12 +22,22 @@
   #btns button.main { background: var(--accent, #1a9fff); border-color: transparent; color: #04121f; }
   #btns button:hover:not(:disabled) { filter: brightness(1.15); }
   #btns button:disabled { opacity: .4; cursor: default; }
-  #info { display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 10px; }
-  #info .box { background: #16202d; border: 1px solid #263447; border-radius: 12px; padding: 8px 14px; min-width: 150px; }
+  /* 右側資訊面板（個人最高 / 排行榜）：可展開 / 收合，頂端對齊畫布 */
+  #side { position: fixed; right: 12px; top: 12px; width: 250px; z-index: 5; transition: transform .28s cubic-bezier(.2, .8, .2, 1); }
+  #side.closed { transform: translateX(calc(100% + 12px)); }
+  #info { display: flex; flex-direction: column; gap: 10px; padding: 10px; overflow-y: auto; max-height: inherit;
+    background: rgba(18, 26, 36, .94); border: 1px solid #263447; border-radius: 14px; }
+  #side.closed #info { visibility: hidden; transition: visibility 0s .28s; }
+  #side.float #info { background: rgba(18, 26, 36, .98); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+  #info .box { background: #16202d; border: 1px solid #263447; border-radius: 12px; padding: 8px 14px; min-width: 0; }
+  #sideTog { position: absolute; left: -30px; top: 0; width: 30px; height: 52px; display: grid; place-items: center; padding: 0; cursor: pointer;
+    color: var(--accent, #1a9fff); background: rgba(18, 26, 36, .94); border: 1px solid #263447; border-right: 0; border-radius: 12px 0 0 12px; }
+  #sideTog:hover { filter: brightness(1.3); }
+  #sideTog svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; transition: transform .28s; }
+  #side.closed #sideTog svg { transform: rotate(180deg); }
   #info h4 { margin: 0 0 4px; font-size: 13px; font-weight: 700; color: #a3adbd; letter-spacing: .06em; }
   #meBest { font-size: 26px; color: var(--accent, #1a9fff); }
-  #rankBox { min-width: 230px; }
-  #rankList { list-style: none; margin: 0; padding: 0; font-size: 15px; }
+    #rankList { list-style: none; margin: 0; padding: 0; font-size: 15px; }
   #rankList li { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; padding: 2px 0; }
   #rankList li.me { color: var(--accent, #1a9fff); font-weight: 700; }
   #rankList li.empty { color: #5d6b80; }
@@ -44,12 +54,15 @@
 <body>
   <div id="hud">分數 <b id="score">0</b>　最高 <b id="best">0</b></div>
   <canvas id="c" width="800" height="800"></canvas>
-  <div id="under">
-    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">再一次</button></div>
+  <aside id="side" hidden>
+    <button id="sideTog" aria-label="展開 / 收合" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     <div id="info">
       <div class="box" id="meBox" hidden><h4>個人最高</h4><b id="meBest">0</b></div>
       <div class="box" id="rankBox" hidden><h4>排行榜</h4><ol id="rankList"></ol></div>
     </div>
+  </aside>
+  <div id="under">
+    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">再一次</button></div>
     <div id="kbd" hidden>
       <span>移動 <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
       <span>開始 / 重來 <kbd>空白</kbd></span>
@@ -68,19 +81,34 @@ try {
   // 依視窗大小把畫布放到最大（保持正方形，扣掉上方分數與下方說明的高度）
   const $ = id => document.getElementById(id);
   const hud = $("hud"), under = $("under");
+  // 右側面板：寬螢幕固定在畫布右邊（記住展開 / 收合）；窄螢幕改成浮在畫布上，預設收合
+  const side = $("side"), tog = $("sideTog"), PW = 250;
+  let userSide = null, floatSide = false, floatOpen = false;
+  try { const v = localStorage.getItem("minihub.snake.side"); if (v !== null) userSide = v === "1"; } catch (e) {}
+  const sideOpen = () => floatSide ? floatOpen : userSide !== false;
+  function paintSide() {
+    const o = sideOpen();
+    side.classList.toggle("closed", !o); side.classList.toggle("float", floatSide);
+    tog.setAttribute("aria-expanded", o); tog.title = o ? "收合" : "展開";
+  }
+  function syncSide() { side.hidden = $("meBox").hidden && $("rankBox").hidden; }
   function fit() {
     const used = hud.offsetHeight + under.offsetHeight + 28 + 24;
     const size = Math.max(200, Math.floor(Math.min(innerWidth - 24, innerHeight - used)));
     cv.style.width = cv.style.height = size + "px";
+    side.style.top = Math.max(8, Math.round(cv.getBoundingClientRect().top)) + "px";
+    side.style.maxHeight = size + "px";
+    floatSide = (innerWidth - size) / 2 < PW + 12 + 30 + 8;
+    paintSide();
   }
   addEventListener("resize", fit); fit();
   try { new ResizeObserver(fit).observe(under); } catch (e) {}
-  let snake, dir, next, food, score, best = 0, alive, started, timer;
+  let snake, dir, next, food, score, best = 0, alive, started, timer, paused = false;
 
   function reset() {
     snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
     dir = next = { x: 1, y: 0 };
-    score = 0; alive = true; started = false;
+    score = 0; alive = true; started = false; paused = false;
     place(); draw(); updateHud(); updateBtns();
     clearInterval(timer);
   }
@@ -95,6 +123,10 @@ try {
   // 「再一次」按鈕：進行中也可重來（先送出目前分數）
   function restart() { if (asking) return; asking = true; askNext().then(ok => { asking = false; if (ok) { submit(); reset(); } }); }
   function start() { if (!started && alive) { started = true; timer = setInterval(step, 110); updateBtns(); } }
+  // 暫停 / 繼續（大廳點左側導覽時會呼叫 MiniHubPause；繼續：空白鍵、方向鍵、點一下或滑動）
+  function pause() { if (!alive || !started || paused) return; paused = true; clearInterval(timer); draw(); }
+  function resume() { if (!paused) return; paused = false; timer = setInterval(step, 110); draw(); }
+  window.MiniHubPause = pause;
   function updateBtns() { $("startBtn").disabled = started || !alive; $("againBtn").classList.toggle("main", !alive); }
   $("startBtn").addEventListener("click", start);
   $("againBtn").addEventListener("click", restart);
@@ -118,7 +150,12 @@ try {
       ctx.fillStyle = i ? ac : "#ffffff";
       ctx.beginPath(); ctx.roundRect(s.x * S + 2, s.y * S + 2, S - 4, S - 4, 12); ctx.fill();
     });
-    if (!alive) {
+    if (paused) {
+      ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold " + 28 * K + "px system-ui";
+      ctx.fillText("已暫停", cv.width / 2, cv.height / 2 - 6 * K);
+      ctx.font = 16 * K + "px system-ui"; ctx.fillText("按空白鍵或點一下繼續", cv.width / 2, cv.height / 2 + 24 * K);
+    } else if (!alive) {
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold " + 28 * K + "px system-ui";
       ctx.fillText("遊戲結束", cv.width / 2, cv.height / 2 - 6 * K);
@@ -132,6 +169,7 @@ try {
   }
   function turn(x, y) {
     if (!alive) return;
+    if (paused) resume();
     if (x === -dir.x && y === -dir.y) return;
     next = { x, y }; start();
   }
@@ -141,7 +179,7 @@ try {
   addEventListener("keydown", e => {
     const k = keys[e.key] || keys[e.key.toLowerCase()];
     if (k) { e.preventDefault(); turn(k[0], k[1]); }
-    else if (e.key === " ") { e.preventDefault(); if (alive && !started) start(); else again(); }
+    else if (e.key === " ") { e.preventDefault(); if (paused) resume(); else if (alive && !started) start(); else again(); }
   });
 
   // 大廳關閉「允許觸控滑動」時，遊戲內也不接受觸控 / 點擊
@@ -149,14 +187,21 @@ try {
   let tx, ty;
   addEventListener("touchstart", e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; }, { passive: true });
   addEventListener("touchend", e => {
-    if (e.target.closest && e.target.closest("#btns")) return;   // 按鈕自己處理
+    if (e.target.closest && e.target.closest("#btns, #side")) return;   // 按鈕 / 右側面板自己處理
     if (!touchOK()) return;
+    if (paused) resume();
     if (!alive) return again();
     const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
     if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0); else turn(0, dy > 0 ? 1 : -1);
   });
-  cv.addEventListener("click", () => { if (touchOK()) again(); });
+  cv.addEventListener("click", () => { if (touchOK()) { if (paused) resume(); else again(); } });
+  tog.addEventListener("click", e => {
+    if (e.detail !== 0 && !touchOK()) return;
+    if (floatSide) floatOpen = !floatOpen;
+    else { userSide = !sideOpen(); try { localStorage.setItem("minihub.snake.side", userSide ? "1" : "0"); } catch (x) {} }
+    paintSide();
+  });
 
   /* ---------- 個人最高 / 排行榜（登入後；與大廳設定同步） ---------- */
   const GAME = "snake";
@@ -174,10 +219,12 @@ try {
   function paintMe() {
     $("meBox").hidden = !logged;
     $("meBest").textContent = Math.max(serverBest, score);   // 遊戲中即時顯示
+    syncSide();
   }
   function paintRank() {
     const box = $("rankBox"), ul = $("rankList");
     box.hidden = !(logged && rankOn);
+    syncSide();
     if (box.hidden) return;
     ul.textContent = "";
     const me = myUid();
