@@ -784,3 +784,7 @@ body.m #profileModal .modal-box { max-height: calc(100dvh - 28px); }
 body.m #profileModal .modal-logo { width: 52px; height: 52px; margin-bottom: 10px; }
 body.m #profileModal h3 { font-size: 21px; }
 body.m #profileModal .field-label:first-child { margin-top: 10px; }
+
+/* 登入視窗：服務條款連結可用鍵盤選取 */
+.legal-link:focus-visible { outline: 3px solid #fff; outline-offset: 4px; border-radius: 4px; color: #fff; }
+#playConsentModal .modal-text { margin-bottom: 20px; }

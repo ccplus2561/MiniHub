@@ -118,7 +118,50 @@
   }
   const EASE = "cubic-bezier(.2, .8, .2, 1)";
 
+  /* ---------- 未登入：開始 / 繼續遊玩前需同意條款 ---------- */
+  let authReady = false, consent = null, consentAt = 0;
+  document.addEventListener("minihub:auth", () => { authReady = true; });
+  function askConsent(yes, no) {
+    if (consent) return false;                                  // 已在詢問中
+    const wasFs = !!document.fullscreenElement;
+    if (wasFs) document.exitFullscreen().catch(() => {});       // 全螢幕時視窗會被蓋住，先退出
+    consent = { yes, no, wasFs }; consentAt = Date.now();
+    try { document.activeElement && document.activeElement.blur(); } catch (e) {}   // 把鍵盤焦點從遊戲拿回來
+    sfx("open"); openModal("playConsentModal");
+    return true;
+  }
+  function settleConsent(ok) {
+    if (!consent) return;
+    const c = consent; consent = null; closeModal("playConsentModal");
+    if (ok && c.wasFs && !player.hidden && player.requestFullscreen) player.requestFullscreen().catch(() => {});
+    (ok ? c.yes : c.no)();
+  }
+  $("#consentOk").addEventListener("click", () => { if (Date.now() - consentAt < 350) return; sfx("confirm"); settleConsent(true); });   // 避免遊戲裡按的空白鍵直接觸發同意
+  $("#consentNo").addEventListener("click", () => { sfx("close"); settleConsent(false); });
+  // 遊戲「下一局」前呼叫：已登入直接 true；未登入需同意，不同意則回首頁並回傳 false
+  window.MiniHubRequestNext = () => new Promise(res => {
+    if (signedIn) return res(true);
+    const shown = askConsent(() => { res(true); try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} }, () => { res(false); closeGame(); });
+    if (!shown) res(false);
+  });
+  // 跨網域的外部遊戲：postMessage({type:"minihub:next"}) → 回覆 {type:"minihub:next-result", ok}
+  window.addEventListener("message", e => {
+    if (!e.data || e.data.type !== "minihub:next" || !frame.contentWindow || e.source !== frame.contentWindow) return;
+    MiniHubRequestNext().then(ok => { try { e.source.postMessage({ type: "minihub:next-result", ok }, "*"); } catch (x) {} });
+  });
+
   function openGame(g, el) {
+    if (g.path) {
+      if (!authReady && window.MiniHubAuth && MiniHubAuth.hasSession()) {   // 還在還原登入狀態：等結果再決定
+        let done = false; const go = () => { if (done) return; done = true; openGame(g, el); };
+        document.addEventListener("minihub:auth", go, { once: true }); setTimeout(() => { authReady = true; go(); }, 5000);
+        return;
+      }
+      if (!signedIn) { askConsent(() => launchGame(g, el), () => {}); return; }   // 不同意：不進入遊戲
+    }
+    launchGame(g, el);
+  }
+  function launchGame(g, el) {
     if (!g.path) { sfx("deny"); return toast("「" + g.title + "」" + (g.badge || "即將推出") + "，敬請期待！"); }
     sfx("open");
     current = g;
@@ -148,7 +191,7 @@
   }
 
   $("#closeBtn").addEventListener("click", closeGame);
-  $("#reloadBtn").addEventListener("click", () => { if (current) frame.src = current.path; });
+  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) frame.src = current.path; }); });
   $("#fsBtn").addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else player.requestFullscreen && player.requestFullscreen();
@@ -250,6 +293,13 @@
   }
   const DIRS = { ArrowUp: "up", w: "up", ArrowDown: "down", s: "down", ArrowLeft: "left", a: "left", ArrowRight: "right", d: "right" };
   document.addEventListener("keydown", e => {
+    if (!$("#playConsentModal").hidden) {      // 同意視窗：Esc = 不同意；方向鍵在兩個按鈕間移動
+      if (e.key === "Escape") { settleConsent(false); e.preventDefault(); }
+      else if (kbdOn() && /^(Arrow(Up|Down|Left|Right)|[wasd])$/i.test(e.key)) {
+        const b = [$("#consentNo"), $("#consentOk")]; b[b.indexOf(document.activeElement) === 1 ? 0 : 1].focus(); e.preventDefault();
+      }
+      return;
+    }
     if (!$("#profileModal").hidden) return;   // 建立資料視窗不可用 Esc 關閉
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
@@ -259,8 +309,9 @@
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
+      else if (kbdOn() && /^t$/i.test(e.key)) { $(".legal-link", $("#loginModal")).focus(); e.preventDefault(); }   // T：直接跳到服務條款（Enter 開啟）
       else if (kbdOn() && /^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「登入方式 / 取消」之間移動焦點（關閉快捷鍵時停用）
-        const b = $$(".btn-google, .btn-ghost", $("#loginModal"));
+        const b = $$(".btn-google, .btn-ghost, .legal-link", $("#loginModal"));
         const up = /^(ArrowUp|w)$/i.test(e.key), i = b.indexOf(document.activeElement);
         b[(i + (up ? -1 : 1) + b.length) % b.length].focus(); e.preventDefault();
       }
@@ -347,6 +398,7 @@
     $$(".legal-doc").forEach(d => { d.hidden = d.dataset.doc !== tab; d.scrollTop = 0; });
   }
   function showLegal(tab) {
+    if (consent) settleConsent(false);   // 看條款 = 先不遊玩（下一局的情況會回首頁）
     ["loginModal", "termsModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
