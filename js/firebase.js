@@ -161,11 +161,12 @@ async function deleteAccount() {
   const pid = ((user.providerData[0] || {}).providerId) || "google.com";
   await F.reauthenticateWithPopup(user, makeProvider(F, pid === "github.com" ? "github" : "google"));   // 需在點擊後立即呼叫，才不會被瀏覽器擋彈窗
   if (SAVE_PROFILE) {
-    bump(1, 2);
+    bump(1, 6);
     const snap = await F.getDoc(F.doc(F.db, "users", user.uid));
     const batch = F.writeBatch(F.db);
     if (snap.exists() && snap.data().gameUid) batch.delete(F.doc(F.db, "uids", snap.data().gameUid));
     batch.delete(F.doc(F.db, "users", user.uid));
+    ["snake"].forEach(g => { batch.delete(F.doc(colB(g), user.uid)); batch.delete(F.doc(colR(g), user.uid)); });   // 一併清掉遊戲成績 / 排行榜
     await batch.commit();
   }
   SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
