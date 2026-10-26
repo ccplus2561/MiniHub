@@ -428,6 +428,11 @@
       openModal("linkModal");
     }
     else if (c === "auth/popup-blocked") toast("登入視窗被瀏覽器擋住，請允許彈出視窗後再試");
+    else if (c === "auth/operation-not-allowed") toast("此登入方式尚未在 Firebase 後台啟用（Authentication > Sign-in method）");
+    else if (c === "auth/unauthorized-domain") toast("此網域未加入 Firebase 授權網域（Authentication > Settings）");
+    else if (c === "auth/network-request-failed") toast("網路連線失敗，請稍後再試");
+    else if (c === "auth/web-storage-unsupported") toast("瀏覽器封鎖了儲存空間，請關閉無痕 / 阻擋第三方 Cookie 後再試");
+    else if (c === "auth/internal-error" || c === "auth/invalid-credential") toast("登入設定有誤（" + c + "），請檢查 Firebase 後台的供應商設定");
     else if (c === "auth/account-exists-with-different-credential") toast("此電子郵件已用其他方式註冊，請改用原本的登入方式");
     else if (!/popup-closed|cancelled-popup/.test(c)) toast("登入失敗：" + (c || e.message));
   }
@@ -456,9 +461,10 @@
   let pEmail = "", picking = false;
   // 產生 UID 並先向資料庫確認沒人用（最多重試 5 次）
   async function pickUid() {
-    picking = true; $("#profOk").disabled = true; $("#profUid").textContent = "產生中…";
+    picking = true; updateProf(); $("#profUid").textContent = "產生中…";
     let uid = genUid();
-    try { for (let i = 0; i < 5 && !(await MiniHubAuth.isUidFree(uid)); i++) uid = genUid(); } catch (e) {}
+    const free = u => Promise.race([MiniHubAuth.isUidFree(u), new Promise(r => setTimeout(() => r(true), 6000))]);   // 逾時就略過檢查（建立時交易仍會確認唯一）
+    try { for (let i = 0; i < 5 && !(await free(uid)); i++) uid = genUid(); } catch (e) {}
     $("#profUid").textContent = uid; picking = false; validateName();
   }
   function checkName(v) {
@@ -471,8 +477,28 @@
     if (BANNED.some(w => v.toLowerCase().includes(w))) return "名稱含有保留字，請換一個";
     return "ok";
   }
+  /* 手機版：分 3 步（名稱 → UID → 隱私）；電腦版維持單頁 */
+  let pStep = 1;
+  const isMob = () => document.body.classList.contains("m");
+  function showErr(msg) { const el = $("#profErr"); el.hidden = !msg; el.textContent = msg || ""; }
+  function updateProf() {
+    const m = isMob(), last = pStep === 3, ok = checkName($("#profName").value) === "ok";
+    $$("#profileModal .pstep").forEach(x => x.classList.toggle("on", Number(x.dataset.step) === pStep));
+    $$("#profDots i").forEach((d, i) => d.classList.toggle("on", i === pStep - 1));
+    $("#profCancel").hidden = m && pStep > 1;
+    $("#profBack").hidden = !m || pStep === 1;
+    $("#profNext").hidden = !m || last;
+    $("#profOk").hidden = m && !last;
+    $("#profNext").disabled = pStep === 1 ? !ok : picking;
+    $("#profOk").disabled = !ok || picking;
+  }
+  function goStep(n) { pStep = Math.max(1, Math.min(3, n)); showErr(""); updateProf(); if (pStep === 1) setTimeout(() => $("#profName").focus(), 60); }
+  $("#profNext").addEventListener("click", () => { if (!$("#profNext").disabled) { sfx("move"); goStep(pStep + 1); } });
+  $("#profBack").addEventListener("click", () => { sfx("move"); goStep(pStep - 1); });
+  $("#profName").addEventListener("keydown", e => { if (e.key === "Enter" && isMob() && !$("#profNext").hidden && !$("#profNext").disabled) { e.preventDefault(); $("#profNext").click(); } });
+  window.addEventListener("resize", () => { if (!$("#profileModal").hidden) updateProf(); });
   function startProfile(email) {
-    pEmail = email;
+    pEmail = email; pStep = 1; showErr("");
     $("#profEmail").textContent = email;
     $("#profName").value = "";
     $("#profPublic").setAttribute("aria-checked", "true");   // 預設開啟
@@ -488,7 +514,7 @@
     hint.classList.toggle("bad", r && r !== "ok");
     hint.classList.toggle("good", r === "ok");
     hint.textContent = !r ? "可使用中文、英文、數字、底線 _" : r === "ok" ? "名稱可以使用" : r;
-    $("#profOk").disabled = r !== "ok" || picking;
+    updateProf();
   }
   $("#profName").addEventListener("input", validateName);
   ["#profPublic", "#profJoin"].forEach(id => $(id).addEventListener("click", e => {
@@ -499,16 +525,21 @@
   $("#profOk").addEventListener("click", async () => {
     const btn = $("#profOk");
     if (btn.disabled) return;
-    btn.disabled = true; $("span", btn).textContent = "建立中…";
+    btn.disabled = true; $("span", btn).textContent = "建立中…"; showErr("");
     try {
-      const p = await MiniHubAuth.createProfile({ name: $("#profName").value, gameUid: $("#profUid").textContent, publicName: $("#profPublic").getAttribute("aria-checked") === "true", joinRank: $("#profJoin").getAttribute("aria-checked") === "true", prefs: window.MiniHubSyncedPrefs && MiniHubSyncedPrefs() });
+      const p = await Promise.race([MiniHubAuth.createProfile({ name: $("#profName").value, gameUid: $("#profUid").textContent, publicName: $("#profPublic").getAttribute("aria-checked") === "true", joinRank: $("#profJoin").getAttribute("aria-checked") === "true", prefs: window.MiniHubSyncedPrefs && MiniHubSyncedPrefs() }),
+        new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 20000))]);
       closeModal("profileModal");
       setAccount(p);
       toast("歡迎，" + p.name + "！");
     } catch (e) {
-      if (e.code === "uid-taken") { pickUid(); toast("UID 已被使用，已換一組新的，請再按一次"); }
+      console.error("createProfile failed", e);
+      if (e.code === "uid-taken") { pickUid(); showErr("UID 已被使用，已換一組新的，請再按一次"); }
       else if (e.code === "already-has-profile") { closeModal("profileModal"); toast("此帳號已有玩家資料"); MiniHubAuth.loadProfile().then(setAccount); }
-      else toast("建立失敗：" + (e.code || e.message));
+      else if (e.code === "permission-denied") showErr("伺服器拒絕建立資料（permission-denied）。請檢查 Firestore 規則是否允許 users/{uid} 與 uids/{gameUid} 的建立。");
+      else if (e.code === "timeout" || e.code === "unavailable") showErr("連線逾時，請檢查網路後再按一次「建立並進入」。");
+      else if (e.code === "not-signed-in") showErr("登入狀態已失效，請取消後重新登入。");
+      else showErr("建立失敗：" + (e.code || e.message));
     }
     $("span", btn).textContent = "建立並進入";
     validateName();

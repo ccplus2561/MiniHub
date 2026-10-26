@@ -115,8 +115,10 @@ async function createProfile({ name, gameUid, publicName, joinRank, prefs }) {
     tx.set(idRef, { owner: user.uid });
     tx.set(uRef, { name, gameUid, email: user.email, createdAt: F.serverTimestamp(), publicName: !!publicName, joinRank: !!joinRank, ...(prefs ? { prefs } : {}) });
   });
-  await recordLogin(user.uid, null);                               // 首次登入也記一筆，下次登入時才有「上次」可顯示
-  return loadProfile(user.uid);
+  // 交易已成功＝資料已建立；之後的讀取失敗（規則 / 網路）不應讓畫面顯示「建立失敗」
+  try { await recordLogin(user.uid, null); } catch (e) {}          // 首次登入也記一筆，下次登入時才有「上次」可顯示
+  try { return await loadProfile(user.uid); }
+  catch (e) { return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null, publicName: !!publicName, joinRank: !!joinRank, prefs: prefs || null, prevLoginAt: null }; }
 }
 
 // 變更使用者名稱：14 天限制由 Firestore 規則強制，前端只負責顯示

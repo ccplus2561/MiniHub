@@ -394,7 +394,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 
 /* ---------- Toast ---------- */
 .toast {
-  position: fixed; left: 50%; bottom: 70px; z-index: 60;
+  position: fixed; left: 50%; bottom: 70px; z-index: 300;   /* 必須高於視窗(80)，否則視窗開著時看不到錯誤提示 */
   transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
   padding: 12px 24px; border-radius: 999px; font-size: 18px; font-weight: 600; color: #fff;
   background: var(--toast); border: 1.5px solid var(--accent-2); transition: .3s var(--ease);
@@ -768,3 +768,19 @@ body.m .toast { bottom: calc(78px + env(safe-area-inset-bottom)); max-width: cal
 .switch:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
 .m-only { display: none !important; }
 body.m .m-only { display: flex !important; }
+
+/* ---------- 建立資料：手機版分步驟 ---------- */
+.pdots { display: none; }
+.prof-err { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.5; color: #ffd9de; background: rgba(229, 84, 106, .18); border: 1.5px solid rgba(229, 84, 106, .55); }
+.prof-err[hidden] { display: none; }
+#profileModal .modal-actions { margin-top: 18px; }
+#profileModal .modal-actions [hidden] { display: none; }
+body.m #profileModal .pdots { display: flex; justify-content: center; gap: 8px; margin: 4px 0 6px; }
+body.m #profileModal .pdots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); transition: width .25s, background .25s; }
+body.m #profileModal .pdots i.on { width: 24px; border-radius: 999px; background: var(--accent-2); }
+body.m #profileModal .pstep:not(.on) { display: none; }
+body.m #profileModal .pstep.on { animation: mFade .25s; }
+body.m #profileModal .modal-box { max-height: calc(100dvh - 28px); }
+body.m #profileModal .modal-logo { width: 52px; height: 52px; margin-bottom: 10px; }
+body.m #profileModal h3 { font-size: 21px; }
+body.m #profileModal .field-label:first-child { margin-top: 10px; }
