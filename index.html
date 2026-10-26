@@ -260,7 +260,7 @@
           <p>歡迎使用 MiniHub（以下稱「本站」）。當你登入或繼續使用本站，即表示你已閱讀、了解並同意本服務條款、隱私權政策及使用規定。若不同意，請停止使用。</p>
           <h4>2. 帳號與遊戲資料</h4>
           <ul>
-            <li>本站支援以 Google、GitHub 或 Microsoft 帳號登入（同一個電子郵件的不同登入方式會連結為同一個帳號）；首次登入時需建立使用者名稱，並由系統產生 9 位數遊戲 UID。</li>
+            <li>本站支援以 Google 或 GitHub 帳號登入（同一個電子郵件的不同登入方式會連結為同一個帳號）；首次登入時需建立使用者名稱，並由系統產生 9 位數遊戲 UID。</li>
             <li>遊戲 UID 建立後無法更改，且一個電子郵件只能擁有一個 UID。</li>
             <li>使用者名稱每 14 天僅能變更一次。</li>
             <li>你應妥善保管自己用來登入的帳號，並對以該帳號進行的行為負責。</li>
@@ -282,7 +282,7 @@
           <p class="muted">最後更新：2026 年 10 月 26 日</p>
           <h4>1. 我們收集的資料</h4>
           <ul>
-            <li>登入時由 Google、GitHub 或 Microsoft 提供的電子郵件地址。</li>
+            <li>登入時由 Google 或 GitHub 提供的電子郵件地址。</li>
             <li>你建立的使用者名稱與系統產生的遊戲 UID。</li>
             <li>註冊時間與登入時間紀錄（用於顯示「註冊遊戲時間」與「上次登入時間」）。</li>
             <li>你對「允許公開使用者名稱」的選擇。</li>
@@ -291,7 +291,7 @@
           <h4>2. 使用目的</h4>
           <p>上述資料僅用於識別你的玩家身分、顯示帳號資訊，以及（在你允許公開使用者名稱時）提供排行榜等遊戲功能。</p>
           <h4>3. 資料儲存與第三方服務</h4>
-          <p>登入與玩家資料由 Google Firebase（Authentication 與 Cloud Firestore）處理與儲存；你選擇的登入供應商（Google、GitHub、Microsoft）亦適用其各自的條款與隱私權政策。</p>
+          <p>登入與玩家資料由 Google Firebase（Authentication 與 Cloud Firestore）處理與儲存；你選擇的登入供應商（Google、GitHub）亦適用其各自的條款與隱私權政策。</p>
           <h4>4. 偏好設定與登入狀態</h4>
           <p>顯示、音效、操作等偏好設定只存在於目前網頁的記憶體，不會寫入瀏覽器或伺服器，重新開啟網頁即恢復預設。登入狀態僅保留到分頁關閉為止。</p>
           <h4>5. 公開範圍</h4>
@@ -365,10 +365,6 @@
       <button class="btn-google" data-provider="github">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#181717" d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
         <span>使用 GitHub 登入</span>
-      </button>
-      <button class="btn-google" data-provider="microsoft">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#F25022" d="M2 2h9.5v9.5H2z"/><path fill="#7FBA00" d="M12.5 2H22v9.5h-9.5z"/><path fill="#00A4EF" d="M2 12.5h9.5V22H2z"/><path fill="#FFB900" d="M12.5 12.5H22V22h-9.5z"/></svg>
-        <span>使用 Microsoft 登入</span>
       </button>
       <button class="btn-ghost full" data-close>取消</button>
       <p class="modal-fine">按下登入前，需先確認<a href="#" class="legal-link" data-legal="terms">服務條款</a></p>
@@ -459,7 +455,6 @@
       <p class="modal-text" id="linkText"></p>
       <button class="btn-google" data-link="google"><span>用 Google 登入並連結</span></button>
       <button class="btn-google" data-link="github"><span>用 GitHub 登入並連結</span></button>
-      <button class="btn-google" data-link="microsoft"><span>用 Microsoft 登入並連結</span></button>
       <button class="btn-ghost full" data-close>取消</button>
     </div>
   </div>

@@ -1,4 +1,4 @@
-// Firebase 整合：Google / GitHub / Microsoft 登入（含同 email 帳號連結）+ 玩家資料（使用者名稱 / 遊戲 UID）
+// Firebase 整合：Google / GitHub 登入（含同 email 帳號連結）+ 玩家資料（使用者名稱 / 遊戲 UID）
 // 注意：偏好設定（顯示、音效…）仍不保存；這裡只保存「帳號資料」。
 // 未登入時完全不連線：Firebase SDK 只在「按下登入」或「分頁內已有登入狀態」時才載入。
 
@@ -35,16 +35,14 @@ const hasSession = () => {
 /* ---------- 登入供應商 ---------- */
 const PROV = {
   google:    { label: "Google" },
-  github:    { label: "GitHub" },
-  microsoft: { label: "Microsoft" }
+  github:    { label: "GitHub" }
 };
 function makeProvider(f, key) {
   if (key === "github") { const p = new f.GithubAuthProvider(); p.addScope("user:email"); return p; }
-  if (key === "microsoft") { const p = new f.OAuthProvider("microsoft.com"); p.addScope("email"); p.addScope("profile"); p.setCustomParameters({ prompt: "select_account" }); return p; }
   return new f.GoogleAuthProvider();
 }
 function credFromError(f, key, e) {
-  const C = key === "github" ? f.GithubAuthProvider : key === "microsoft" ? f.OAuthProvider : f.GoogleAuthProvider;
+  const C = key === "github" ? f.GithubAuthProvider : f.GoogleAuthProvider;
   return C.credentialFromError(e);
 }
 let pending = null;   // 等待連結的憑證（只存在記憶體）
@@ -159,7 +157,7 @@ window.MiniHubAuth = {
   hasSession,
   preload: () => boot().catch(() => {}),     // 按下「登入」時預先載入，之後彈出視窗才不會被瀏覽器擋
   ping, usage: () => ({ ...use }),
-  // key: "google" | "github" | "microsoft"
+  // key: "google" | "github"
   // 若該 email 已用「另一種方式」註冊過，會丟出 code = "needs-link"（附 email 與 provider），
   // 畫面請使用者改用原本的方式登入，再呼叫 linkPending(原本的方式) 把新方式連結到同一個帳號。
   signIn: async key => {

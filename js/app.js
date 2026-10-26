@@ -343,7 +343,7 @@
 
   window.MiniHubToast = toast;
 
-  /* ---------- 登入（Google / GitHub / Microsoft） ---------- */
+  /* ---------- 登入（Google / GitHub） ---------- */
   function openModal(id) {
     const m = $("#" + id); m.hidden = false;
     const f = $("[data-autofocus]", m);
@@ -359,7 +359,7 @@
     closeModal("logoutModal");
     if (window.MiniHubAuth) MiniHubAuth.signOut();
   });
-  const PNAME = { google: "Google", github: "GitHub", microsoft: "Microsoft" };
+  const PNAME = { google: "Google", github: "GitHub" };
   let chosen = "google";
   $$("#loginModal [data-provider]").forEach(b => b.addEventListener("click", () => { chosen = b.dataset.provider; openModal("termsModal"); }));   // 先確認條款
   $("#termsCancel").addEventListener("click", () => closeModal("termsModal"));
