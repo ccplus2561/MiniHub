@@ -587,6 +587,16 @@
     if ((e.ctrlKey || e.metaKey) && /^[acxsu]$/i.test(e.key) && !isField(e)) e.preventDefault();
   }, true);
 
+  /* ---------- 載入畫面（遠端資料抓完才收起；最多等 6 秒） ---------- */
+  const splash = $("#splash"), splashT0 = Date.now();
+  let splashDone = false;
+  window.MiniHubSplashHide = () => {
+    if (splashDone || !splash) return;
+    splashDone = true;
+    setTimeout(() => { splash.classList.add("out"); setTimeout(() => splash.remove(), 600); }, Math.max(0, 800 - (Date.now() - splashT0)));
+  };
+  setTimeout(window.MiniHubSplashHide, 6000);
+
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
   document.body.dataset.zone = "nav";

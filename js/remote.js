@@ -3,7 +3,8 @@
 (() => {
   const API_URL = "https://script.google.com/macros/s/AKfycbxl_vvSh3jclgzhfGix_F_btn-oAAAvyQKr2YlAI31T4bYnmaO3RdFTlOQHcgNJXKQQ/exec";                 // 貼上 Apps Script 網頁應用程式網址（結尾是 /exec）
   const ALLOWED_HOSTS = ["github.io"]; // 外部遊戲連結只接受這些網域（含子網域）；可加自己的網域
-  if (!API_URL) return;
+  const ready = () => window.MiniHubSplashHide && window.MiniHubSplashHide();
+  if (!API_URL) return ready();
 
   const on = v => String(v == null ? "" : v).trim() === "顯示";   // 「狀態」欄：顯示 / 關閉
   const str = (v, max) => String(v == null ? "" : v).trim().slice(0, max);
@@ -45,6 +46,7 @@
       const games = toGames(d.games), notices = toNotices(d.notices);
       if (games.length && window.MiniHubAddGames) window.MiniHubAddGames(games);
       if (window.MiniHubSetNotices) window.MiniHubSetNotices(notices, !/play=/.test(location.hash));
+      ready();
     })
-    .catch(() => {});   // 失敗就安靜略過，不影響網站
+    .catch(ready);   // 失敗就安靜略過，不影響網站
 })();
