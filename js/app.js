@@ -601,15 +601,15 @@
     if ((e.ctrlKey || e.metaKey) && /^[acxsu]$/i.test(e.key) && !isField(e)) e.preventDefault();
   }, true);
 
-  /* ---------- 載入畫面（遠端資料抓完才收起；最多等 6 秒） ---------- */
+  /* ---------- 載入畫面（遠端資料抓完才收起；最多等 3 秒） ---------- */
   const splash = $("#splash"), splashT0 = Date.now();
   let splashDone = false;
-  window.MiniHubSplashHide = () => {
+  window.MiniHubSplashHide = quick => {
     if (splashDone || !splash) return;
     splashDone = true;
-    setTimeout(() => { splash.classList.add("out"); setTimeout(() => splash.remove(), 600); }, Math.max(0, 800 - (Date.now() - splashT0)));
+    setTimeout(() => { splash.classList.add("out"); setTimeout(() => splash.remove(), 600); }, Math.max(0, (quick ? 350 : 800) - (Date.now() - splashT0)));
   };
-  setTimeout(window.MiniHubSplashHide, 6000);
+  setTimeout(() => window.MiniHubSplashHide(), 3000);
 
   /* ---------- 初始化 ---------- */
   document.body.dataset.view = "home";
@@ -627,6 +627,14 @@
     renderChips(); renderLibrary();
     const m2 = location.hash.match(/play=([\w-]+)/);   // 分享連結指向外部遊戲
     if (m2 && player.hidden) { const g = add.find(x => x.id === m2[1]); if (g) openGame(g); }
+  };
+  // 取代所有外部（試算表）遊戲：新增、更新、下架都會反映；目前選取的遊戲仍在就維持選取
+  window.MiniHubSetExternalGames = list => {
+    for (let i = games.length - 1; i >= 0; i--) if (String(games[i].id).startsWith("ext-")) games.splice(i, 1);
+    games.push(...list);
+    renderChips(); renderLibrary();
+    const m2 = location.hash.match(/play=([\w-]+)/);   // 分享連結指向外部遊戲
+    if (m2 && player.hidden) { const g = list.find(x => x.id === m2[1]); if (g) openGame(g); }
   };
   let notices = [];
   const ICON_WARN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg>';

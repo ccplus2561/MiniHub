@@ -3,7 +3,7 @@
 (() => {
   const API_URL = "https://script.google.com/macros/s/AKfycbxl_vvSh3jclgzhfGix_F_btn-oAAAvyQKr2YlAI31T4bYnmaO3RdFTlOQHcgNJXKQQ/exec";                 // 貼上 Apps Script 網頁應用程式網址（結尾是 /exec）
   const ALLOWED_HOSTS = ["github.io"]; // 外部遊戲連結只接受這些網域（含子網域）；可加自己的網域
-  const ready = () => window.MiniHubSplashHide && window.MiniHubSplashHide();
+  const ready = quick => window.MiniHubSplashHide && window.MiniHubSplashHide(quick);
   if (!API_URL) return ready();
 
   const on = v => String(v == null ? "" : v).trim() === "顯示";   // 「狀態」欄：顯示 / 關閉
@@ -38,15 +38,30 @@
     });
   }
 
+  // ---- 快取：先用上次抓到的內容立刻顯示，再背景更新（只存公開的公告 / 遊戲清單） ----
+  const KEY = "minihub:remote:v1";
+  const readCache = () => { try { const d = JSON.parse(localStorage.getItem(KEY)); return d && Array.isArray(d.games) && Array.isArray(d.notices) ? d : null; } catch (e) { return null; } };
+  const writeCache = d => { try { localStorage.setItem(KEY, JSON.stringify({ games: d.games, notices: d.notices })); } catch (e) {} };
+  let first = true;   // 公告只在進站的第一次自動彈出，背景更新不會再彈
+  const apply = d => {
+    const games = toGames(d.games), notices = toNotices(d.notices);
+    if (window.MiniHubSetExternalGames) window.MiniHubSetExternalGames(games);
+    if (window.MiniHubSetNotices) window.MiniHubSetNotices(notices, first && !/play=/.test(location.hash));
+    first = false;
+  };
+
+  const cached = readCache();
+  if (cached) { apply(cached); ready(true); }   // 有快取：載入畫面只短暫閃過
+
   const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 10000);
   fetch(API_URL, { signal: ctl.signal })
     .then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(d => {
       clearTimeout(t);
-      const games = toGames(d.games), notices = toNotices(d.notices);
-      if (games.length && window.MiniHubAddGames) window.MiniHubAddGames(games);
-      if (window.MiniHubSetNotices) window.MiniHubSetNotices(notices, !/play=/.test(location.hash));
+      if (!d || !Array.isArray(d.games) || !Array.isArray(d.notices)) return Promise.reject("bad data");
+      writeCache(d);
+      apply(d);
       ready();
     })
-    .catch(ready);   // 失敗就安靜略過，不影響網站
+    .catch(() => ready());   // 失敗就安靜略過，不影響網站
 })();
