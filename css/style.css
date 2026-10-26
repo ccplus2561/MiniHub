@@ -252,6 +252,9 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 /* ---------- 遊戲播放層 ---------- */
 .player { position: fixed; inset: 0; z-index: 50; display: flex; flex-direction: column; background: #000; }
 .player[hidden] { display: none; }
+/* 未開啟「遊戲全螢幕」：留出左側導覽列（紅框處），遊戲只佔右側內容區 */
+.player.with-rail { left: 112px; z-index: 10; }
+.player.with-rail:fullscreen { left: 0; z-index: auto; }   /* 手動按全螢幕鈕時仍整頁全螢幕 */
 .player-bar {
   display: flex; align-items: center; gap: 10px; padding: 8px 14px;
   background: var(--bar); border-bottom: 1px solid var(--line);
@@ -763,6 +766,9 @@ body.m .ann-list { padding: 14px 14px 6px; }
 body.m .ann-foot { padding: 12px 14px 16px; }
 body.m .ann-hint { display: none; }
 body.m .player-title { font-size: 17px; }
+/* 手機版：保留頂部列與底部分頁列 */
+body.m .player.with-rail { left: 0; top: 54px; bottom: calc(62px + env(safe-area-inset-bottom)); }
+body.m .player.with-rail:fullscreen { top: 0; bottom: 0; }
 body.m .toast { bottom: calc(78px + env(safe-area-inset-bottom)); max-width: calc(100vw - 32px); font-size: 16px; padding: 10px 18px; text-align: center; }
 
 .switch:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }

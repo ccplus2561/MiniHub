@@ -184,13 +184,16 @@
     srcEl = el || $("#libraryRow .card.selected");
     $("#playerTitle").textContent = g.title;
     frame.src = g.path;
+    // 設定 > 顯示 > 遊戲全螢幕：開啟 = 整個畫面都是遊戲；關閉 = 保留左側導覽列（手機版保留上下列）
+    const fsOn = !!(window.MiniHubPrefs && MiniHubPrefs().fsStart);
+    player.classList.toggle("with-rail", !fsOn);
     player.hidden = false;
     closing = false;
     player.animate(
       [{ clipPath: clipFrom(srcEl), opacity: .3 }, { clipPath: "inset(0 round 0)", opacity: 1 }],
       { duration: 460, easing: EASE });
     history.replaceState(null, "", "#play=" + g.id);
-    if (window.MiniHubPrefs && MiniHubPrefs().fsStart && player.requestFullscreen) player.requestFullscreen().catch(() => {});
+    if (fsOn && player.requestFullscreen) player.requestFullscreen().catch(() => {});
     frame.focus();
   }
 

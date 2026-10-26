@@ -7,20 +7,21 @@
 <style>
   html, body { margin: 0; height: 100%; background: #0e141b; color: #eef2f7;
     font-family: system-ui, "Microsoft JhengHei", sans-serif; overflow: hidden; touch-action: none; }
-  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
-  canvas { background: #16202d; border: 2px solid var(--accent, #1a9fff); border-radius: 12px; max-width: 94vw; max-height: 74vh;
-    box-shadow: 0 0 24px color-mix(in srgb, var(--accent, #1a9fff) 35%, transparent); transition: transform .25s, box-shadow .25s; }
-  canvas:hover { transform: scale(1.02); box-shadow: 0 0 36px color-mix(in srgb, var(--accent, #1a9fff) 55%, transparent); }
-  #hud { font-size: 18px; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+  /* 畫布大小由下方 fit() 依視窗計算（盡量放大）；內部解析度 800px，放大後依然清晰 */
+  canvas { display: block; background: #16202d; border: 3px solid var(--accent, #1a9fff); border-radius: 16px;
+    width: 560px; height: 560px;
+    box-shadow: 0 0 28px color-mix(in srgb, var(--accent, #1a9fff) 40%, transparent); }
+  #hud { font-size: 26px; font-weight: 700; letter-spacing: .04em; }
   #hud b { color: var(--accent, #1a9fff); }
-  small { color: #a3adbd; }
+  small { color: #a3adbd; font-size: 15px; text-align: center; padding: 0 12px; }
 </style>
 <style>html,body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}</style>
 <script>["copy","cut","dragstart","selectstart","contextmenu"].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()})})</script>
 </head>
 <body>
   <div id="hud">分數 <b id="score">0</b>　最高 <b id="best">0</b></div>
-  <canvas id="c" width="400" height="400"></canvas>
+  <canvas id="c" width="800" height="800"></canvas>
   <small>方向鍵 / WASD 或滑動操作・按任意方向開始・空白鍵重來</small>
 <script>
 // 同步主頁的幻彩主題色（同源時才讀得到）
@@ -30,7 +31,15 @@ try {
 } catch (e) {}
 (() => {
   const cv = document.getElementById("c"), ctx = cv.getContext("2d");
-  const N = 20, S = cv.width / N;
+  const N = 20, S = cv.width / N, K = cv.width / 400;   // K：文字 / 圓角依解析度縮放
+  // 依視窗大小把畫布放到最大（保持正方形，扣掉上方分數與下方說明的高度）
+  const hud = document.getElementById("hud"), tip = document.querySelector("small");
+  function fit() {
+    const used = hud.offsetHeight + tip.offsetHeight + 28 + 24;
+    const size = Math.max(200, Math.floor(Math.min(innerWidth - 24, innerHeight - used)));
+    cv.style.width = cv.style.height = size + "px";
+  }
+  addEventListener("resize", fit); fit();
   let snake, dir, next, food, score, best = 0, alive, started, timer;
 
   function reset() {
@@ -67,13 +76,13 @@ try {
     const ac = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#1a9fff";
     snake.forEach((s, i) => {
       ctx.fillStyle = i ? ac : "#ffffff";
-      ctx.beginPath(); ctx.roundRect(s.x * S + 1, s.y * S + 1, S - 2, S - 2, 6); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(s.x * S + 2, s.y * S + 2, S - 4, S - 4, 12); ctx.fill();
     });
     if (!alive) {
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, cv.width, cv.height);
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold 28px system-ui";
-      ctx.fillText("遊戲結束", cv.width / 2, cv.height / 2 - 6);
-      ctx.font = "16px system-ui"; ctx.fillText("按空白鍵或點一下重來", cv.width / 2, cv.height / 2 + 24);
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold " + 28 * K + "px system-ui";
+      ctx.fillText("遊戲結束", cv.width / 2, cv.height / 2 - 6 * K);
+      ctx.font = 16 * K + "px system-ui"; ctx.fillText("按空白鍵或點一下重來", cv.width / 2, cv.height / 2 + 24 * K);
     }
   }
   function updateHud() {
