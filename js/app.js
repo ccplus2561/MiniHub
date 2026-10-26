@@ -649,10 +649,10 @@
       if (n.hot) { const t = document.createElement("span"); t.className = "ann-tag hot"; t.innerHTML = ICON_WARN + "重要"; meta.appendChild(t); }
       if (fresh(n.date)) { const t = document.createElement("span"); t.className = "ann-tag new"; t.textContent = "新"; meta.appendChild(t); }
       if (n.date) { const d = document.createElement("span"); d.className = "ann-date"; d.textContent = n.date; meta.appendChild(d); }
+      if (n.link) { const a = document.createElement("a"); a.className = "ann-link"; a.href = n.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.innerHTML = "<span>了解更多</span>" + ICON_ARROW; meta.appendChild(a); }   // 連結按鈕放在標籤列最右側
       it.appendChild(meta);
       const h = document.createElement("h4"); h.textContent = n.title; it.appendChild(h);
       if (n.body) { const p = document.createElement("p"); p.textContent = n.body; it.appendChild(p); }
-      if (n.link) { const a = document.createElement("a"); a.className = "ann-link"; a.href = n.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.innerHTML = "<span>了解更多</span>" + ICON_ARROW; it.appendChild(a); }
       box.appendChild(it);
     });
     box.scrollTop = 0;

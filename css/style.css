@@ -640,13 +640,13 @@ body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box
 .ann-tag svg { width: 14px; height: 14px; }
 .ann-tag.hot { color: #1f1f1f; background: #ffcf5c; }
 .ann-tag.new { color: #fff; background: var(--accent); }
-.ann-date { margin-left: auto; font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ann-date { font-size: 14px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ann h4 { font-size: 20px; font-weight: 800; line-height: 1.4; word-break: break-word; }
 .ann p { margin: 8px 0 0; font-size: 16px; line-height: 1.75; color: var(--text-2); white-space: pre-wrap; word-break: break-word; }
-.ann-link { text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 7px 16px; border-radius: 999px;
-  font-size: 15px; font-weight: 700; color: var(--accent-2); border: 1.5px solid var(--btn-line); background: var(--ov-1);
+.ann-link { margin-left: auto; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 999px;
+  font-size: 14px; font-weight: 700; color: var(--accent-2); border: 1.5px solid var(--btn-line); background: var(--ov-1);
   transition: background .2s, transform .2s, color .2s; }
-.ann-link svg { width: 16px; height: 16px; transition: transform .2s; }
+.ann-link svg { width: 15px; height: 15px; transition: transform .2s; }
 .ann-link:hover { background: var(--a2); color: #fff; transform: translateY(-2px); }
 .ann-link:hover svg { transform: translateX(3px); }
 .ann-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px 18px;
