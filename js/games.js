@@ -14,7 +14,8 @@ window.GAMES = [
   {
     id: "snake", title: "貪吃蛇", category: "街機", emoji: "🐍", icon: "icons/snake.svg",
     colors: ["#1f7a4d", "#0c3b2a"], path: "games/snake/index.html",
-    desc: "經典貪吃蛇：方向鍵 / WASD 或在螢幕上滑動操作。", featured: true,
+    desc: "經典街機：吃食物，讓蛇越變越長。",
+    how: "玩法：方向鍵 / WASD 或滑動轉向，別撞牆、別咬到自己。", featured: true,
     tags: { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true }
   },
   {

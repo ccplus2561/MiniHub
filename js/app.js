@@ -58,6 +58,7 @@
     cards.forEach((c, idx) => c.classList.toggle("selected", idx === selected));
     $("#heroTitle").textContent = g.title;
     $("#heroDesc").textContent = g.desc || g.category;
+    $("#heroHow").textContent = g.how || ""; $("#heroHow").hidden = !g.how;
     $("#playBtn span").textContent = g.path ? "開始遊戲" : (g.badge || "即將推出");
     paintTags(g);
     hero.hidden = false;
