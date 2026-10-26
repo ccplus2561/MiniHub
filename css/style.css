@@ -180,6 +180,8 @@ body:not([data-view="library"]) .backdrop { opacity: .28; }
   font-size: 13px; font-weight: 700; color: #fff;
   background: rgba(14, 20, 27, .82); border: 1.5px solid var(--accent-2);
 }
+.badge.dev { color: #1a1200; background: #fbbf24; border-color: #fbbf24; }
+.badge.soon { color: var(--text-2); background: rgba(14, 20, 27, .82); border: 1.5px dashed var(--text-2); }
 .card.soon .card-art { filter: saturate(.35) brightness(.75); }
 
 

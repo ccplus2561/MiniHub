@@ -21,7 +21,7 @@
     el.style.setProperty("--c2", g.colors[1]);
     el.innerHTML = `
       <div class="card-art">${g.icon ? `<img class="icon" src="${esc(g.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="emoji">${esc(g.emoji)}</span>`}</div>
-      ${badge ? `<span class="badge">${esc(badge)}</span>` : ""}
+      ${badge ? `<span class="badge ${badge === "開發中" ? "dev" : "soon"}">${badge === "開發中" ? "🛠 " : "⏳ "}${esc(badge)}</span>` : ""}
       <div class="card-info">
         <div class="card-name">${esc(g.title)}</div>
         <div class="card-sub">${esc(g.category)}</div>
