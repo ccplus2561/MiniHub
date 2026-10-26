@@ -215,22 +215,25 @@
     pauseGame();
     try { document.activeElement && document.activeElement.blur(); } catch (x) {}
     leaveTo = () => closeGame();
-    sfx("open"); openModal("exitModal");
+    sfx("open");
+    // 全螢幕時只有播放層看得到，需先退出全螢幕才能顯示確認視窗
+    if (document.fullscreenElement) { wasFs = true; Promise.resolve(document.exitFullscreen()).catch(() => {}).then(() => openModal("exitModal")); }
+    else { wasFs = false; openModal("exitModal"); }
   }
   $("#closeBtn").addEventListener("click", askExit);
 
   /* ---------- 遊戲中點左側導覽（只接受滑鼠 / 觸控）：立即暫停並詢問是否退出 ---------- */
   // 退出時本局不另外計入成績；若已刷新個人最高紀錄，遊戲離開時會直接更新（由遊戲自己處理）
-  let leaveTo = null;
+  let leaveTo = null, wasFs = false;
   function pauseGame() {
     try { frame.contentWindow.MiniHubPause && frame.contentWindow.MiniHubPause(); } catch (e) {}
     try { frame.contentWindow.postMessage({ type: "minihub:pause" }, "*"); } catch (e) {}   // 外部遊戲可自行監聽
   }
   function settleLeave(ok) {
     if (!leaveTo) return;
-    const go = leaveTo; leaveTo = null; closeModal("exitModal");
+    const go = leaveTo; leaveTo = null; closeModal("exitModal"); if (ok) wasFs = false;
     if (ok) { sfx("confirm"); go(); }
-    else { sfx("close"); try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} }
+    else { sfx("close"); if (wasFs && player.requestFullscreen) player.requestFullscreen().catch(() => {}); wasFs = false; try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} }
   }
   document.addEventListener("click", e => {
     if (player.hidden || closing || !e.target.closest) return;

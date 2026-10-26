@@ -97,6 +97,8 @@ try {
   function fit() {
     const used = hud.offsetHeight + under.offsetHeight + ($("kbd").hidden ? 0 : $("kbd").offsetHeight) + 28 + 24;
     const size = Math.max(200, Math.floor(Math.min(innerWidth - 24, innerHeight - used)));
+    document.body.style.boxSizing = "border-box";
+    document.body.style.paddingBottom = ($("kbd").hidden ? 0 : $("kbd").offsetHeight) + "px";
     cv.style.width = cv.style.height = size + "px";
     side.style.top = Math.max(8, Math.round(cv.getBoundingClientRect().top)) + "px";
     side.style.maxHeight = size + "px";
