@@ -40,7 +40,7 @@
     el.style.background =
       `radial-gradient(1000px 700px at 75% 25%, ${g.colors[0]}, transparent 70%),` +
       `radial-gradient(900px 700px at 0% 100%, ${g.colors[1]}, transparent 70%)`;
-    el.textContent = g.emoji;
+    el.innerHTML = g.icon ? `<img src="${esc(g.icon)}" alt="">` : `<span>${esc(g.emoji)}</span>`;
     bds.forEach((b, i) => b.classList.toggle("on", i === bdIdx));
   }
 
@@ -66,13 +66,13 @@
   }
 
   /* ---------- 遊戲標籤（✔ / ✘） ---------- */
-  const TAG_DEFAULT = { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true };
+  const TAG_DEFAULT = {};   // 未設定 = 「─」；true = ✔；false = ✘
   const TAG_ROWS = [[["single", "單人模式"], ["multi", "多人連線"]], [["mobile", "支援手機"], ["desktop", "支援電腦"]],
                     [["kbd", "鍵盤快捷"], ["touch", "觸碰滑動"]], [["rank", "排行榜"], ["personal", "個人成績"]]];
   function paintTags(g) {
     const t = Object.assign({}, TAG_DEFAULT, g.tags || {});
     $("#gameTags").innerHTML = TAG_ROWS.map(r => r.map(([k, n]) =>
-      `<span class="${t[k] ? "yes" : "no"}"><i>${t[k] ? "✔" : "✘"}</i>${n}</span>`).join("")).join("");
+      `<span class="${t[k] === true ? "yes" : t[k] === false ? "no" : "na"}"><i>${t[k] === true ? "✔" : t[k] === false ? "✘" : "─"}</i>${n}</span>`).join("")).join("");
   }
 
   /* ---------- 遊戲庫 / 分類 ---------- */

@@ -38,9 +38,10 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 .bd {
   position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease;
   display: grid; place-items: center end; padding-right: 8vw;
-  font-style: normal; font-size: min(46vh, 380px); filter: blur(2px) saturate(.8);
-  color: rgba(255, 255, 255, .12);
+  font-style: normal; font-size: min(46vh, 380px);
 }
+.bd > * { opacity: .3; filter: blur(7px) saturate(.9); }
+.bd img { width: min(46vh, 380px); height: min(46vh, 380px); object-fit: contain; }
 .bd.on { opacity: .85; }
 body:not([data-view="library"]) .backdrop { opacity: .28; }
 .backdrop::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(14, 20, 27, .35), rgba(14, 20, 27, .82) 85%); }
@@ -199,6 +200,8 @@ body:not([data-view="library"]) .backdrop { opacity: .28; }
 .game-tags span { display: flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--text); }
 .game-tags i { font-style: normal; font-weight: 800; width: 18px; text-align: center; }
 .game-tags .yes i { color: #4ade80; }
+.game-tags .na { color: var(--muted); }
+.game-tags .na i { color: var(--muted); }
 .game-tags .no { color: var(--muted); }
 .game-tags .no i { color: #f87171; }
 #playBtn { min-width: 240px; height: 64px; font-size: 22px; justify-content: center; }
