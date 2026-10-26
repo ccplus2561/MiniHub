@@ -59,9 +59,20 @@
     $("#heroTitle").textContent = g.title;
     $("#heroDesc").textContent = g.desc || g.category;
     $("#playBtn span").textContent = g.path ? "開始遊戲" : (g.badge || "即將推出");
+    paintTags(g);
     hero.hidden = false;
     hero.classList.remove("pop"); void hero.offsetWidth; hero.classList.add("pop");   // 每次選擇都從底部跳出
     cards[selected].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }
+
+  /* ---------- 遊戲標籤（✔ / ✘） ---------- */
+  const TAG_DEFAULT = { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true };
+  const TAG_ROWS = [[["single", "單人模式"], ["multi", "多人連線"]], [["mobile", "支援手機"], ["desktop", "支援電腦"]],
+                    [["kbd", "鍵盤快捷"], ["touch", "觸碰滑動"]], [["rank", "排行榜"], ["personal", "個人成績"]]];
+  function paintTags(g) {
+    const t = Object.assign({}, TAG_DEFAULT, g.tags || {});
+    $("#gameTags").innerHTML = TAG_ROWS.map(r => r.map(([k, n]) =>
+      `<span class="${t[k] ? "yes" : "no"}"><i>${t[k] ? "✔" : "✘"}</i>${n}</span>`).join("")).join("");
   }
 
   /* ---------- 遊戲庫 / 分類 ---------- */
