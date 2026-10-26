@@ -383,7 +383,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .set-group + .set-label, .notice + .set-group { margin-top: 12px; }
 #kbdPanel { margin-top: 18px; animation: viewIn .38s cubic-bezier(.2, .8, .2, 1); }
 #kbdPanel[hidden] { display: none; }
-.no-kbd .hints { display: none; }
+.no-kbd .hints, .no-kbd .bp-hints { display: none; }
 
 .no-anim *, .no-anim *::before, .no-anim *::after { animation: none !important; transition-duration: .01s !important; }
 
@@ -557,6 +557,7 @@ body.no-anim .cursor-glow { display: none; }
 
 /* ---------- 快捷鍵區域指示 / 關閉觸控 ---------- */
 body.kb:not(.no-kbd)[data-zone="nav"] .nav-item.active { outline: 3px solid #fff; outline-offset: 2px; }
+body.kb.login-k[data-zone="nav"] .nav-item.active { outline: none; }
 body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box-shadow: 0 0 22px rgba(255, 255, 255, .35); }
 .no-touch button { cursor: default; }
 

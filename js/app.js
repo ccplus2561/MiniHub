@@ -165,7 +165,7 @@
   const touchOn = () => !window.MiniHubPrefs || MiniHubPrefs().touch;
   let zone = "nav", kEl = null;
 
-  function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; }
+  function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; document.body.classList.remove("login-k"); }
   function setK(el, quiet) {
     clearK(); kEl = el; el.classList.add("kfocus");
     if (!quiet) sfx("move");
@@ -221,7 +221,10 @@
   function paintHints() {
     const K = (...a) => a.map(x => `<kbd>${x}</kbd>`).join("");
     const home = document.body.dataset.view === "home";
-    const list = zone === "nav"
+    const onLogin = document.body.classList.contains("login-k");
+    const list = zone === "nav" && onLogin
+      ? [[K("↑", "↓"), "切換"], [K("Enter"), signedIn ? "登出" : "登入"]]
+      : zone === "nav"
       ? [[K("↑", "↓"), "切換分頁"], [K("Enter", "D", "→"), "進入"]]
       : home
         ? [[K("←", "→"), "選擇"], [K("Enter"), "開始"], [K("Esc", "A"), "返回分頁"]]
@@ -244,7 +247,7 @@
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
-      else if (/^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「登入方式 / 取消」之間移動焦點
+      else if (kbdOn() && /^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「登入方式 / 取消」之間移動焦點（關閉快捷鍵時停用）
         const b = $$(".btn-google, .btn-ghost", $("#loginModal"));
         const up = /^(ArrowUp|w)$/i.test(e.key), i = b.indexOf(document.activeElement);
         b[(i + (up ? -1 : 1) + b.length) % b.length].focus(); e.preventDefault();
@@ -259,8 +262,19 @@
     e.preventDefault();
     document.body.classList.add("kb");
 
-    if (zone === "nav") {                       // 最左側：上下換分頁，Enter / D / → 進入中間
-      if (dir === "up") stepTab(-1);
+    if (zone === "nav") {                       // 最左側：上下換分頁（最後一個分頁再往下 / 第一個再往上 = 登入、登出按鈕），Enter / D / → 進入中間
+      const tabs = $$(".nav-item"), login = $("#loginBtn");
+      const cur = tabs.findIndex(n => n.classList.contains("active"));
+      const focusLogin = () => { sfx("move"); clearK(); kEl = login; login.classList.add("kfocus"); document.body.classList.add("login-k"); paintHints(); };
+      if (kEl === login) {                      // 目前停在登入 / 登出按鈕
+        if (dir === "up" || dir === "down") { sfx("move"); clearK(); showView(tabs[dir === "up" ? tabs.length - 1 : 0].dataset.view); paintHints(); }
+        else if (enter) { sfx("confirm"); login.click(); }
+        else if (esc) { clearK(); paintHints(); }
+        return;
+      }
+      if (dir === "down" && cur === tabs.length - 1) focusLogin();
+      else if (dir === "up" && cur === 0) focusLogin();
+      else if (dir === "up") stepTab(-1);
       else if (dir === "down") stepTab(1);
       else if (dir === "right" || enter) setZone("mid", true);
       return;
