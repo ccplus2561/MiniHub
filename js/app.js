@@ -203,6 +203,11 @@
   }
   function activate() {
     if (!kEl || !kEl.isConnected) return;
+    if (kEl.matches("#libraryRow .card")) {   // 已選到圖卡：Enter 跳到「開始遊戲」按鈕，再按一次才進入
+      const b = $("#playBtn");
+      if (!$("#hero").hidden && b.offsetParent) { sfx("confirm"); setK(b, true); }
+      return;
+    }
     const txt = kEl.classList.contains("chip") ? kEl.textContent : null;
     if (!kEl.matches(".switch, .seg button")) sfx("confirm");   // 開關 / 分段選項的聲音由設定頁自己處理
     kEl.click();
