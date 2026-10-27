@@ -656,7 +656,7 @@ body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box
 .ann-top p { margin-top: 2px; font-size: 15px; color: var(--muted); }
 .ann-list { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--accent) transparent;
   padding: 18px 24px 8px; display: flex; flex-direction: column; gap: 14px; }
-.ann { position: relative; overflow: hidden; padding: 16px 18px 16px 24px; border-radius: 14px;
+.ann { flex: none; position: relative; overflow: hidden; padding: 16px 18px 16px 24px; border-radius: 14px;
   background: var(--panel); border: 1px solid var(--line-2);
   animation: cardIn .45s var(--ease) both; animation-delay: calc(var(--i, 0) * 70ms + 80ms); }
 .ann::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
@@ -791,6 +791,19 @@ body.m .ann-top { padding: 18px 64px 16px 18px; }
 body.m .ann-list { padding: 14px 14px 6px; }
 body.m .ann-foot { padding: 12px 14px 16px; }
 body.m .ann-hint { display: none; }
+/* 手機版公告：卡片不被壓縮、字級與間距縮小，內容多時於清單內捲動 */
+body.m .ann-box { width: 100%; }
+body.m .ann-top { gap: 12px; }
+body.m .ann-ico { width: 44px; height: 44px; border-radius: 13px; }
+body.m .ann-ico svg { width: 24px; height: 24px; }
+body.m .ann-top h3 { font-size: 22px; }
+body.m .ann-top p { font-size: 13px; }
+body.m .ann-box .modal-x { top: 12px; right: 12px; }
+body.m .ann-list { gap: 12px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+body.m .ann { padding: 14px 14px 14px 20px; }
+body.m .ann-meta { flex-wrap: wrap; row-gap: 6px; }
+body.m .ann h4 { font-size: 18px; }
+body.m .ann p { font-size: 15px; line-height: 1.65; }
 body.m .player-title { font-size: 17px; }
 /* 手機版：保留頂部列與底部分頁列 */
 body.m .player.with-rail { left: 0; top: 54px; bottom: calc(62px + env(safe-area-inset-bottom)); }
