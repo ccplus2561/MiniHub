@@ -68,7 +68,7 @@
       <span>也可以用滑動操作</span>
   </div>
   <div id="under">
-    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">再一次</button></div>
+    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">開始 / 重來</button></div>
     <small id="tip"></small>
   </div>
 <script>
@@ -138,7 +138,7 @@ try {
     dir = next;
     const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
     if (h.x < 0 || h.y < 0 || h.x >= N || h.y >= N || snake.some(s => s.x === h.x && s.y === h.y)) {
-      alive = false; clearInterval(timer); draw(); updateBtns(); submit(); updateHud(); return;
+      alive = false; clearInterval(timer); draw(); updateBtns(); submit(); updateHud(); revealRankOnGameOver(); return;
     }
     snake.unshift(h);
     if (h.x === food.x && h.y === food.y) { score++; best = Math.max(best, score); place(); updateHud(); }
@@ -163,7 +163,7 @@ try {
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold " + 28 * K + "px system-ui";
       ctx.fillText("遊戲結束", cv.width / 2, cv.height / 2 - 6 * K);
-      ctx.font = 16 * K + "px system-ui"; ctx.fillText("按空白鍵或點一下重來", cv.width / 2, cv.height / 2 + 24 * K);
+      ctx.font = 16 * K + "px system-ui"; ctx.fillText("按空白鍵或下方按鈕重新開始", cv.width / 2, cv.height / 2 + 24 * K);
     }
   }
   function updateHud() {
@@ -194,12 +194,12 @@ try {
     if (e.target.closest && e.target.closest("#btns, #side")) return;   // 按鈕 / 右側面板自己處理
     if (!touchOK()) return;
     if (paused) resume();
-    if (!alive) return again();
+    if (!alive) return; // 遊戲結束後，點擊空白處不會重新開始
     const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
     if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return;
     if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0); else turn(0, dy > 0 ? 1 : -1);
   });
-  cv.addEventListener("click", () => { if (touchOK()) { if (paused) resume(); else again(); } });
+  // 不把畫布空白點擊當作開始 / 重來，避免誤觸；重新開始請用空白鍵或下方按鈕。
   tog.addEventListener("click", e => {
     if (e.detail !== 0 && !touchOK()) return;
     if (floatSide) floatOpen = !floatOpen;
@@ -219,6 +219,17 @@ try {
     } catch (e) { return {}; }
   };
   const myUid = () => { const { A } = env(); try { return A ? A.uid() : ""; } catch (e) { return ""; } };
+
+  function revealRankOnGameOver() {
+    // 只有已登入且允許排行榜時，遊戲結束才自動展開排行榜面板。
+    if (!logged || !rankOn) return;
+    if (floatSide) floatOpen = true;
+    else {
+      userSide = true;
+      try { localStorage.setItem("minihub.snake.side", "1"); } catch (e) {}
+    }
+    paintSide();
+  }
 
   function paintMe() {
     $("meBox").hidden = !logged;
