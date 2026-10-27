@@ -147,12 +147,41 @@ try {
   }
   function draw() {
     ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.fillStyle = "#ff5d73";
-    ctx.beginPath(); ctx.arc((food.x + .5) * S, (food.y + .5) * S, S * .38, 0, 7); ctx.fill();
+    // 新版食物：發光紅寶石造型，保留清楚的紅色辨識度。
+    const fx = (food.x + .5) * S, fy = (food.y + .5) * S;
+    ctx.save();
+    ctx.shadowColor = "#ff315d"; ctx.shadowBlur = 20 * K;
+    const fg = ctx.createRadialGradient(fx - S * .12, fy - S * .16, S * .04, fx, fy, S * .43);
+    fg.addColorStop(0, "#fff1f4"); fg.addColorStop(.25, "#ff718c"); fg.addColorStop(1, "#e81748");
+    ctx.fillStyle = fg; ctx.beginPath();
+    for (let j = 0; j < 10; j++) {
+      const a = -Math.PI / 2 + j * Math.PI / 5, r = j % 2 ? S * .27 : S * .4;
+      const x = fx + Math.cos(a) * r, y = fy + Math.sin(a) * r;
+      if (!j) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath(); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.beginPath(); ctx.arc(fx - S * .1, fy - S * .13, S * .07, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+
     const ac = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#1a9fff";
+    // 新版蛇身：漸層膠囊節點與細緻描邊，蛇頭加上朝向一致的眼睛。
     snake.forEach((s, i) => {
-      ctx.fillStyle = i ? ac : "#ffffff";
-      ctx.beginPath(); ctx.roundRect(s.x * S + 2, s.y * S + 2, S - 4, S - 4, 12); ctx.fill();
+      const x = s.x * S + 1.8, y = s.y * S + 1.8, w = S - 3.6;
+      const grad = ctx.createLinearGradient(x, y, x + w, y + w);
+      if (i === 0) { grad.addColorStop(0, "#f4fff9"); grad.addColorStop(1, ac); }
+      else { grad.addColorStop(0, ac); grad.addColorStop(1, "#145b46"); }
+      ctx.fillStyle = grad; ctx.strokeStyle = i === 0 ? "#eafff4" : "rgba(255,255,255,.18)"; ctx.lineWidth = 1.5 * K;
+      ctx.beginPath(); ctx.roundRect(x, y, w, w, S * .28); ctx.fill(); ctx.stroke();
+      if (i === 0) {
+        const ex = s.x * S + S / 2, ey = s.y * S + S / 2;
+        const forward = dir || {x:1,y:0}, perp = {x:-forward.y,y:forward.x};
+        for (const sideEye of [-1, 1]) {
+          const px = ex + forward.x * S * .17 + perp.x * S * .19 * sideEye;
+          const py = ey + forward.y * S * .17 + perp.y * S * .19 * sideEye;
+          ctx.fillStyle = "#10251d"; ctx.beginPath(); ctx.arc(px, py, S * .085, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(px - S * .02, py - S * .025, S * .028, 0, Math.PI * 2); ctx.fill();
+        }
+      }
     });
     if (paused) {
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, cv.width, cv.height);
@@ -185,6 +214,26 @@ try {
     if (k) { e.preventDefault(); turn(k[0], k[1]); }
     else if (e.key === " ") { e.preventDefault(); if (paused) resume(); else if (alive && !started) start(); else again(); }
   });
+
+  // 電腦版滑鼠方向操作：在遊戲畫布按住並往上／下／左／右拖曳即可轉向。
+  // 僅處理真正的滑鼠輸入，觸控裝置仍沿用原本的手指滑動操作。
+  let mouseStart = null;
+  cv.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    mouseStart = { x: e.clientX, y: e.clientY };
+    try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  cv.addEventListener("pointerup", e => {
+    if (e.pointerType !== "mouse" || !mouseStart) return;
+    const dx = e.clientX - mouseStart.x, dy = e.clientY - mouseStart.y;
+    mouseStart = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+    if (paused) resume();
+    if (!alive) return;
+    if (Math.abs(dx) > Math.abs(dy)) turn(dx > 0 ? 1 : -1, 0);
+    else turn(0, dy > 0 ? 1 : -1);
+  });
+  cv.addEventListener("pointercancel", () => { mouseStart = null; });
 
   // 大廳關閉「允許觸控滑動」時，遊戲內也不接受觸控 / 點擊
   const touchOK = () => { try { return parent.MiniHubPrefs().touch !== false; } catch (e) { return true; } };

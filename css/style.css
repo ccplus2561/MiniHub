@@ -889,3 +889,6 @@ img { max-width: 100%; }
   .bd > * { filter: none; }
   .card, .nav-item, .login-btn { will-change: auto; }
 }
+
+/* 遊戲庫選取項目的多段說明保留換行。 */
+#heroDesc { white-space: pre-line; }
