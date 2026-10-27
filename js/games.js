@@ -14,7 +14,7 @@ window.GAMES = [
   {
     id: "snake", title: "貪吃蛇", category: "街機", emoji: "🐍", icon: "icons/snake.svg",
     colors: ["#1f7a4d", "#0c3b2a"], path: "games/snake/index.html",
-    desc: "經典街機遊戲，操控小蛇吃下食物、逐漸變長並挑戰更高分數。\n\n遊戲規定與條件：地圖為 20 × 20 格（共 400 格）；撞到牆壁或自己的身體即遊戲結束。必須按下下方「開始」按鈕才能開始。\n\n如何玩：開始後，使用鍵盤方向鍵／WASD，或在遊戲畫布上用滑鼠拖曳、手機手指滑動來控制方向；相關操作可在「設定 > 操作」中開啟或關閉。",
+    desc: "經典街機遊戲，操控小蛇吃食物、越長越高分。\n規則：20 × 20 地圖，撞牆或撞到自己即結束。\n操作：方向鍵／WASD，或在畫面上滑動、拖曳。",
     how: "", featured: true,
     tags: { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true }
   },

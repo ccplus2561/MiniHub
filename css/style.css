@@ -210,6 +210,13 @@ body:not([data-view="library"]) .backdrop { opacity: 0; }   /* 只有遊戲庫�
 #playBtn { min-width: 240px; height: 64px; font-size: 22px; justify-content: center; }
 #playBtn svg { width: 24px; height: 24px; }
 body.m .hero-actions { align-items: stretch; }
+/* 遊戲特色：電腦版隱藏切換鈕、永遠展開；手機版預設收合 */
+.tags-toggle { display: none; }
+body.m .tags-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 10px 14px; border-radius: 12px; font: inherit; font-size: 14px; font-weight: 700;
+  color: var(--text); background: rgba(14, 20, 27, .72); border: 1px solid var(--line); cursor: pointer; }
+body.m .tags-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+body.m .tags-toggle.open svg { transform: rotate(180deg); }
+body.m .game-tags:not(.open) { display: none; }
 body.m .game-tags { font-size: 13px; padding: 10px 12px; gap: 6px 10px; }
 
 /* Steam 風綠色「開始」按鈕 */

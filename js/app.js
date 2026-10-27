@@ -61,6 +61,7 @@
     $("#heroHow").textContent = g.how || ""; $("#heroHow").hidden = !g.how;
     $("#playBtn span").textContent = g.path ? "開始遊戲" : (g.badge || "即將推出");
     paintTags(g);
+    setTagsOpen(false);   // 手機版切換遊戲時預設收合
     hero.hidden = false;
     hero.classList.remove("pop"); void hero.offsetWidth; hero.classList.add("pop");   // 每次選擇都從底部跳出
     cards[selected].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
@@ -70,6 +71,13 @@
   const TAG_DEFAULT = {};   // 未設定 = 「─」；true = ✔；false = ✘
   const TAG_ROWS = [[["single", "單人模式"], ["multi", "多人連線"]], [["mobile", "支援手機"], ["desktop", "支援電腦"]],
                     [["kbd", "鍵盤快捷"], ["touch", "觸碰滑動"]], [["rank", "排行榜"], ["personal", "個人成績"]]];
+  function setTagsOpen(open) {
+    const box = $("#gameTags"), btn = $("#tagsToggle");
+    box.classList.toggle("open", open);
+    btn.classList.toggle("open", open);
+    btn.setAttribute("aria-expanded", open);
+  }
+  $("#tagsToggle").addEventListener("click", () => setTagsOpen(!$("#gameTags").classList.contains("open")));
   function paintTags(g) {
     const t = Object.assign({}, TAG_DEFAULT, g.tags || {});
     $("#gameTags").innerHTML = TAG_ROWS.map(r => r.map(([k, n]) =>

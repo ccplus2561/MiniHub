@@ -74,6 +74,7 @@
             <p id="heroHow" class="how"></p>
           </div>
           <div class="hero-actions">
+            <button class="tags-toggle" id="tagsToggle" type="button" aria-expanded="false" aria-controls="gameTags">遊戲特色<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
             <div class="game-tags" id="gameTags"></div>
             <button class="btn-primary" id="playBtn">
               <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>
@@ -440,8 +441,8 @@
   <div class="modal" id="exitModal" data-lock hidden>
     <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="exitTitle">
       <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></div>
-      <h3 id="exitTitle">要退出遊戲嗎？</h3>
-      <p class="modal-text">遊戲已暫停。退出後本局不列入成績；若已刷新個人最高紀錄，會直接更新。</p>
+      <h3 id="exitTitle">遊戲暫停</h3>
+      <p class="modal-text">你確認要退出遊戲嗎？</p>
       <div class="modal-actions">
         <button class="btn-ghost" id="exitNo" data-autofocus>繼續遊戲</button>
         <button class="btn-primary sm danger" id="exitOk"><span>退出遊戲</span></button>
