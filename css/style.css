@@ -216,7 +216,11 @@ body.m .tags-toggle { display: flex; align-items: center; justify-content: space
   color: var(--text); background: rgba(14, 20, 27, .72); border: 1px solid var(--line); cursor: pointer; }
 body.m .tags-toggle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
 body.m .tags-toggle.open svg { transform: rotate(180deg); }
-body.m .game-tags:not(.open) { display: none; }
+body.m .game-tags { overflow: hidden; max-height: 260px; opacity: 1; margin-top: 0; visibility: visible;
+  transition: max-height .35s cubic-bezier(.4, 0, .2, 1), opacity .25s ease, margin-top .35s cubic-bezier(.4, 0, .2, 1), padding .35s cubic-bezier(.4, 0, .2, 1), border-color .25s ease, visibility 0s; }
+body.m .game-tags:not(.open) { max-height: 0; opacity: 0; margin-top: -16px; padding-top: 0; padding-bottom: 0; border-color: transparent; visibility: hidden;
+  transition: max-height .3s cubic-bezier(.4, 0, .2, 1), opacity .2s ease, margin-top .3s cubic-bezier(.4, 0, .2, 1), padding .3s cubic-bezier(.4, 0, .2, 1), border-color .2s ease, visibility 0s .3s; }
+body.no-anim.m .game-tags, body.m.no-anim .game-tags { transition: none; }
 body.m .game-tags { font-size: 13px; padding: 10px 12px; gap: 6px 10px; }
 
 /* Steam 風綠色「開始」按鈕 */
