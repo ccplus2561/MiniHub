@@ -200,13 +200,15 @@
     }
     launchGame(g, el);
   }
+  // 用 replace 載入遊戲，不在瀏覽紀錄裡多加一筆（否則手機返回鍵會先退回 iframe 的上一頁）
+  function setFrame(u) { try { frame.contentWindow.location.replace(u); } catch (e) { frame.src = u; } }
   function launchGame(g, el) {
     if (!g.path) { sfx("deny"); return toast("「" + g.title + "」" + (g.badge || "即將推出") + "，敬請期待！"); }
     sfx("open");
     current = g;
     srcEl = el || $("#libraryRow .card.selected");
     $("#playerTitle").textContent = g.title;
-    frame.src = bust(g.path);
+    setFrame(bust(g.path));
     // 設定 > 顯示 > 遊戲全螢幕：開啟 = 整個畫面都是遊戲；關閉 = 保留左側導覽列（手機版保留上下列）
     const fsOn = !!(window.MiniHubPrefs && MiniHubPrefs().fsStart);
     player.classList.toggle("with-rail", !fsOn);
@@ -215,7 +217,7 @@
     player.animate(
       [{ clipPath: clipFrom(srcEl), opacity: .3 }, { clipPath: "inset(0 round 0)", opacity: 1 }],
       { duration: 460, easing: EASE });
-    history.replaceState(null, "", "#play=" + g.id);
+    history.replaceState(history.state, "", "#play=" + g.id);
     if (fsOn && player.requestFullscreen) player.requestFullscreen().catch(() => {});
     frame.focus();
   }
@@ -224,8 +226,8 @@
     if (!current || closing) return;
     closing = true; sfx("close");
     if (document.fullscreenElement) document.exitFullscreen();
-    history.replaceState(null, "", location.pathname + location.search);
-    const done = () => { player.hidden = true; frame.src = "about:blank"; current = null; closing = false; if (typeof cb === "function") cb(); };
+    history.replaceState(history.state, "", location.pathname + location.search);
+    const done = () => { player.hidden = true; setFrame("about:blank"); current = null; closing = false; if (typeof cb === "function") cb(); };
     const a = player.animate(
       [{ clipPath: "inset(0 round 0)", opacity: 1 }, { clipPath: clipFrom(srcEl), opacity: .3 }],
       { duration: 340, easing: EASE });
@@ -244,6 +246,7 @@
     else { wasFs = false; openModal("exitModal"); }
   }
   $("#closeBtn").addEventListener("click", askExit);
+  window.MiniHubAskExit = askExit; window.MiniHubIsPlaying = () => !!current && !closing;   // 供 guard.js（返回鍵 / 滑動返回）使用
 
   /* ---------- 遊戲中點左側導覽（只接受滑鼠 / 觸控）：立即暫停並詢問是否退出 ---------- */
   // 退出時本局不另外計入成績；若已刷新個人最高紀錄，遊戲離開時會直接更新（由遊戲自己處理）
@@ -271,7 +274,7 @@
   }, true);
   $("#exitNo").addEventListener("click", () => settleLeave(false));
   $("#exitOk").addEventListener("click", () => settleLeave(true));
-  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) frame.src = bust(current.path); }); });
+  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) setFrame(bust(current.path)); }); });
   $("#fsBtn").addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else player.requestFullscreen && player.requestFullscreen();

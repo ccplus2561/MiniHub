@@ -40,8 +40,8 @@
 
   // ---- 快取：先用上次抓到的內容立刻顯示，再背景更新（只存公開的公告 / 遊戲清單） ----
   const KEY = "minihub:remote:v1";
-  const readCache = () => { try { const d = JSON.parse(localStorage.getItem(KEY)); return d && Array.isArray(d.games) && Array.isArray(d.notices) ? d : null; } catch (e) { return null; } };
-  const writeCache = d => { try { localStorage.setItem(KEY, JSON.stringify({ games: d.games, notices: d.notices })); } catch (e) {} };
+  const readCache = () => { try { const d = JSON.parse(sessionStorage.getItem(KEY)); return d && Array.isArray(d.games) && Array.isArray(d.notices) ? d : null; } catch (e) { return null; } };
+  const writeCache = d => { try { sessionStorage.setItem(KEY, JSON.stringify({ games: d.games, notices: d.notices })); } catch (e) {} };
   let first = true;   // 公告只在進站的第一次自動彈出，背景更新不會再彈
   const apply = d => {
     const games = toGames(d.games), notices = toNotices(d.notices);

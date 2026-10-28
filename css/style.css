@@ -22,7 +22,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-html, body { height: 100%; }
+html, body { height: 100%; overscroll-behavior: none; }   /* 手機下拉不會誤觸重新整理 */
 body {
   font-family: "Motiva Sans", "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
   color: var(--text);

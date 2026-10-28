@@ -86,7 +86,6 @@ try {
   // 右側面板：寬螢幕固定在畫布右邊（記住展開 / 收合）；窄螢幕改成浮在畫布上，預設收合
   const side = $("side"), tog = $("sideTog"), PW = 340;
   let userSide = null, floatSide = false, floatOpen = false;
-  try { const v = localStorage.getItem("minihub.snake.side"); if (v !== null) userSide = v === "1"; } catch (e) {}
   const sideOpen = () => floatSide ? floatOpen : userSide !== false;
   function paintSide() {
     const o = sideOpen();
@@ -335,7 +334,7 @@ try {
   tog.addEventListener("click", e => {
     if (e.detail !== 0 && !touchOK()) return;
     if (floatSide) floatOpen = !floatOpen;
-    else { userSide = !sideOpen(); try { localStorage.setItem("minihub.snake.side", userSide ? "1" : "0"); } catch (x) {} }
+    else { userSide = !sideOpen();  }
     paintSide();
   });
 
@@ -358,7 +357,6 @@ try {
     if (floatSide) floatOpen = true;
     else {
       userSide = true;
-      try { localStorage.setItem("minihub.snake.side", "1"); } catch (e) {}
     }
     paintSide();
   }

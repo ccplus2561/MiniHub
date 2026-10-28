@@ -33,7 +33,7 @@
     if (store) store.removeItem(KEY);
 
     var CSS = "css/style.css";
-    var JS = ["js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
+    var JS = ["js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
     var MOD = "js/firebase.js";
     var warm = function (u) { return fetch(u, { cache: "no-cache" }).catch(function () {}); };
     var ready = function (fn) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn); else fn(); };
