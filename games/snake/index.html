@@ -109,12 +109,94 @@ try {
   try { new ResizeObserver(fit).observe(under); } catch (e) {}
   let snake, dir, next, food, score, best = 0, alive, started, timer, paused = false;
 
+  /* ---------- 音效：吃到食物 / 背景音樂 / 遊戲結束（Web Audio 即時合成，無音檔） ----------
+     遵守大廳設定：「全部靜音」「音樂」「音效」；單獨開啟本頁時全部預設開啟。 */
+  const snd = (() => {
+    let ac = null, lp = null, sfxBus = null, bgm = null, timer = 0, nextT = 0, pos = 0, playing = false;
+    const EIGHTH = 60 / 112 / 2;                                  // 112 BPM 的八分音符
+    const prefs = () => { try { return parent === window ? {} : parent.MiniHubPrefs(); } catch (e) { return {}; } };
+    const sfxOn = () => { const p = prefs(); return !p.mute && p.sfx !== false; };
+    const musicOn = () => { const p = prefs(); return !p.mute && p.music !== false; };
+    function ensure() {
+      if (ac) return ac;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ac = new AC();
+      lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2400; lp.Q.value = 0.4;   // 柔和、不刺耳
+      const comp = ac.createDynamicsCompressor(), master = ac.createGain(); master.gain.value = 0.7;
+      lp.connect(comp); comp.connect(master); master.connect(ac.destination);
+      sfxBus = ac.createGain(); sfxBus.connect(lp);
+      return ac;
+    }
+    function tone(bus, f, t, dur, vol, type, to) {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = type || "triangle";
+      o.frequency.setValueAtTime(f, t);
+      if (to) o.frequency.exponentialRampToValueAtTime(to, t + dur);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(vol, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.03);
+    }
+    const wake = () => { if (ac && ac.state === "suspended") ac.resume().catch(() => {}); };
+
+    function eat() {                                              // 清脆上揚兩音
+      if (!sfxOn() || !ensure()) return; wake();
+      const t = ac.currentTime + 0.005;
+      tone(sfxBus, 660, t, .08, .16, "triangle");
+      tone(sfxBus, 990, t + .06, .12, .16, "triangle");
+    }
+    function over() {                                             // 低沉下行四音
+      if (!sfxOn() || !ensure()) return; wake();
+      const t = ac.currentTime + 0.02;
+      [[392, 0, .16], [330, .16, .16], [262, .32, .16], [196, .48, .55, 130]]
+        .forEach(([f, at, d, to]) => tone(sfxBus, f, t + at, d, .2, "triangle", to));
+    }
+
+    // 背景音樂：Am - F - C - G 琶音 + 低音，循環播放（lookahead 排程，無縫接軌）
+    const CH = [[220, 261.63, 329.63, 110], [174.61, 220, 261.63, 87.31], [261.63, 329.63, 392, 130.81], [196, 246.94, 293.66, 98]];
+    const ARP = [0, 1, 2, 1, 2, 1, 0, 1];
+    function note(i, t) {
+      const bar = (i >> 3) & 3, k = i & 7, c = CH[bar];
+      tone(bgm, c[ARP[k]] * 2, t, EIGHTH * 1.6, .035, "triangle");
+      if (k === 0 || k === 4) tone(bgm, c[3], t, EIGHTH * 3.4, .08, "sine");
+      if (k === 6 && bar % 2) tone(bgm, c[2] * 2, t, EIGHTH * 1.2, .03, "sine");
+    }
+    function sched() {
+      if (!playing) return;
+      while (nextT < ac.currentTime + 0.25) { note(pos, nextT); nextT += EIGHTH; pos = (pos + 1) % 32; }
+    }
+    function start() {
+      if (playing || !musicOn() || !ensure()) return; wake();
+      bgm = ac.createGain(); bgm.gain.value = 1; bgm.connect(lp);
+      playing = true; nextT = ac.currentTime + 0.08; sched();
+      timer = setInterval(sched, 60);
+    }
+    function stop() {
+      if (!playing) return;
+      playing = false; clearInterval(timer);
+      const g = bgm, t = ac.currentTime;
+      g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0.0001, t + .15);
+      setTimeout(() => { try { g.disconnect(); } catch (e) {} }, 400);
+    }
+    // 依目前狀態與設定同步音樂（設定被切換、分頁切換時呼叫）
+    function sync() {
+      const want = started && alive && !paused && musicOn();
+      if (want) start(); else stop();
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (!ac) return;
+      if (document.hidden) ac.suspend().catch(() => {}); else ac.resume().catch(() => {});
+    });
+    return { eat, over, start, stop, sync };
+  })();
+
   function reset() {
     snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
     dir = next = { x: 1, y: 0 };
     score = 0; alive = true; started = false; paused = false;
     place(); draw(); updateHud(); updateBtns();
-    clearInterval(timer);
+    clearInterval(timer); snd.stop();
   }
   function place() {
     do { food = { x: Math.floor(Math.random() * N), y: Math.floor(Math.random() * N) }; }
@@ -126,10 +208,10 @@ try {
   const again = () => { if (alive || asking) return; restart(); };
   // 「再一次」按鈕：進行中也可重來（先送出目前分數）
   function restart() { if (asking) return; asking = true; askNext().then(ok => { asking = false; if (ok) { submit(); reset(); } }); }
-  function start() { if (!started && alive) { started = true; timer = setInterval(step, 110); updateBtns(); } }
+  function start() { if (!started && alive) { started = true; timer = setInterval(step, 110); updateBtns(); snd.start(); } }
   // 暫停 / 繼續（大廳點左側導覽時會呼叫 MiniHubPause；繼續：空白鍵、方向鍵、點一下或滑動）
-  function pause() { if (!alive || !started || paused) return; paused = true; clearInterval(timer); draw(); }
-  function resume() { if (!paused) return; paused = false; timer = setInterval(step, 110); draw(); }
+  function pause() { if (!alive || !started || paused) return; paused = true; clearInterval(timer); snd.stop(); draw(); }
+  function resume() { if (!paused) return; paused = false; timer = setInterval(step, 110); draw(); snd.start(); }
   window.MiniHubPause = pause;
   function updateBtns() { $("startBtn").disabled = started || !alive; $("againBtn").classList.toggle("main", !alive); }
   $("startBtn").addEventListener("click", start);
@@ -138,10 +220,10 @@ try {
     dir = next;
     const h = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
     if (h.x < 0 || h.y < 0 || h.x >= N || h.y >= N || snake.some(s => s.x === h.x && s.y === h.y)) {
-      alive = false; clearInterval(timer); draw(); updateBtns(); submit(); updateHud(); revealRankOnGameOver(); return;
+      alive = false; clearInterval(timer); snd.stop(); snd.over(); draw(); updateBtns(); submit(); updateHud(); revealRankOnGameOver(); return;
     }
     snake.unshift(h);
-    if (h.x === food.x && h.y === food.y) { score++; best = Math.max(best, score); place(); updateHud(); }
+    if (h.x === food.x && h.y === food.y) { score++; best = Math.max(best, score); place(); updateHud(); snd.eat(); }
     else snake.pop();
     draw();
   }
@@ -365,7 +447,7 @@ try {
       }
       reconcile();
     }
-    updateHud(); paintRank(); fit();
+    updateHud(); paintRank(); fit(); snd.sync();
   }
   try {
     parent.document.addEventListener("minihub:prefs", refresh);
