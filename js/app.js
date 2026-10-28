@@ -4,6 +4,9 @@
   const games = window.GAMES || [];
   
   const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
+  // 遊戲頁（iframe）加上時間參數，避免吃到瀏覽器快取的舊版；外部網址不動
+  const bust = p => /^(https?:)?\/\//i.test(p) ? p : p + (p.includes("?") ? "&" : "?") + "t=" + Date.now();
+  const splash = $("#splash"), splashHTML = splash ? splash.outerHTML : "";
   let selected = -1;
   let shown = [];
   let category = "全部";
@@ -203,7 +206,7 @@
     current = g;
     srcEl = el || $("#libraryRow .card.selected");
     $("#playerTitle").textContent = g.title;
-    frame.src = g.path;
+    frame.src = bust(g.path);
     // 設定 > 顯示 > 遊戲全螢幕：開啟 = 整個畫面都是遊戲；關閉 = 保留左側導覽列（手機版保留上下列）
     const fsOn = !!(window.MiniHubPrefs && MiniHubPrefs().fsStart);
     player.classList.toggle("with-rail", !fsOn);
@@ -268,7 +271,7 @@
   }, true);
   $("#exitNo").addEventListener("click", () => settleLeave(false));
   $("#exitOk").addEventListener("click", () => settleLeave(true));
-  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) frame.src = current.path; }); });
+  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) frame.src = bust(current.path); }); });
   $("#fsBtn").addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else player.requestFullscreen && player.requestFullscreen();
@@ -545,10 +548,55 @@
     delOk.disabled = delInput.value.trim() !== "刪除";
   });
 
+  /* ---------- 登出：顯示「登出中...」載入畫面，徹底清除網站上的登入與本機資料後重新載入 ---------- */
+  let bye = false;
+  ["keydown", "keyup"].forEach(t => window.addEventListener(t, e => { if (bye) { e.preventDefault(); e.stopImmediatePropagation(); } }, true));
+  async function wipeSiteData() {
+    const wait = (p, ms) => Promise.race([Promise.resolve(p).catch(() => {}), new Promise(r => setTimeout(r, ms))]);
+    try { sessionStorage.clear(); } catch (e) {}
+    try { localStorage.clear(); } catch (e) {}
+    try {   // Cookie：各種路徑 / 網域組合都清
+      const paths = ["/"]; let acc = "";
+      location.pathname.split("/").filter(Boolean).forEach(x => { acc += "/" + x; paths.push(acc); });
+      const hs = location.hostname.split("."), doms = [null];
+      for (let i = 0; i < hs.length - 1; i++) doms.push("." + hs.slice(i).join("."));
+      document.cookie.split(";").forEach(c => {
+        const n = c.split("=")[0].trim(); if (!n) return;
+        paths.forEach(pa => doms.forEach(d => { document.cookie = n + "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; path=" + pa + (d ? "; domain=" + d : ""); }));
+      });
+    } catch (e) {}
+    const jobs = [];
+    try {   // IndexedDB（Firebase 登入 / 安裝資料）
+      let names = ["firebaseLocalStorageDb", "firebase-heartbeat-database", "firebase-installations-database"];
+      if (indexedDB.databases) { try { names = names.concat((await indexedDB.databases()).map(d => d.name)); } catch (e) {} }
+      [...new Set(names.filter(Boolean))].forEach(n => jobs.push(wait(new Promise(r => {
+        const q = indexedDB.deleteDatabase(n); q.onsuccess = q.onerror = q.onblocked = () => r();   // 被占用時，重新載入後會自動完成刪除
+      }), 1500)));
+    } catch (e) {}
+    try { if (window.caches) jobs.push(wait(caches.keys().then(ks => Promise.all(ks.map(k => caches.delete(k)))), 1500)); } catch (e) {}
+    try { if (navigator.serviceWorker) jobs.push(wait(navigator.serviceWorker.getRegistrations().then(rs => Promise.all(rs.map(r => r.unregister()))), 1500)); } catch (e) {}
+    await Promise.all(jobs);
+  }
+  function showBye() {
+    document.body.classList.add("bye");
+    const t = document.createElement("template");
+    t.innerHTML = splashHTML || '<div class="splash" role="status"><b class="splash-name">MiniHub</b><span class="splash-text">載入中<i>.</i><i>.</i><i>.</i></span><div class="splash-spin"></div></div>';
+    const el = t.content.firstElementChild, tx = el.querySelector(".splash-text");
+    el.removeAttribute("id"); el.classList.remove("out");
+    if (tx && tx.firstChild) tx.firstChild.nodeValue = "登出中";
+    document.body.appendChild(el);
+  }
   $("#logoutOk").addEventListener("click", async () => {
+    if (bye) return; bye = true;
     closeModal("logoutModal");
-    if (window.MiniHubFlushPrefs) { try { await MiniHubFlushPrefs(); } catch (e) {} }   // 登出前先把還沒送出的設定存起來
-    if (window.MiniHubAuth) MiniHubAuth.signOut();
+    showBye();
+    const t0 = Date.now(), lim = (p, ms) => Promise.race([Promise.resolve(p).catch(() => {}), new Promise(r => setTimeout(r, ms))]);
+    if (window.MiniHubFlushPrefs) await lim(MiniHubFlushPrefs(), 2500);   // 登出前先把還沒送出的設定存起來
+    if (window.MiniHubAuth) await lim(MiniHubAuth.signOut(), 2500);
+    await wipeSiteData();
+    await new Promise(r => setTimeout(r, Math.max(0, 900 - (Date.now() - t0))));
+    try { sessionStorage.setItem("mh_bye", "1"); } catch (e) {}      // 重新載入後的載入畫面延續顯示「登出中...」
+    location.replace(location.pathname);                              // 重新載入（同時清掉網址上的參數 / 記憶體中的狀態）
   });
   const PNAME = { google: "Google", github: "GitHub" };
   let chosen = "google";
@@ -799,7 +847,7 @@
   }, true);
 
   /* ---------- 載入畫面（遠端資料抓完才收起；最多等 3 秒） ---------- */
-  const splash = $("#splash"), splashT0 = Date.now();
+  const splashT0 = Date.now();
   let splashDone = false;
   window.MiniHubSplashHide = quick => {
     if (splashDone || !splash) return;
