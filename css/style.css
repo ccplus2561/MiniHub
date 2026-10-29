@@ -259,6 +259,7 @@ body.m .game-tags { font-size: 13px; padding: 10px 12px; gap: 6px 10px; }
 .btn-icon.sm { width: 44px; height: 44px; }
 
 /* ---------- 分類 / 關於 ---------- */
+.lib-empty { padding: 28px 4px; color: var(--muted, #8b93a7); font-size: 14px; }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
 .chip {
   padding: 10px 22px; border-radius: 999px; font-size: 17px; font-weight: 600;

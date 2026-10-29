@@ -10,6 +10,9 @@
   let selected = -1;
   let shown = [];
   let category = "全部";
+  const CATEGORIES = ["街機", "益智", "動作", "桌遊", "紙牌", "射擊", "音樂"];   // 分類按鈕固定順序
+  // 排序：無標籤（可遊玩）→ 開發中 → 即將推出（其餘未開放）；同組維持原本順序
+  const rank = g => !g.path ? 2 : (g.badge === "開發中" ? 1 : 0);
 
   /* ---------- 卡片 ---------- */
   const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -98,7 +101,7 @@
   }
 
   function renderChips() {
-    const cats = ["全部", ...new Set(games.map(g => g.category))];
+    const cats = ["全部", ...CATEGORIES];
     const box = $("#chips");
     box.innerHTML = "";
     cats.forEach(c => {
@@ -112,8 +115,10 @@
 
   function renderLibrary() {
     const keep = shown[selected] && shown[selected].id;
-    shown = games.filter(g => category === "全部" || g.category === category);
+    shown = games.filter(g => category === "全部" || g.category === category)
+      .map((g, i) => [g, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
     renderGrid($("#libraryRow"), shown);
+    if (!shown.length) $("#libraryRow").innerHTML = '<div class="lib-empty">此分類暫無遊戲，敬請期待！</div>';
     const i = shown.findIndex(g => g.id === keep);
     select(i);   // 原本選的還在清單裡就維持選取，否則收起底部資訊
   }

@@ -3,7 +3,7 @@
  * 新增遊戲：把資料夾放進 games/，再在這裡加一筆資料。
  *   id        唯一代號（英文）
  *   title     顯示名稱
- *   category  分類（會自動產生分類按鈕）
+ *   category  分類（街機／益智／動作／桌遊／紙牌／射擊／音樂；按鈕由 app.js 固定產生）
  *   emoji     卡片圖示（之後可改成 icon: "games/xxx/icon.png"）
  *   colors    卡片漸層 [起, 終]
  *   path      遊戲入口；留空 = 顯示「封測中」
@@ -29,7 +29,7 @@ window.GAMES = [
     desc: "記住位置，找出所有成對的卡牌。", featured: true
   },
   {
-    id: "racer", title: "極速賽車", category: "競速", emoji: "🏎️",
+    id: "racer", title: "極速賽車", category: "街機", emoji: "🏎️",
     colors: ["#b91c1c", "#4c0f0f"], path: "",
     desc: "閃避障礙，跑得越遠分數越高。", featured: true
   },
