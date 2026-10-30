@@ -287,6 +287,23 @@
   }, true);
   $("#exitNo").addEventListener("click", () => settleLeave(false));
   $("#exitOk").addEventListener("click", () => settleLeave(true));
+  /* 音樂 / 音效：頂端按鈕直接切換大廳設定（等同設定頁的開關） */
+  const audioBtns = { music: $("#musicBtn"), sfx: $("#sfxBtn") };
+  const paintAudio = () => {
+    const p = window.MiniHubPrefs ? MiniHubPrefs() : { music: true, sfx: true };
+    Object.keys(audioBtns).forEach(k => {
+      const on = !p.mute && p[k];
+      audioBtns[k].classList.toggle("off", !on);
+      audioBtns[k].setAttribute("aria-pressed", String(!!on));
+    });
+  };
+  Object.keys(audioBtns).forEach(k => audioBtns[k].addEventListener("click", () => {
+    const sw = document.querySelector('.switch[data-set="' + k + '"]');
+    if (sw) sw.click();
+    try { frame.focus(); frame.contentWindow.focus(); } catch (e) {}
+  }));
+  document.addEventListener("minihub:prefs", paintAudio);
+  paintAudio();
   $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) loadGame(current); }); });
   $("#fsBtn").addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen();

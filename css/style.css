@@ -257,6 +257,9 @@ body.m .game-tags { font-size: 13px; padding: 10px 12px; gap: 6px 10px; }
 #closeBtn:hover svg { transform: translateX(-3px) scale(1.15); }
 .btn-icon:active { transform: scale(.92); }
 .btn-icon.sm { width: 44px; height: 44px; }
+.btn-icon .slash { display: none; }
+.btn-icon.off { opacity: .55; }
+.btn-icon.off .slash { display: block; }
 
 /* ---------- 分類 / 關於 ---------- */
 .lib-empty { padding: 28px 4px; color: var(--muted, #8b93a7); font-size: 14px; }
