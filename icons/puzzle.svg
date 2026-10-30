@@ -1,19 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-<rect x="10" y="10" width="108" height="108" rx="20" fill="#cbd0d4"/>
-<rect x="18" y="18" width="27" height="27" rx="7" fill="#e9e4d8"/>
-<text x="31.5" y="38.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#656d70">2</text>
-<rect x="51" y="18" width="27" height="27" rx="7" fill="#d8e6dc"/>
-<text x="64.5" y="38.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#587467">4</text>
-<rect x="84" y="18" width="27" height="27" rx="7" fill="#e3e5e4"/>
-<rect x="18" y="51" width="27" height="27" rx="7" fill="#d8e6dc"/>
-<text x="31.5" y="71.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#587467">4</text>
-<rect x="51" y="51" width="27" height="27" rx="7" fill="#85c3b7"/>
-<text x="64.5" y="69.5" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="14" fill="#ffffff">16</text>
-<rect x="84" y="51" width="27" height="27" rx="7" fill="#e3e5e4"/>
-<rect x="18" y="84" width="27" height="27" rx="7" fill="#e9e4d8"/>
-<text x="31.5" y="104.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#656d70">2</text>
-<rect x="51" y="84" width="27" height="27" rx="7" fill="#acd5ca"/>
-<text x="64.5" y="104.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#315e58">8</text>
-<rect x="84" y="84" width="27" height="27" rx="7" fill="#e9e4d8"/>
-<text x="97.5" y="104.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#656d70">2</text>
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1f2f45"/><stop offset="1" stop-color="#0e141b"/></linearGradient>
+<radialGradient id="glow"><stop offset="0" stop-color="#e7b95e" stop-opacity=".7"/><stop offset="1" stop-color="#e7b95e" stop-opacity="0"/></radialGradient>
+</defs>
+<rect x="10" y="10" width="108" height="108" rx="20" fill="url(#bg)" stroke="#668bc2" stroke-width="6"/>
+<circle cx="86" cy="86" r="38" fill="url(#glow)"/>
+<rect x="22" y="22" width="40" height="40" rx="9" fill="#acd5ca"/>
+<text x="42" y="51.4" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" text-anchor="middle" font-size="26" fill="#315e58">8</text>
+<rect x="66" y="22" width="40" height="40" rx="9" fill="#668fca"/>
+<text x="86" y="49.6" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" text-anchor="middle" font-size="21" fill="#ffffff">64</text>
+<rect x="22" y="66" width="40" height="40" rx="9" fill="#bd80b0"/>
+<text x="42" y="92.5" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" text-anchor="middle" font-size="18" fill="#ffffff">512</text>
+<rect x="66" y="66" width="40" height="40" rx="9" fill="#e7b95e"/>
+<text x="86" y="91.4" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" text-anchor="middle" font-size="15" fill="#ffffff">2048</text>
 </svg>
