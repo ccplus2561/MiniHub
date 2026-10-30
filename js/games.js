@@ -9,13 +9,21 @@
  *   path      遊戲入口；留空 = 顯示「封測中」
  *   desc      一句話介紹
  *   featured  是否顯示在首頁精選
+ *   board     排行榜規格（沒有排行榜的遊戲不要寫）：
+ *               order   "desc" = 分數越高越好；"asc" = 越低越好（例如用時）
+ *               unit    單位文字（例如 "分"、"秒"）
+ *               max     最大合理值（選填；超過視為不合法、不寫入）
+ *               modes   多個排行榜（選填，例如 ["easy","hard"]，限小寫英數；第一個為預設）
+ *               fields  允許附帶儲存的額外欄位（選填，例如 ["level"]，最多 5 個）
+ *             遊戲裡只要呼叫 MiniHub.board(id, ...).submit(分數)；Firebase 的存取、排序、
+ *             刪除帳號時的清除，大廳都會依這份規格自動處理，不需要再改 firebase.js。
  */
 window.GAMES = [
   {
     id: "snake", title: "貪吃蛇", category: "街機", emoji: "🐍", icon: "icons/snake.svg",
     colors: ["#1f7a4d", "#0c3b2a"], path: "games/snake/index.html",
     desc: "經典街機遊戲，操控小蛇吃食物、越長越高分。\n規則：20 × 20 地圖，撞牆或撞到自己即結束。\n操作：方向鍵／WASD，或在畫面上滑動、拖曳。",
-    how: "", featured: true,
+    how: "", featured: true, board: { order: "desc", unit: "分", max: 400 },
     tags: { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true }
   },
   {

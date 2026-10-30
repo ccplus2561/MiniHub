@@ -166,7 +166,11 @@ async function deleteAccount() {
     const batch = F.writeBatch(F.db);
     if (snap.exists() && snap.data().gameUid) batch.delete(F.doc(F.db, "uids", snap.data().gameUid));
     batch.delete(F.doc(F.db, "users", user.uid));
-    ["snake"].forEach(g => { batch.delete(F.doc(colB(g), user.uid)); batch.delete(F.doc(colR(g), user.uid)); });   // 一併清掉遊戲成績 / 排行榜
+    // 一併清掉所有「有排行榜（games.js 宣告 board）」的遊戲成績 / 排行榜（含各模式）
+    (window.GAMES || []).filter(x => x.board).forEach(x => (Array.isArray(x.board.modes) && x.board.modes.length ? x.board.modes : [""]).forEach(m => {
+      if (m && !MODE_OK.test(m)) return;
+      batch.delete(F.doc(colB(x.id, m), user.uid)); batch.delete(F.doc(colR(x.id, m), user.uid));
+    }));
     await batch.commit();
   }
   SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
@@ -194,40 +198,63 @@ async function ping() {
    games/{game}/bests/{uid}  個人最高（只有本人可讀寫）：{ score, inRank, name }
    games/{game}/ranks/{uid}  排行榜（登入者可讀、本人可寫）：{ score, name, updatedAt }；name 寫入時就已依「公開使用者名稱」遮蔽 */
 const NOP = () => {};
-const colB = g => F.collection(F.db, "games", g, "bests");
-const colR = g => F.collection(F.db, "games", g, "ranks");
+// ---- 排行榜 / 個人最高：通用存取。每款遊戲在 js/games.js 用 board 欄位宣告規格，這裡不需要為新遊戲改動 ----
+//   board: { order: "desc" | "asc"（desc = 越高越好，asc = 越低越好）, unit: "分", max: 最大合理值（選填，超過不寫入）,
+//            modes: ["easy","hard"]（選填，每個模式各一份排行榜；第一個為預設，名稱限小寫英數）, fields: ["level"]（選填，允許附帶儲存的額外欄位）}
+// 資料路徑：games/{id}/bests[_模式]/{uid} 與 games/{id}/ranks[_模式]/{uid}（沒有 modes 時沒有後綴）
+const gameSpec = g => { try { const x = (window.GAMES || []).find(v => v.id === g); return x && x.board && typeof x.board === "object" ? x.board : null; } catch (e) { return null; } };
+const MODE_OK = /^[a-z0-9]{1,12}$/;
+const modeOf = (spec, m) => Array.isArray(spec.modes) && spec.modes.length ? (spec.modes.includes(m) && MODE_OK.test(m) ? m : spec.modes[0]) : "";
+const suf = m => m ? "_" + m : "";
+// 取得此遊戲的集合；沒有規格（未宣告 board）的遊戲一律視為不支援
+const ctx = (g, m) => { const spec = gameSpec(g); return spec ? { spec, mode: modeOf(spec, m), desc: spec.order !== "asc" } : null; };
+const colB = (g, m) => F.collection(F.db, "games", g, "bests" + suf(m));
+const colR = (g, m) => F.collection(F.db, "games", g, "ranks" + suf(m));
 const scoreUid = () => (F && F.auth.currentUser ? F.auth.currentUser.uid : "");
+const cleanExtra = (spec, x) => {
+  const o = {}, keys = Array.isArray(spec.fields) ? spec.fields : [];
+  if (x && typeof x === "object") keys.slice(0, 5).forEach(k => { const v = x[k]; if (typeof v === "number" && isFinite(v)) o[k] = v; else if (typeof v === "string") o[k] = v.slice(0, 40); });
+  return o;
+};
 const scores = {
   uid: scoreUid,
-  // 個人最高（即時）：cb({ score, inRank, name } | null)
-  watchBest(game, cb) {
-    const u = scoreUid();
-    if (!u || !SAVE_PROFILE) return NOP;
-    return F.onSnapshot(F.doc(colB(game), u), s => { bump(1, 0); const d = s.exists() ? s.data() : null; cb(d ? { score: Number(d.score) || 0, inRank: !!d.inRank, name: String(d.name || "") } : null); }, NOP);
+  // 遊戲規格（供 SDK 判斷排序 / 單位 / 模式）；沒有規格回傳 null
+  spec(game) { const c = ctx(game); return c ? { order: c.desc ? "desc" : "asc", unit: String(c.spec.unit || ""), modes: Array.isArray(c.spec.modes) ? c.spec.modes.slice() : null, fields: Array.isArray(c.spec.fields) ? c.spec.fields.slice() : [] } : null; },
+  // 個人最高（即時）：cb({ score, inRank, name, extra } | null)
+  watchBest(game, cb, mode) {
+    const u = scoreUid(), c = ctx(game, mode);
+    if (!u || !c || !SAVE_PROFILE) return NOP;
+    return F.onSnapshot(F.doc(colB(game, c.mode), u), s => { bump(1, 0); const d = s.exists() ? s.data() : null; cb(d ? { score: Number(d.score) || 0, inRank: !!d.inRank, name: String(d.name || ""), extra: d.extra || {} } : null); }, NOP);
   },
-  // 排行榜前 n 名（即時）：cb([{ uid, name, score }])
-  watchTop(game, n, cb) {
-    if (!scoreUid() || !SAVE_PROFILE) return NOP;
-    return F.onSnapshot(F.query(colR(game), F.orderBy("score", "desc"), F.limit(n)), s => {
+  // 排行榜前 n 名（即時）：cb([{ uid, name, score, extra }])
+  watchTop(game, n, cb, mode) {
+    const c = ctx(game, mode);
+    if (!scoreUid() || !c || !SAVE_PROFILE) return NOP;
+    return F.onSnapshot(F.query(colR(game, c.mode), F.orderBy("score", c.desc ? "desc" : "asc"), F.limit(Math.min(Math.max(n | 0, 1), 20))), s => {
       bump(s.size || 1, 0);
-      cb(s.docs.map(d => ({ uid: d.id, name: String(d.data().name || "").slice(0, 40), score: Number(d.data().score) || 0 })));
+      cb(s.docs.map(d => ({ uid: d.id, name: String(d.data().name || "").slice(0, 40), score: Number(d.data().score) || 0, extra: d.data().extra || {} })));
     }, NOP);
   },
-  // 目前名次 = 分數比我高的人數 + 1
-  async rankOf(game, score) {
+  // 目前名次 = 比我好的人數 + 1
+  async rankOf(game, score, mode) {
+    const c = ctx(game, mode);
+    if (!c) return 0;
     bump(1, 0);
-    const c = await F.getCountFromServer(F.query(colR(game), F.where("score", ">", score)));
-    return c.data().count + 1;
+    const r = await F.getCountFromServer(F.query(colR(game, c.mode), F.where("score", c.desc ? ">" : "<", score)));
+    return r.data().count + 1;
   },
   // 寫入個人最高；rank = true 同步寫進排行榜（name 為已處理好的顯示名稱），false 則自排行榜移除
-  async saveScore(game, score, { rank, name }) {
-    const u = scoreUid();
-    if (!u || !SAVE_PROFILE) return;
+  async saveScore(game, score, { rank, name, mode, extra } = {}) {
+    const u = scoreUid(), c = ctx(game, mode);
+    if (!u || !c || !SAVE_PROFILE) return;
+    score = Number(score);
+    if (!isFinite(score) || score <= 0 || (typeof c.spec.max === "number" && score > c.spec.max)) { console.warn("[MiniHub] 分數不合法，已略過：", game, score); return; }
+    const ex = cleanExtra(c.spec, extra), nm = String(name || "").slice(0, 40);
     bump(0, 2);
     const b = F.writeBatch(F.db);
-    b.set(F.doc(colB(game), u), { score, inRank: !!rank, name: rank ? String(name || "").slice(0, 40) : "" });
-    if (rank) b.set(F.doc(colR(game), u), { score, name: String(name || "").slice(0, 40), updatedAt: F.serverTimestamp() });
-    else b.delete(F.doc(colR(game), u));
+    b.set(F.doc(colB(game, c.mode), u), { score, inRank: !!rank, name: rank ? nm : "", extra: ex });
+    if (rank) b.set(F.doc(colR(game, c.mode), u), { score, name: nm, extra: ex, updatedAt: F.serverTimestamp() });
+    else b.delete(F.doc(colR(game, c.mode), u));
     await b.commit();
   }
 };

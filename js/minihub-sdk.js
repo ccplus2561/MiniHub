@@ -15,11 +15,14 @@
  *   MiniHub.requestNext()       開始下一局前呼叫；未登入時大廳會詢問同意條款。回傳 Promise<boolean>
  * ── 玩家 / 排行榜 ─────────────────────────────────────
  *   MiniHub.player()            { loggedIn, uid, name, canRank, displayName, maskName(name) }
- *   MiniHub.board(gameId, { top: 3, onUpdate(state) })
+ *   MiniHub.board(gameId, { top: 3, mode, onUpdate(state) })
  *       自動處理「個人最高 + 排行榜前 N 名 + 自己的名次」，並讓雲端資料跟大廳隱私設定一致。
- *       state = { logged, rankOn, myName, uid, best, top:[{uid,name,score}], myRank }
- *       回傳 { submit(score), state, destroy() }；遊戲結束時呼叫 submit(分數) 即可
- *       （只有高於個人最高才會寫入）。onUpdate 在任何資料變動時呼叫，請在裡面重畫畫面。
+ *       前提：該遊戲已在 js/games.js 宣告 board 規格（排序方向、單位、模式…），否則 state.supported = false。
+ *       state = { supported, logged, rankOn, myName, uid, mode, order, unit, best, top:[{uid,name,score,extra}], myRank }
+ *       回傳 { submit(score, { extra }), setMode(mode), state, destroy() }
+ *       遊戲結束時呼叫 submit(分數) 即可（只有比個人最高更好才會寫入；order 為 "asc" 時越低越好）。
+ *       有多個排行榜時用 mode / setMode 切換；extra 只能帶 games.js 的 board.fields 允許的欄位。
+ *       onUpdate 在任何資料變動時呼叫，請在裡面重畫畫面。
  */
 (function () {
   "use strict";
@@ -68,8 +71,8 @@
   function board(game, opt) {
     opt = opt || {};
     var topN = opt.top || 3, cb = opt.onUpdate || noop;
-    var st = { logged: false, rankOn: false, myName: "", uid: "", best: 0, top: [], myRank: 0 };
-    var bestDoc = null, offBest = null, offTop = null, bestKey = "", topKey = false, busy = false, seq = 0, rt = 0, dead = false;
+    var st = { supported: false, logged: false, rankOn: false, myName: "", uid: "", mode: opt.mode || "", order: "desc", unit: "", best: 0, top: [], myRank: 0 };
+    var bestDoc = null, offBest = null, offTop = null, bestKey = "", topKey = "", busy = false, seq = 0, rt = 0, dead = false;
     var A = function () { try { return P && P.MiniHubAuth && P.MiniHubAuth.scores; } catch (e) { return null; } };
     var emit = function () { if (!dead) try { cb(st); } catch (e) {} };
 
@@ -80,7 +83,7 @@
         if (dead) return;
         if (!a || !st.rankOn || st.best <= 0 || st.top.some(function (r) { return r.uid === st.uid; })) { st.myRank = 0; return emit(); }
         var n = ++seq;
-        a.rankOf(game, st.best).then(function (r) { if (n === seq && !dead) { st.myRank = r; emit(); } }, noop);
+        a.rankOf(game, st.best, st.mode).then(function (r) { if (n === seq && !dead) { st.myRank = r; emit(); } }, noop);
       }, 300);
     }
     function reconcile() {   // 讓雲端資料跟目前設定一致（加入 / 退出排行榜、名稱遮蔽改變）
@@ -89,43 +92,54 @@
       var nm = st.rankOn ? st.myName : "";
       if (bestDoc.inRank === st.rankOn && (!st.rankOn || bestDoc.name === nm)) return;
       busy = true;
-      a.saveScore(game, bestDoc.score, { rank: st.rankOn, name: nm }).then(noop, noop).then(function () { busy = false; });
+      a.saveScore(game, bestDoc.score, { rank: st.rankOn, name: nm, mode: st.mode, extra: bestDoc.extra }).then(noop, noop).then(function () { busy = false; });
     }
-    function stopSubs() { if (offBest) offBest(); if (offTop) offTop(); offBest = offTop = null; bestKey = ""; topKey = false; }
+    function stopSubs() { if (offBest) offBest(); if (offTop) offTop(); offBest = offTop = null; bestKey = ""; topKey = ""; }
 
     function refresh() {
       if (dead) return;
-      var a = A(), p = player();
+      var a = A(), p = player(), sp = null;
+      try { sp = a && a.spec ? a.spec(game) : null; } catch (e) {}
+      st.supported = !!sp;
+      if (sp) { st.order = sp.order; st.unit = sp.unit; if (sp.modes && sp.modes.indexOf(st.mode) < 0) st.mode = sp.modes[0]; }
+      if (!sp) a = null;   // 沒有宣告規格：不連線
       st.logged = !!(a && p.loggedIn); st.uid = st.logged ? p.uid : "";
       st.rankOn = st.logged && p.canRank; st.myName = p.displayName;
       if (!st.logged) { stopSubs(); st.best = 0; bestDoc = null; st.top = []; st.myRank = 0; }
       else {
-        if (bestKey !== st.uid) {
+        if (bestKey !== st.uid + "|" + st.mode) {
           if (offBest) offBest();
-          bestKey = st.uid;
-          offBest = a.watchBest(game, function (d) { bestDoc = d; st.best = d ? d.score : 0; calcRank(); reconcile(); emit(); });
+          bestKey = st.uid + "|" + st.mode;
+          offBest = a.watchBest(game, function (d) { bestDoc = d; st.best = d ? d.score : 0; calcRank(); reconcile(); emit(); }, st.mode);
         }
-        if (topKey !== st.rankOn) {
+        if (topKey !== st.rankOn + "|" + st.mode) {
           if (offTop) offTop();
-          offTop = null; topKey = st.rankOn;
-          if (st.rankOn) offTop = a.watchTop(game, topN, function (rows) { st.top = rows; calcRank(); emit(); });
+          offTop = null; topKey = st.rankOn + "|" + st.mode;
+          if (st.rankOn) offTop = a.watchTop(game, topN, function (rows) { st.top = rows; calcRank(); emit(); }, st.mode);
           else { st.top = []; st.myRank = 0; }
         }
         reconcile();
       }
       emit();
     }
-    function submit(score) {
+    function submit(score, o) {
       var a = A();
-      if (!a || !st.logged || !(score > st.best)) return;
+      score = Number(score);
+      if (!a || !st.supported || !st.logged || !isFinite(score) || score <= 0) return;
+      var better = st.order === "asc" ? (st.best <= 0 || score < st.best) : score > st.best;   // 0 = 還沒有成績
+      if (!better) return;
       st.best = score; emit();
-      a.saveScore(game, score, { rank: st.rankOn, name: st.rankOn ? st.myName : "" }).then(noop, noop);
+      a.saveScore(game, score, { rank: st.rankOn, name: st.rankOn ? st.myName : "", mode: st.mode, extra: o && o.extra }).then(noop, noop);
+    }
+    function setMode(m) {   // 切換排行榜模式（games.js 的 board.modes）
+      if (m === st.mode) return;
+      st.mode = m; stopSubs(); bestDoc = null; st.best = 0; st.top = []; st.myRank = 0; refresh();
     }
     function destroy() { dead = true; clearTimeout(rt); stopSubs(); off(); }
     var off = onChange(refresh);
     addEventListener("pagehide", destroy);
     refresh();
-    return { submit: submit, state: st, destroy: destroy, refresh: refresh };
+    return { submit: submit, setMode: setMode, state: st, destroy: destroy, refresh: refresh };
   }
 
   /* ---------- 同步大廳的幻彩主題色 ---------- */
