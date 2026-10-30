@@ -448,7 +448,7 @@
     tiles.forEach(place);               // 觸發滑動動畫
 
     score += gained;
-    if (score > peak) peak = score;
+    if (score > peak) { peak = score; if (typeof paintMe === "function") paintMe(); }
     if (score > best) { best = score; saveBest(); }
     setScore(gained);
 
@@ -482,6 +482,7 @@
         gameOver = true;
         sound.over();
         submitScore();
+        revealRankOnGameOver();
         refreshPowerups();
         setTimeout(() => showOverlay("沒有可移動的方塊", `本局分數：${score.toLocaleString("en-US")}`), 250);
       }
@@ -575,17 +576,34 @@
   }
 
   /* ---------- 個人最高 / 排行榜（登入後；資料由大廳 SDK 處理） ---------- */
-  const rankBtn = $("rank-btn"), rankPop = $("rank-pop"), meBestEl = $("me-best"), rankList = $("rank-list");
+  const meBestEl = $("me-best"), rankList = $("rank-list");
+  const side = $("side"), tog = $("sideTog"), gameEl = document.querySelector(".game"), PW = 260;
   let st = { logged: false, rankOn: false, best: 0, top: [], myRank: 0, myName: "", uid: "" };
+  let userSide = null, floatSide = false, floatOpen = false;   // 寬螢幕：固定在右側，記住展開 / 收合；窄螢幕（含手機）：浮在棋盤上，預設收合
   const fmt = n => Number(n).toLocaleString("en-US");
+  const sideOpen = () => floatSide ? floatOpen : userSide !== false;
+  function paintSide() {
+    const o = sideOpen();
+    side.classList.toggle("closed", !o); side.classList.toggle("float", floatSide);
+    tog.setAttribute("aria-expanded", String(o)); tog.title = o ? "收合" : "展開";
+  }
+  function fitSide() {
+    const r = $("board").getBoundingClientRect(), g = gameEl.getBoundingClientRect();
+    side.style.top = Math.max(8, Math.round(r.top)) + "px";
+    side.style.maxHeight = Math.max(160, Math.round(r.height)) + "px";
+    floatSide = (innerWidth - g.width) / 2 < PW + 12 + 34 + 8;
+    paintSide();
+  }
+  function paintMe() { meBestEl.textContent = fmt(Math.max(st.best, peak)); }
   function paintRank() {
-    rankBtn.hidden = !st.logged;
-    if (!st.logged) rankPop.hidden = true;
-    rankBtn.setAttribute("aria-expanded", String(!rankPop.hidden));
-    meBestEl.textContent = fmt(Math.max(st.best, peak));
-    $("rank-title").hidden = rankList.hidden = !(st.logged && st.rankOn);
+    const showRank = st.logged && st.rankOn;
+    $("meBox").hidden = !st.logged;
+    $("rankBox").hidden = !showRank;
+    side.hidden = !st.logged && !showRank;      // 未登入或不允許排行榜：整個面板不顯示
+    paintMe();
     rankList.textContent = "";
-    if (rankList.hidden) return;
+    if (!side.hidden) fitSide();
+    if (!showRank) return;
     const add = (rank, name, sc, cls) => {
       const li = document.createElement("li"); if (cls) li.className = cls;
       [rank, name, sc].forEach((t, i) => { const e = document.createElement("span"); if (i === 2) e.className = "sc"; e.textContent = t; li.appendChild(e); });
@@ -603,7 +621,13 @@
       else add("—", st.myName, "尚無成績", "me");
     }
   }
-  rankBtn.addEventListener("click", () => { rankPop.hidden = !rankPop.hidden; paintRank(); });
+  tog.addEventListener("click", () => { if (floatSide) floatOpen = !floatOpen; else userSide = !sideOpen(); paintSide(); });
+  addEventListener("resize", () => { if (!side.hidden) fitSide(); });
+  function revealRankOnGameOver() {      // 已登入且允許排行榜時，遊戲結束自動展開
+    if (!(st.logged && st.rankOn)) return;
+    if (floatSide) floatOpen = true; else userSide = true;
+    paintSide();
+  }
   let board = { submit() {} };
   if (hub) {
     board = hub.board("puzzle", { top: 3, onUpdate: s => {
@@ -612,7 +636,7 @@
       paintRank();
     } });
     window.addEventListener("pagehide", submitScore);
-    hub.onPause(() => { submitScore(); cancelMode(); rankPop.hidden = true; paintRank(); });   // 回合制，無計時器；暫停時送出成績並收起面板
+    hub.onPause(() => { submitScore(); cancelMode(); floatOpen = false; paintSide(); });   // 回合制，無計時器；暫停時送出成績並收起面板
   }
 
   startGame();
