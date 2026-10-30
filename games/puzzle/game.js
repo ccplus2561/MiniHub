@@ -77,13 +77,20 @@
   fxCanvas.setAttribute("aria-hidden", "true");
   boardWrap.appendChild(fxCanvas);
   const fxCtx = fxCanvas.getContext("2d");
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const FX_COLORS = {                     // 與 style.css 的方塊色階對應
+    const FX_COLORS = {                     // 與 style.css 的方塊色階對應
     512: "#bd80b0", 1024: "#d88c9e", 2048: "#e7b95e", 4096: "#f0975a",
     8192: "#e8685c", 16384: "#cf4768", 32768: "#9a52b8", 65536: "#5a6fc4", 131072: "#2f9fb5"
   };
   const FX_RAINBOW = ["#e7b95e", "#d88c9e", "#8e7ac8", "#4f9fc6", "#76b9ac"];
   let fxParts = [], fxRaf = 0, fxLast = 0, fxW = 0, fxH = 0;
+
+  // 動畫 / 炫光效果：跟隨大廳設定「動畫效果」，關閉時停用並清除畫面上的特效
+  const animOK = () => { try { return !hub || hub.prefs().anim !== false; } catch (_) { return true; } };
+  function applyAnim() {
+    const on = animOK();
+    document.body.classList.toggle("no-anim", !on);
+    if (!on) { fxParts = []; fxCtx.clearRect(0, 0, fxW, fxH); }
+  }
 
   function fxResize() {
     const r = fxCanvas.getBoundingClientRect();
@@ -98,7 +105,7 @@
   fxResize();
 
   function burst(t) {
-    if (reduceMotion.matches || !fxW) return;
+    if (!animOK() || !fxW) return;
     const level = Math.min(Math.log2(t.v) - 8, 9);          // 512→1、1024→2、2048→3 …
     const cr = fxCanvas.getBoundingClientRect();
     const tr = tilesEl.getBoundingClientRect();
@@ -638,14 +645,14 @@
     board = hub.board("puzzle", { top: 3, onUpdate: s => {
       st = { logged: s.logged, rankOn: s.rankOn, best: s.best, top: s.top, myRank: s.myRank, myName: s.myName, uid: s.uid };
       if (s.best > best) { best = s.best; bestEl.textContent = fmt(best); }
-      applyKbd();
+      applyKbd(); applyAnim();
       paintRank();
     } });
     window.addEventListener("pagehide", submitScore);
     hub.onPause(() => { submitScore(); cancelMode(); floatOpen = false; paintSide(); });   // 回合制，無計時器；暫停時送出成績並收起面板
   }
 
-  applyKbd();
+  applyKbd(); applyAnim();
   startGame();
   if (hub) board.refresh();
 })();

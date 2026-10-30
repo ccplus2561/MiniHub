@@ -300,10 +300,10 @@ body {
   .score-card strong { font-size: 20px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .tile { transition: none; }
-  .tile-in, .score-card.bump strong, .score-add, .overlay, .overlay-card { animation: none !important; }
-}
+/* 大廳設定「動畫效果」關閉時：停用滑動、彈出與炫光（不再依系統的「減少動態效果」） */
+body.no-anim .tile { transition: none; }
+body.no-anim .tile-in, body.no-anim .score-card.bump strong, body.no-anim .score-add, body.no-anim .overlay, body.no-anim .overlay-card { animation: none !important; }
+body.no-anim .fx { display: none; }
 
 /* ---------- 右側資訊面板（個人最高 / 排行榜）：可展開 / 收合；登入且允許才顯示 ---------- */
 #side { position: fixed; right: 12px; top: 12px; width: 260px; z-index: 7; transition: transform .28s cubic-bezier(.2, .8, .2, 1); }
