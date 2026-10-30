@@ -248,12 +248,13 @@ const scores = {
     const u = scoreUid(), c = ctx(game, mode);
     if (!u || !c || !SAVE_PROFILE) return;
     score = Number(score);
-    if (!isFinite(score) || score <= 0 || (typeof c.spec.max === "number" && score > c.spec.max)) { console.warn("[MiniHub] 分數不合法，已略過：", game, score); return; }
+    if (!Number.isInteger(score) || score <= 0 || (typeof c.spec.max === "number" && score > c.spec.max)) { console.warn("[MiniHub] 分數不合法（需為大於 0 的整數且不超過 max；計時請用毫秒整數），已略過：", game, score); return; }
     const ex = cleanExtra(c.spec, extra), nm = String(name || "").slice(0, 40);
     bump(0, 2);
     const b = F.writeBatch(F.db);
-    b.set(F.doc(colB(game, c.mode), u), { score, inRank: !!rank, name: rank ? nm : "", extra: ex });
-    if (rank) b.set(F.doc(colR(game, c.mode), u), { score, name: nm, extra: ex, updatedAt: F.serverTimestamp() });
+    const hasEx = Object.keys(ex).length > 0;   // 沒有額外欄位就不寫 extra（與舊資料格式相同）
+    b.set(F.doc(colB(game, c.mode), u), { score, inRank: !!rank, name: rank ? nm : "", ...(hasEx ? { extra: ex } : {}) });
+    if (rank) b.set(F.doc(colR(game, c.mode), u), { score, name: nm, ...(hasEx ? { extra: ex } : {}), updatedAt: F.serverTimestamp() });
     else b.delete(F.doc(colR(game, c.mode), u));
     await b.commit();
   }
