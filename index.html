@@ -34,6 +34,7 @@
 
     var CSS = "css/style.css";
     var JS = ["js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
+    var WARM_ONLY = ["js/minihub-sdk.js"];   // 遊戲頁會載入的共用檔：進站時一併向伺服器確認，不注入大廳
     var MOD = "js/firebase.js";
     var warm = function (u) { return fetch(u, { cache: "no-cache" }).catch(function () {}); };
     var ready = function (fn) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn); else fn(); };
@@ -44,7 +45,7 @@
       var mod = function () { var m = document.createElement("script"); m.type = "module"; m.src = MOD; document.body.appendChild(m); };
       last.onload = last.onerror = mod;   // firebase.js 必須在其他腳本之後執行
     }
-    Promise.all([CSS].concat(JS, MOD).map(warm)).then(function () { ready(inject); });
+    Promise.all([CSS].concat(JS, MOD, WARM_ONLY).map(warm)).then(function () { ready(inject); });
   })();
   </script>
 </head>

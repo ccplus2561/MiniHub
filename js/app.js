@@ -208,13 +208,20 @@
   }
   // 用 replace 載入遊戲，不在瀏覽紀錄裡多加一筆（否則手機返回鍵會先退回 iframe 的上一頁）
   function setFrame(u) { try { frame.contentWindow.location.replace(u); } catch (e) { frame.src = u; } }
+  // 載入遊戲前，先向伺服器確認共用 SDK 是最新版（沒變動只回 304，很輕量；最多等 1.5 秒，連不上就照常載入），
+  // 這樣遊戲頁面載入 SDK 時一定拿到最新的，不會吃到瀏覽器的舊快取
+  const SDK_URL = "js/minihub-sdk.js";
+  const loadGame = g => {
+    const fresh = Promise.race([fetch(SDK_URL, { cache: "no-cache" }).catch(() => {}), new Promise(r => setTimeout(r, 1500))]);
+    fresh.then(() => { if (current === g) setFrame(bust(g.path)); });
+  };
   function launchGame(g, el) {
     if (!g.path) { sfx("deny"); return toast("「" + g.title + "」" + (g.badge || "即將推出") + "，敬請期待！"); }
     sfx("open");
     current = g;
     srcEl = el || $("#libraryRow .card.selected");
     $("#playerTitle").textContent = g.title;
-    setFrame(bust(g.path));
+    loadGame(g);
     // 設定 > 顯示 > 遊戲全螢幕：開啟 = 整個畫面都是遊戲；關閉 = 保留左側導覽列（手機版保留上下列）
     const fsOn = !!(window.MiniHubPrefs && MiniHubPrefs().fsStart);
     player.classList.toggle("with-rail", !fsOn);
@@ -280,7 +287,7 @@
   }, true);
   $("#exitNo").addEventListener("click", () => settleLeave(false));
   $("#exitOk").addEventListener("click", () => settleLeave(true));
-  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) setFrame(bust(current.path)); }); });
+  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) loadGame(current); }); });
   $("#fsBtn").addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else player.requestFullscreen && player.requestFullscreen();
