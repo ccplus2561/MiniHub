@@ -25,7 +25,6 @@
   const scoreEl = $("score");
   const bestEl = $("best");
   const undoButton = $("undo");
-  const restartButton = $("restart");
   const overlay = $("overlay");
   const overlayTitle = $("overlay-title");
   const overlayMessage = $("overlay-message");
@@ -33,8 +32,9 @@
   const noteEl = $("note");
   // 依裝置顯示操作提示：觸控裝置顯示滑動，其他顯示鍵盤／滑鼠
   const touchOnly = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-  const NOTE_DEFAULT = touchOnly ? "在畫面上滑動即可移動方塊" : noteEl.textContent;
-  noteEl.textContent = NOTE_DEFAULT;
+  const kbdBar = $("kbd");
+  const NOTE_TOUCH = "在畫面上滑動即可移動方塊";
+  const NOTE_DEFAULT = NOTE_TOUCH;
   const puButtons = { remove: $("pu-remove"), swap: $("pu-swap") };
   const costEls = { remove: $("cost-remove"), swap: $("cost-swap") };
   const costUndoEl = $("cost-undo");
@@ -276,7 +276,15 @@
     }
     tilesEl.classList.toggle("picking", !!mode);
   }
-  function setNote(text) { noteEl.textContent = text || NOTE_DEFAULT; }
+  let kbdShown = false;
+  function setNote(text) { noteEl.textContent = text || NOTE_DEFAULT; noteEl.hidden = kbdShown && !text; }   // 快捷介面顯示時，預設提示隱藏（道具操作提示仍會顯示）
+  // 鍵盤快捷介面：只在「鍵盤快捷鍵」開啟時顯示；關閉時隱藏，改顯示滑動提示
+  function applyKbd() {
+    kbdShown = kbdOK() && !touchOnly;
+    kbdBar.hidden = !kbdShown;
+    document.body.classList.toggle("has-kbd", kbdShown);
+    if (!mode) setNote();
+  }
   function cancelMode() {
     if (picked) picked.el.classList.remove("selected");
     mode = null; picked = null;
@@ -563,9 +571,6 @@
   }, { passive: false });
 
   undoButton.addEventListener("click", undo);
-  restartButton.addEventListener("click", () => {
-    if (window.confirm("確定要重新開始這一局嗎？")) newGame();
-  });
   overlayButton.addEventListener("click", newGame);
   // 下一局：未登入時由大廳詢問是否同意條款；單獨開啟本頁時直接重來
   let asking = false;
@@ -633,12 +638,14 @@
     board = hub.board("puzzle", { top: 3, onUpdate: s => {
       st = { logged: s.logged, rankOn: s.rankOn, best: s.best, top: s.top, myRank: s.myRank, myName: s.myName, uid: s.uid };
       if (s.best > best) { best = s.best; bestEl.textContent = fmt(best); }
+      applyKbd();
       paintRank();
     } });
     window.addEventListener("pagehide", submitScore);
     hub.onPause(() => { submitScore(); cancelMode(); floatOpen = false; paintSide(); });   // 回合制，無計時器；暫停時送出成績並收起面板
   }
 
+  applyKbd();
   startGame();
   if (hub) board.refresh();
 })();

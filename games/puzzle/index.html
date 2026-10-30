@@ -43,11 +43,14 @@
 
       <div class="controls">
         <button id="undo" class="button button-light" type="button"><span aria-hidden="true">↶</span> 復原 <em id="cost-undo" class="cost"></em></button>
-        <button id="restart" class="button button-primary" type="button">重新開始 <span aria-hidden="true">↻</span></button>
       </div>
       <p id="note" class="note">方向鍵／WASD、滑鼠拖曳或滾輪移動方塊</p>
     </div>
   </main>
+  <div id="kbd" hidden>
+    <span>移動 <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
+    <span>也可以用滑鼠拖曳、滾輪或滑動操作</span>
+  </div>
   <aside id="side" hidden>
     <button id="sideTog" type="button" aria-label="展開 / 收合" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     <div id="info">

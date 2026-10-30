@@ -10,7 +10,9 @@
   --mint: #76b9ac;
   --gap: clamp(5px, 1.5vw, 9px);
   --slide: 110ms;
+  --kbd-h: 0px;            /* 鍵盤快捷介面佔用的底部高度（顯示時為 48px） */
 }
+body.has-kbd { --kbd-h: 48px; }
 
 html, body { min-height: 100%; }
 
@@ -20,7 +22,7 @@ body {
   min-height: 100dvh;
   display: grid;
   place-items: center;
-  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) calc(max(24px, env(safe-area-inset-bottom)) + var(--kbd-h)) max(16px, env(safe-area-inset-left));
   background: linear-gradient(160deg, #1b2838, #0e141b 70%) fixed;
   color: var(--ink);
   font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
@@ -34,7 +36,7 @@ body {
 }
 
 /* ---------- 版面：直向（手機／窄視窗）= 由上到下堆疊 ---------- */
-.game { width: min(600px, 100%, max(260px, calc(100dvh - 335px))); }
+.game { width: min(600px, 100%, max(260px, calc(100dvh - 335px - var(--kbd-h)))); }
 
 .brand { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 10px; }
 .brand h1 { margin: 0; font-size: 20px; font-weight: 900; letter-spacing: .01em; }
@@ -61,14 +63,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
   padding: 10px 16px;
   border: 1px solid rgba(255,255,255,.10);
   border-radius: 12px;
   background: rgba(23, 32, 45, .78);
 }
-.score-card span { color: #d5deea; font-size: 13px; }
-.score-card strong { color: var(--ink); font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.score-card span { color: #d5deea; font-size: 13px; white-space: nowrap; }
+.score-card strong { color: var(--ink); font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .score-card.bump strong { animation: scoreBump .25s ease; }
 .score-add.neg { color: #cf4768; }
 .score-add {
@@ -187,7 +190,7 @@ body {
 .button-light.active { background: #3b5f92; border-color: #8fb2e6; color: #fff; }
 .button-light:disabled .cost { color: #a89560; }
 
-.controls { display: grid; grid-template-columns: .85fr 1.4fr; gap: 12px; margin-top: 18px; }
+.controls { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 18px; }
 
 .button {
   min-height: 56px;
@@ -242,11 +245,11 @@ body {
 
 /* ---------- 版面：橫向（電腦／平板橫放／手機橫放）= 左棋盤、右側控制面板 ---------- */
 @media (min-aspect-ratio: 1/1) and (min-width: 520px) {
-  body { padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+  body { padding-top: max(16px, env(safe-area-inset-top)); padding-bottom: calc(max(16px, env(safe-area-inset-bottom)) + var(--kbd-h)); }
   .game {
-    --pw: clamp(200px, 32vw, 300px);                       /* 右側面板寬 */
+    --pw: clamp(220px, 34vw, 320px);                       /* 右側面板寬 */
     --lg: clamp(16px, 3vw, 40px);                          /* 欄間距 */
-    --bs: min(720px, calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),
+    --bs: min(720px, calc(100dvh - 32px - var(--kbd-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom)),
               calc(100vw - 32px - env(safe-area-inset-left) - env(safe-area-inset-right) - var(--pw) - var(--lg)));
     width: calc(var(--bs) + var(--lg) + var(--pw));
     display: grid;
@@ -264,10 +267,9 @@ body {
   .controls { grid-template-columns: 1fr; margin-top: 12px; }
   .note { margin-top: 14px; }
 }
-/* 較寬的桌機：分數卡左右並排、放大字級 */
+/* 較寬的桌機：分數卡維持單欄滿寬（避免換行）、放大字級 */
 @media (min-aspect-ratio: 1/1) and (min-width: 900px) {
-  .score-row { grid-template-columns: 1fr 1fr; }
-  .score-card { padding: 12px 14px; }
+  .score-card { padding: 12px 16px; }
   .score-card strong { font-size: 24px; }
 }
 /* 橫放手機等矮螢幕：縮小按鈕、隱藏提示 */
@@ -276,8 +278,6 @@ body {
   .brand h1 { font-size: 18px; }
   .icon-btn { width: 32px; height: 32px; }
   .icon-btn svg { width: 17px; height: 17px; }
-  .score-row { grid-template-columns: 1fr 1fr; }
-  .controls { grid-template-columns: .85fr 1.4fr; }
   .powerups { grid-template-columns: 1fr 1fr; }
   .score-row, .controls { gap: 6px; margin-bottom: 6px; }
   .score-card { padding: 6px 10px; }
@@ -327,3 +327,10 @@ body {
 #rank-list li.gap { display: block; text-align: center; color: #8aa3bd; line-height: 8px; }
 #rank-list .sc { font-weight: 700; }
 [hidden] { display: none !important; }
+
+/* ---------- 鍵盤快捷介面（大廳設定「鍵盤快捷鍵」開啟時才顯示） ---------- */
+#kbd { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; height: 48px; display: flex; align-items: center; justify-content: flex-end; gap: 28px;
+  padding: 0 28px; font-size: 16px; color: #a3adbd; white-space: nowrap;
+  background: linear-gradient(0deg, rgba(11, 17, 24, .92), rgba(11, 17, 24, .5)); border-top: 1px solid #263447; }
+#kbd kbd { display: inline-block; min-width: 28px; margin-right: 4px; padding: 1px 9px; text-align: center; border-radius: 8px; font: 700 14px/22px system-ui, sans-serif;
+  color: #0e141b; background: #a3adbd; }
