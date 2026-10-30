@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f3ee">
+  <meta name="description" content="2048 數字合併小遊戲">
+  <title>2048</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="../../js/minihub-sdk.js"></script>
+</head>
+<body>
+  <main class="game">
+    <div class="panel-top">
+      <header class="brand">
+        <h1>2048</h1>
+      </header>
+      <div class="score-row" aria-label="遊戲分數">
+        <div class="score-card"><span>分數</span><strong id="score">0</strong></div>
+        <div class="score-card best-card"><span>最高分</span><strong id="best">0</strong></div>
+      </div>
+    </div>
+
+    <section class="board-wrap" aria-label="2048 遊戲棋盤">
+      <div id="board" class="board" role="grid" aria-label="5 乘 5 數字方塊棋盤">
+        <div class="cells" aria-hidden="true"></div>
+        <div id="tiles" class="tiles"></div>
+      </div>
+      <div id="rank-pop" class="rank-pop" hidden>
+        <h3>個人最高</h3><b id="me-best">0</b>
+        <h3 id="rank-title">排行榜</h3><ol id="rank-list"></ol>
+      </div>
+      <div id="overlay" class="overlay hidden" aria-live="polite">
+        <div class="overlay-card">
+          <h2 id="overlay-title">遊戲結束</h2>
+          <p id="overlay-message"></p>
+          <button id="overlay-button" class="button button-primary" type="button">再玩一次</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="panel-bottom">
+      <div class="powerups" aria-label="道具">
+        <button id="pu-remove" class="button button-light button-sm" type="button"><span aria-hidden="true">✕</span> 清除方塊 <em id="cost-remove" class="cost"></em></button>
+        <button id="pu-swap" class="button button-light button-sm" type="button"><span aria-hidden="true">⇄</span> 交換方塊 <em id="cost-swap" class="cost"></em></button>
+      </div>
+
+      <div class="controls">
+        <button id="undo" class="button button-light" type="button"><span aria-hidden="true">↶</span> 復原 <em id="cost-undo" class="cost"></em></button>
+        <button id="restart" class="button button-primary" type="button">重新開始 <span aria-hidden="true">↻</span></button>
+      </div>
+      <p id="note" class="note">方向鍵／WASD、滑鼠拖曳或滾輪移動方塊</p>
+    </div>
+  </main>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

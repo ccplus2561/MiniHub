@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0e141b">
+  <title>MiniHub 遊戲平台</title>
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <!-- 載入畫面所需的最小樣式（完整樣式載入前先顯示，避免閃爍）；style.css 載入後會接手 -->
+  <style>
+    body{margin:0;background:#0e141b}
+    .splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0e141b;color:#fff;font-family:system-ui,"Microsoft JhengHei",sans-serif}
+    .splash-logo{width:110px;height:110px;fill:none;stroke:#1a9fff;stroke-width:1.5}
+    .splash-name{font-size:32px;font-weight:800;letter-spacing:.04em}
+    .splash-text{font-size:26px;font-weight:600;letter-spacing:.08em;color:#a3adbd}
+    .splash-spin{width:44px;height:44px;margin-top:10px;border-radius:50%;border:4px solid rgba(255,255,255,.12);border-top-color:#1a9fff;animation:splashSpin .8s linear infinite}
+    @keyframes splashSpin{to{transform:rotate(360deg)}}
+  </style>
+  <!-- 確保每次進站都是最新版：
+       1) 若首頁是直接從瀏覽器快取（未向伺服器確認）取得，就強制重新抓一次；
+       2) 每個 CSS / JS 都先向伺服器確認（沒變動只回 304，很輕量）再載入，GitHub Pages 部署完成後不會再吃到舊檔。 -->
+  <script>
+  (function () {
+    var KEY = "mh_refreshed", store = null;
+    try { store = window.sessionStorage; } catch (e) {}
+    var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+    if (nav && nav.type === "navigate" && nav.transferSize === 0 && store && !store.getItem(KEY)) {
+      store.setItem(KEY, "1");
+      var go = function () { location.reload(); };
+      fetch(location.href, { cache: "reload" }).then(go, go);
+      return;
+    }
+    if (store) store.removeItem(KEY);
+
+    var CSS = "css/style.css";
+    var JS = ["js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
+    var WARM_ONLY = ["js/minihub-sdk.js"];   // 遊戲頁會載入的共用檔：進站時一併向伺服器確認，不注入大廳
+    var MOD = "js/firebase.js";
+    var warm = function (u) { return fetch(u, { cache: "no-cache" }).catch(function () {}); };
+    var ready = function (fn) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn); else fn(); };
+    function inject() {
+      var l = document.createElement("link"); l.rel = "stylesheet"; l.href = CSS; document.head.appendChild(l);
+      var last = null;
+      JS.forEach(function (u) { var s = document.createElement("script"); s.src = u; s.async = false; document.body.appendChild(s); last = s; });
+      var mod = function () { var m = document.createElement("script"); m.type = "module"; m.src = MOD; document.body.appendChild(m); };
+      last.onload = last.onerror = mod;   // firebase.js 必須在其他腳本之後執行
+    }
+    Promise.all([CSS].concat(JS, MOD, WARM_ONLY).map(warm)).then(function () { ready(inject); });
+  })();
+  </script>
+</head>
+<body>
+  <!-- 開啟網站時的載入畫面：抓完公告 / 遊戲清單後才進入 -->
+  <div class="splash" id="splash" role="status" aria-live="polite">
+    <svg class="splash-logo" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z" pathLength="1"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01" pathLength="1"/></svg>
+    <b class="splash-name">MiniHub</b>
+    <span class="splash-text">載入中<i>.</i><i>.</i><i>.</i></span>
+    <div class="splash-spin" aria-hidden="true"></div>
+  </div>
+  <script>try{if(sessionStorage.getItem("mh_bye")){sessionStorage.removeItem("mh_bye");document.querySelector(".splash-text").firstChild.nodeValue="登出中";}}catch(e){}</script>
+
+  <!-- 背景：隨選中遊戲淡入淡出 -->
+  <div class="backdrop" id="backdrop" aria-hidden="true"><i class="bd on"></i><i class="bd"></i></div>
+
+  <div class="app">
+
+    <!-- 左側導覽軌（橫向平板：左手拇指導覽） -->
+    <aside class="rail">
+      <button class="brand" id="brandBtn" aria-label="公告">
+        <svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01"/></svg>
+        <b>MiniHub</b>
+      </button>
+      <nav class="tabs" id="sidebar" aria-label="主選單">
+        <button class="nav-item active" data-view="home">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
+        <span>首頁</span>
+      </button>
+        <button class="nav-item" data-view="library">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>遊戲庫</span>
+      </button>
+        <button class="nav-item" data-view="settings">
+        <svg viewBox="0 0 24 24"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.2"/><circle cx="8" cy="17" r="2.2"/></svg>
+        <span>設定</span>
+      </button>
+        <button class="nav-item" data-view="about">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg>
+        <span>關於</span>
+      </button>
+      </nav>
+      <button class="login-btn" id="loginBtn" aria-label="登入">
+        <svg viewBox="0 0 24 24"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 8l4 4-4 4M14 12H4"/></svg>
+        <img class="avatar" id="loginAvatar" alt="" referrerpolicy="no-referrer">
+        <span>登入</span>
+      </button>
+    </aside>
+
+    <div class="content">
+
+    <!-- 主要內容 -->
+    <main class="main">
+
+      <!-- 首頁（暫時清空） -->
+      <section class="view active" id="view-home"></section>
+
+      <!-- 遊戲庫：選到圖卡放大，底部跳出名稱與開始遊戲 -->
+      <section class="view" id="view-library">
+        <h2 class="page-title">遊戲庫</h2>
+        <div class="chips" id="chips"></div>
+        <div class="card-row" id="libraryRow"></div>
+
+        <div class="hero" id="hero" hidden>
+          <div class="hero-text">
+            <h1 id="heroTitle"></h1>
+            <p id="heroDesc"></p>
+            <p id="heroHow" class="how"></p>
+          </div>
+          <div class="hero-actions">
+            <button class="tags-toggle" id="tagsToggle" type="button" aria-expanded="false" aria-controls="gameTags">遊戲特色<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+            <div class="game-tags" id="gameTags"></div>
+            <button class="btn-primary" id="playBtn">
+              <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>
+              <span>開始遊戲</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 設定 -->
+      <section class="view" id="view-settings">
+        <h2 class="page-title">設定</h2>
+
+        <div class="set-layout">
+          <aside class="set-list" aria-label="設定分類">
+            <button class="set-item active" data-pane="account"><b>帳號</b></button>
+            <button class="set-item" data-pane="privacy"><b>隱私</b></button>
+            <button class="set-item" data-pane="display"><b>顯示</b></button>
+            <button class="set-item" data-pane="language"><b>語言</b></button>
+            <button class="set-item" data-pane="audio"><b>音效</b></button>
+            <button class="set-item" data-pane="controls"><b>操作</b></button>
+            <button class="set-item" data-pane="status"><b>伺服器狀態</b></button>
+          </aside>
+
+          <div class="set-content">
+
+            <!-- 帳號 -->
+            <div class="pane active" id="pane-account">
+              <div class="info-card">
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 4-6 8-6s7.2 2 8 6"/></svg>
+                  <div class="grow"><small>使用者名稱</small><h4 id="accName"></h4><p class="lock-hint" id="accLock" hidden></p></div>
+                  <button class="row-btn" id="editNameBtn" aria-label="修改使用者名稱" hidden><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg></button>
+                </div>
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.8-2.4 3-2.4s2.4.8 3 2.4M15 10h3M15 14h3"/></svg>
+                  <div class="grow"><small>遊戲 UID</small><h4 id="accUid"></h4></div>
+                </div>
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                  <div class="grow"><small>註冊遊戲時間</small><h4 id="accReg"></h4></div>
+                </div>
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <div class="grow"><small>上次登入時間</small><h4 id="accLast"></h4></div>
+                </div>
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+                  <div class="grow"><small>電子郵件</small><h4 id="accEmail"></h4></div>
+                  <button class="row-btn" id="emailEye" aria-label="顯示完整電子郵件" hidden>
+                    <svg class="eye-on" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="notice" id="guestNote"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p><b>目前是訪客模式</b>：不會連線到伺服器，也不會同步任何資料；登入後才會連線並同步你的玩家資料。</p></div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>登入即視同你已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p></div>
+            </div>
+
+            <!-- 顯示 -->
+            <div class="pane" id="pane-display">
+              <div class="set-label">顯示模式</div>
+              <button class="radio-card wide selected" data-group="display" data-value="auto">
+                <i class="radio"></i>
+                <div><b>自動 <span class="tag">預設</span></b><p>依裝置與螢幕大小自動選擇版面</p></div>
+              </button>
+              <button class="radio-card wide" data-group="display" data-value="desktop">
+                <i class="radio"></i>
+                <div><b>電腦版</b><p>適合電腦與平板的橫向版面</p></div>
+              </button>
+              <button class="radio-card wide" data-group="display" data-value="mobile">
+                <i class="radio"></i>
+                <div><b>手機版</b><p>適合手機直向操作：底部導覽、單欄版面</p></div>
+              </button>
+              <div class="set-label">介面</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>圖卡大小</b><small>調整首頁與遊戲庫的卡片尺寸</small></div><div class="seg" data-set="cardSize"><button data-value="s">小</button><button data-value="m">中</button><button data-value="l">大</button></div></div>
+                <div class="set-row"><div class="set-text"><b>動畫效果</b><small>卡片轉場與滑鼠停留動畫</small></div><button class="switch" role="switch" aria-checked="false" data-set="anim" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>遊戲全螢幕</b><small>開始遊戲時自動全螢幕</small></div><button class="switch" role="switch" aria-checked="false" data-set="fsStart" aria-label="開關"><i></i></button></div>
+              </div>
+            </div>
+
+            <!-- 音效 -->
+            <div class="pane" id="pane-audio">
+              <div class="set-label">聲音</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>全部靜音</b><small>關閉所有聲音</small></div><button class="switch" role="switch" aria-checked="false" data-set="mute" aria-label="開關"><i></i></button></div>
+                <div class="set-row" data-dep="mute"><div class="set-text"><b>音樂</b><small>背景音樂</small></div><button class="switch" role="switch" aria-checked="false" data-set="music" aria-label="開關"><i></i></button></div>
+                <div class="set-row" data-dep="mute"><div class="set-text"><b>音效</b><small>按鈕與遊戲音效</small></div><button class="switch" role="switch" aria-checked="false" data-set="sfx" aria-label="開關"><i></i></button></div>
+              </div>
+            </div>
+
+            <!-- 操作 -->
+            <div class="pane" id="pane-controls">
+              <div class="set-label">輸入</div>
+              <div class="notice m-only"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>手機版：鍵盤快捷鍵固定關閉、觸控滑動固定開啟。這不會改動你在電腦版保存的設定。</p></div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>允許鍵盤快捷鍵</b><small>開啟後可用鍵盤操作大廳</small></div><button class="switch" role="switch" aria-checked="false" data-set="kbd" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許觸控滑動</b><small>關閉後，滑鼠與觸控點擊皆無效</small></div><button class="switch" role="switch" aria-checked="false" data-set="touch" aria-label="開關"><i></i></button></div>
+              </div>
+            </div>
+
+            <!-- 伺服器狀態 -->
+            <div class="pane" id="pane-status">
+              <div class="set-label">連線狀態</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>網路</b><small>瀏覽器是否連上網路</small></div><span class="stat" id="stNet" data-s="">—</span></div>
+                <div class="set-row"><div class="set-text"><b>Firestore 伺服器</b><small id="stSrvNote">尚未檢查</small></div><span class="stat" id="stSrv" data-s="">—</span></div>
+                <div class="set-row"><div class="set-text"><b>帳號登入</b><small>登入狀態</small></div><span class="stat" id="stAuth" data-s="">—</span></div>
+              </div>
+              <button class="btn-primary sm" id="stCheck" style="margin-top:16px"><span>重新檢查</span></button>
+              <div class="set-label">本次使用量</div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>讀取次數</b><small>這個網頁開啟期間、這台裝置</small></div><span class="stat plain" id="stReads">0</span></div>
+                <div class="set-row"><div class="set-text"><b>寫入次數</b><small>這個網頁開啟期間、這台裝置</small></div><span class="stat plain" id="stWrites">0</span></div>
+              </div>
+            </div>
+
+            <!-- 隱私 -->
+            <div class="pane" id="pane-privacy">
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>允許加入排行榜</b><small>開啟後才能在遊戲中進行排名比較</small></div><button class="switch" role="switch" aria-checked="false" data-set="joinRank" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許公開使用者名稱</b><small>開啟顯示完整名稱，關閉則部分以 * 遮蔽</small></div><button class="switch" role="switch" aria-checked="false" data-set="publicName" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>排行榜上的顯示名稱</b><small>依目前設定預覽</small></div><span class="stat plain" id="rankPreview">—</span></div>
+              </div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>需登入並開啟「允許加入排行榜」，才能在遊戲中進行排名比較；關閉時不會出現在任何排行榜。</p></div>
+              <div id="delAccBox" hidden>
+                <div class="set-label">危險區域</div>
+                <div class="set-group">
+                  <div class="set-row"><div class="set-text"><b>刪除帳號</b><small>刪除後所有資料將清空，需重新註冊</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>刪除帳號</span></button></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 語言 -->
+            <div class="pane" id="pane-language">
+              <div class="set-label">選擇語言</div>
+              <button class="radio-card wide selected" data-group="lang" data-value="zh-Hant">
+                <i class="radio"></i>
+                <div><b>繁體中文 <span class="tag">預設</span></b></div>
+              </button>
+            </div>
+
+          </div>
+
+          <!-- 說明（右側）：隨左側分類切換 -->
+          <aside class="set-help" id="setHelp" aria-label="說明">
+            <div class="set-label">說明</div>
+            <div class="help-pane active" id="help-account">
+              <div class="help-title">帳號</div><p>顯示登入後的使用者名稱、遊戲 UID、註冊時間與電子郵件（預設遮罩，可按眼睛圖示顯示完整內容）。</p><p>使用者名稱每 14 天可修改一次；遊戲 UID 建立後無法更改。</p>
+            </div>
+            <div class="help-pane" id="help-display">
+              <div class="help-title">顯示</div><p>顯示模式：自動會依螢幕寬度切換電腦版或手機版，也可以手動指定；顯示模式不會保存。</p><p>圖卡大小：調整首頁與遊戲庫的卡片尺寸（手機版自動縮小）。</p><p>動畫效果：關閉後減少轉場與停留動畫。</p><p>遊戲全螢幕：開始遊戲時自動進入全螢幕。</p><p>登入後，動畫效果、遊戲全螢幕與圖卡大小會同步到帳號（電腦版與手機版的圖卡大小各自保存）；顯示模式不保存，每次開啟都是「自動」。</p>
+            </div>
+            <div class="help-pane" id="help-audio">
+              <div class="help-title">音效</div><p>全部靜音：關閉所有聲音。</p><p>音效：按鈕、切換、進出遊戲時的提示音，音量刻意調低、音色柔和。</p><p>音樂：預留給之後的背景音樂。</p><p>登入後，這些設定會同步到帳號。</p>
+            </div>
+            <div class="help-pane" id="help-controls">
+              <div id="kbdPanel">
+              <div class="help-title">鍵盤快捷鍵</div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>僅適用於 MiniHub 大廳；遊戲內的快捷鍵由各遊戲開發者自行設計。登入後，操作設定會同步到帳號；手機版固定關閉鍵盤快捷鍵，不影響電腦版的設定。</p></div>
+              <div class="set-group">
+                <div class="set-row"><div class="set-text"><b>上</b><small>切換到上一個分頁</small></div><span class="keys"><kbd>↑</kbd><kbd>W</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>下</b><small>切換到下一個分頁</small></div><span class="keys"><kbd>↓</kbd><kbd>S</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>左</b><small>選擇上一款遊戲；已在最左邊則回到分頁</small></div><span class="keys"><kbd>←</kbd><kbd>A</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>右</b><small>選擇下一款遊戲；在分頁時進入中間內容</small></div><span class="keys"><kbd>→</kbd><kbd>D</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>確認</b><small>進入內容 / 開始遊戲 / 啟用項目</small></div><span class="keys"><kbd>Enter</kbd></span></div>
+                <div class="set-row"><div class="set-text"><b>返回</b><small>從中間內容回到最左側分頁</small></div><span class="keys"><kbd>Esc</kbd></span></div>
+              </div>
+              </div>
+              <div class="notice" id="kbdOff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>鍵盤快捷鍵已關閉。要使用鍵盤操作，請先開啟左側的「允許鍵盤快捷鍵」。</p></div>
+            </div>
+            <div class="help-pane" id="help-privacy">
+              <div class="help-title">隱私</div><p>允許加入排行榜：開啟後才能在遊戲中進行排名比較；關閉時你不會出現在任何排行榜。</p><p>允許公開使用者名稱：開啟時排行榜顯示完整名稱；關閉時只顯示部分字元，其餘以 * 取代（例如「王*明」）。</p><p>首次登入時會詢問這兩個選項（預設開啟）。登入後，這裡的選擇會同步到你的帳號；訪客無法加入排行榜。</p>
+            </div>
+            <div class="help-pane" id="help-language">
+              <div class="help-title">語言</div><p>目前僅提供繁體中文，其他語言之後再開放。</p><p>登入後，語言設定會同步到帳號。</p>
+            </div>
+            <div class="help-pane" id="help-status">
+              <div class="help-title">伺服器狀態</div><p>Firestore 伺服器：實際向資料庫讀取一次，收到回應就代表連得上，並顯示來回時間；每檢查一次約計 1 次讀取。<b>未登入的訪客不會連線到伺服器、也不同步資料</b>，登入後才會連線並可檢查。</p><p>本次使用量：只統計這個網頁開啟期間、這台裝置的讀寫次數（估算），重新整理會歸零，不是整個專案的總用量。</p><p>專案的計費指標（所有玩家合計）只能在 Firebase 主控台 &gt; Firestore &gt; 用量 查看，網頁端無法取得。</p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- 關於 -->
+      <section class="view" id="view-about">
+        <h2 class="page-title">關於</h2>
+        <div class="panel about-legal">
+          <div class="chips legal-tabs">
+            <button class="chip legal-tab active" data-tab="terms">服務條款</button>
+            <button class="chip legal-tab" data-tab="privacy">隱私權政策</button>
+            <button class="chip legal-tab" data-tab="rules">使用規定</button>
+          </div>
+        <div class="legal-doc" data-doc="terms">
+          <h3>服務條款</h3>
+          <p class="muted">最後更新：2026 年 10 月 30 日</p>
+          <h4>1. 接受條款</h4>
+          <p>歡迎使用 MiniHub（以下稱「本站」）。當你登入或繼續使用本站，即表示你已閱讀、了解並同意本服務條款、隱私權政策及使用規定。若不同意，請停止使用。</p>
+          <p>未滿 18 歲者須經法定代理人（父母或監護人）閱讀並同意後，方可註冊與使用；未滿 7 歲者請由法定代理人代為操作。</p>
+          <h4>2. 服務說明與原創聲明</h4>
+          <ul>
+            <li>本站為開發者個人獨立開發的免費遊戲平台，開發過程使用人工智慧（AI）作為輔助工具（程式碼、美術素材、測試等）。</li>
+            <li>本站盡力確保內容為原創或已取得合法授權。若你認為本站內容侵害你的權利，請依隱私權政策「聯絡方式」通知，我們將儘速查證並處理。</li>
+            <li>本站目前不收費、不含廣告；若未來新增，將先於本站公告並更新相關條款。</li>
+            <li>本站禁止任何破壞遊戲公平與網站平衡的行為，詳見使用規定。</li>
+          </ul>
+          <h4>3. 帳號與遊戲資料</h4>
+          <ul>
+            <li>本站支援以 Google 或 GitHub 帳號登入；同一個電子郵件的不同登入方式會連結為同一個 MiniHub 帳號。首次登入時需建立使用者名稱，並由系統產生 9 位數遊戲 UID。</li>
+            <li>遊戲 UID 建立後無法更改，且一個電子郵件只能擁有一個 UID。</li>
+            <li>使用者名稱每 14 天僅能變更一次，並須符合使用規定。</li>
+            <li>帳號與遊戲紀錄僅限本人使用，不得轉讓、出租、買賣或共用。</li>
+            <li>你應妥善保管登入用的第三方帳號；以該帳號進行的行為視為你本人的行為。發現帳號遭盜用，請儘速通知我們。</li>
+          </ul>
+          <h4>4. 使用者責任</h4>
+          <p>你同意依使用規定使用服務，不得從事任何違法、侵害他人權益（含智慧財產權、隱私權）或干擾服務運作的行為，並自行負擔因此產生的法律責任。</p>
+          <h4>5. 服務變更與中止</h4>
+          <p>本站為免費服務，我們可能新增、修改、暫停或終止部分或全部功能，也可能因維護、升級、故障，或第三方服務的額度、費用或政策限制而暫時無法使用，並將盡力減少影響。若決定終止全部服務，將盡可能事先於本站公告。</p>
+          <h4>6. 智慧財產權</h4>
+          <p>本站的程式、介面、圖像與內容之相關權利，除另有標示外，均屬本站或原權利人所有，未經同意不得擅自重製、散布或作商業利用。</p>
+          <h4>7. 免責聲明與責任限制</h4>
+          <ul>
+            <li>本站以「現狀」提供，不保證服務不中斷、無錯誤，或遊戲資料永久保存；建議你自行留意重要紀錄。</li>
+            <li>本站使用 Google Firebase、GitHub Pages 等第三方服務，因這些服務的中斷、異常或其自身之資安事件所造成的損害，本站將協助處理，但在法律允許範圍內不負賠償責任。</li>
+            <li>因使用或無法使用本站所生之損害，在法律允許的範圍內，本站不負賠償責任。但本站故意或重大過失，或依法（如個人資料保護法、消費者保護法等）不得排除或限制之責任，不在此限。</li>
+          </ul>
+          <h4>8. 條款修改</h4>
+          <p>我們可能修訂本條款，修訂後的內容公布於本頁並載明更新日期，自公布時起生效；重大變更將於本站公告。你於修訂後繼續使用，即視為同意。</p>
+          <h4>9. 準據法與管轄</h4>
+          <p>本條款以中華民國法律為準據法；如有爭議，以依法有管轄權之法院為管轄法院。本條款任一條文經認定無效，不影響其餘條文之效力。</p>
+        </div>
+
+        <div class="legal-doc" data-doc="privacy" hidden>
+          <h3>隱私權政策</h3>
+          <p class="muted">最後更新：2026 年 10 月 30 日</p>
+          <p>本站依中華民國《個人資料保護法》（下稱「個資法」）告知你以下事項。本站由開發者個人經營。</p>
+          <h4>1. 蒐集的資料</h4>
+          <ul>
+            <li><b>身分資料</b>：登入時由 Google 或 GitHub 提供的電子郵件地址；你建立的使用者名稱與系統產生的遊戲 UID。</li>
+            <li><b>帳號紀錄</b>：註冊時間、上次登入時間、上次更名時間。</li>
+            <li><b>設定</b>：「允許加入排行榜」「允許公開使用者名稱」的選擇，以及動畫效果、全螢幕、圖卡大小、語言、音效、操作等偏好。</li>
+            <li><b>遊戲資料</b>：遊戲最高分與排行榜資料（分數、顯示名稱）。</li>
+          </ul>
+          <p>登入供應商提供的大頭貼僅在登入期間用於畫面顯示，不會另外儲存；本站無法取得、也不會儲存你的第三方帳號密碼；本站不自行蒐集 IP 位址、裝置資訊或進行廣告追蹤，但第三方服務（見第 4 點）可能記錄一般連線資訊。</p>
+          <h4>2. 蒐集目的</h4>
+          <p>識別玩家身分與管理帳號、顯示帳號資訊、提供排行榜與遊戲功能、維護系統安全與處理違規（如外掛、刷榜）、處理你的聯繫與申請。</p>
+          <h4>3. 利用期間、地區、對象與方式</h4>
+          <ul>
+            <li><b>期間</b>：自註冊起至你刪除帳號或本站終止服務為止；本站不會因長期未登入而自動刪除帳號，如欲刪除，可自行刪除或聯絡本站申請。被停用的帳號，其帳號與違規紀錄會保留，用於防止再次濫用、處理申訴及依法配合調查。</li>
+            <li><b>地區</b>：資料儲存於 Google Firebase 雲端服務，所在地依 Google 的設定，可能位於中華民國境外；本站不會主動將資料傳輸至其他地區或第三方。</li>
+            <li><b>對象</b>：本站開發者，以及提供雲端服務的第三方供應商。</li>
+            <li><b>方式</b>：以電子或自動化方式處理與利用。</li>
+          </ul>
+          <h4>4. 第三方服務與資料共享</h4>
+          <ul>
+            <li>本站不會出售、出租或交換你的個人資料；除法律規定或司法、主管機關依法要求外，不會向第三方揭露。</li>
+            <li>登入與玩家資料由 Google Firebase（Authentication 與 Cloud Firestore）處理與儲存；登入供應商（Google、GitHub）亦適用其各自的條款與隱私權政策。</li>
+            <li>本站向 Google Apps Script 讀取公告與開發中遊戲清單；此請求不含你的帳號資料，但 Google 可能記錄 IP 等一般連線資訊。網頁由 GitHub Pages 提供，程式庫由 Google 靜態資源伺服器載入，其供應商亦可能記錄一般連線資訊。</li>
+          </ul>
+          <h4>5. 偏好設定與瀏覽器儲存</h4>
+          <p>登入後，各項偏好設定會同步到你的帳號，下次登入自動套用；「顯示模式」不會保存。訪客的設定只存在於目前網頁的記憶體，不會寫入瀏覽器或伺服器。登入狀態僅保留到分頁關閉為止。</p>
+          <p>為加快開啟速度，本站會把公開的公告與遊戲清單暫存在你的瀏覽器（不含帳號資料），清除瀏覽器資料即可移除。本站不使用廣告或追蹤用 Cookies。</p>
+          <p>離開網站、關閉分頁或切到背景時，本站會清除瀏覽器中的 localStorage、Cookies、快取與 IndexedDB。Firebase 可能在瀏覽器產生登入與安裝識別資料，Google、GitHub 的登入視窗亦會使用其自身的 Cookies，適用各自的隱私權政策。</p>
+          <h4>6. 公開範圍</h4>
+          <p>你的電子郵件不會公開。首次登入時會詢問是否允許加入排行榜與公開使用者名稱（預設開啟）。只有允許加入排行榜時你才可能出現在排行榜，公開內容包含顯示名稱、分數與名次；允許公開使用者名稱時顯示完整名稱，否則只顯示部分字元（其餘以 * 取代）。關閉後最高分仍會保存但不公開。你可隨時在「設定 &gt; 隱私」變更。</p>
+          <h4>7. 你的權利與資料刪除</h4>
+          <p>依個資法第 3 條，你可就本站保有的個人資料請求：查詢或閱覽、製給複製本、補充或更正、停止蒐集／處理／利用、刪除。</p>
+          <ul>
+            <li><b>自行刪除</b>：於「設定 &gt; 隱私 &gt; 刪除帳號」可自行刪除帳號，使用者名稱、遊戲 UID、設定、遊戲成績與排行榜資料會從伺服器清除且無法復原，之後需重新註冊。第三方服務的備份可能於一定期間後才完全清除。</li>
+            <li><b>其他申請</b>：請依第 10 點聯絡，我們會於核對身分後處理；查詢、閱覽、複製本於收到申請後 15 日內，補充、更正、停止或刪除於 30 日內處理並回覆（必要時依法延長並通知）。</li>
+          </ul>
+          <h4>8. 不提供資料的影響</h4>
+          <p>你可不登入，以訪客身分遊玩（不連線伺服器、不同步資料）。若不提供電子郵件或拒絕本政策，將無法註冊與使用帳號、排行榜及雲端同步功能。</p>
+          <h4>9. 資訊安全與事故通知</h4>
+          <p>本站採用 HTTPS 傳輸與資料庫存取規則等措施保護資料，但網路傳輸與儲存無法保證絕對安全。若發生個人資料被竊取、洩漏、竄改或遭其他侵害的事故，本站將於查明後以適當方式（如本站公告或電子郵件）通知受影響的使用者。</p>
+          <h4>10. 聯絡方式</h4>
+          <p>行使權利、申訴、檢舉、侵權通知或有任何疑問，請透過本站「設定」頁將提供的「聯絡窗口」聯繫（預定日後開放；開放前如需協助，請留意本站公告）。</p>
+          <h4>11. 未成年人</h4>
+          <p>未滿 18 歲者請在法定代理人同意與陪同下使用，並請其協助閱讀本政策。</p>
+          <h4>12. 政策修改</h4>
+          <p>本政策如有修訂，將公布於本頁並載明更新日期；重大變更將於本站公告。</p>
+        </div>
+
+        <div class="legal-doc" data-doc="rules" hidden>
+          <h3>使用規定</h3>
+          <p class="muted">最後更新：2026 年 10 月 30 日</p>
+          <h4>禁止行為</h4>
+          <ul>
+            <li>使用外掛、腳本、機器人、修改封包或記憶體，或利用漏洞取得不正當利益（含刷榜、洗分、複製資料）。</li>
+            <li>冒用他人身分，或註冊含有辱罵、歧視、色情、暴力、仇恨、個資，或冒充官方 / 管理人員的使用者名稱。</li>
+            <li>干擾、破壞或試圖未經授權存取本站與其後端服務，包含 DDoS、掃描漏洞、逆向工程、大量自動化請求或大量註冊帳號。</li>
+            <li>散布惡意程式、垃圾訊息、廣告、詐騙連結、誹謗或侵害他人權利（如著作權、隱私權）的內容。</li>
+            <li>帳號轉讓、出租、買賣或共用。</li>
+            <li>其他違反法律或侵害他人權益的行為。</li>
+          </ul>
+          <h4>使用者名稱</h4>
+          <p>名稱需為 2–12 個字，僅可使用中文、英文、數字與底線，不得包含空白，且不得使用「官方」「管理員」「客服」等保留字；每 14 天僅能變更一次。</p>
+          <h4>違規處理</h4>
+          <p>如發現違規，違規帳號一律以「停用帳號」處理，必要時併同強制更改名稱、移除或重置異常成績與排行榜紀錄，且不另行通知。如涉及違法（如刑法妨害電腦使用罪、公然侮辱、詐欺等），本站得保存相關紀錄並配合司法或主管機關調查。</p>
+          <h4>檢舉與申訴</h4>
+          <p>如發現違規或對處置有疑問，請依隱私權政策「聯絡方式」通知，我們將儘速查證回覆。</p>
+          <h4>規定修訂</h4>
+          <p>本站得修訂本規定，修訂後公布於本頁並自公布時起生效。</p>
+        </div>
+        </div>
+      </section>
+
+
+    </main>
+
+    <!-- 底部操作提示 -->
+    <footer class="hints">
+      <span><kbd>←</kbd><kbd>→</kbd> 選擇</span>
+      <span><kbd>Enter</kbd> 開始</span>
+      <span><kbd>Esc</kbd> 返回</span>
+    </footer>
+    </div>
+  </div>
+
+  <!-- 遊戲播放層 -->
+  <div class="player" id="player" hidden>
+    <div class="player-bar">
+      <button class="btn-icon sm" id="closeBtn" aria-label="返回">
+        <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <span class="player-title" id="playerTitle"></span>
+      <button class="btn-icon sm pm-btn" id="pmMusic" data-pm="music" aria-label="音樂" title="音樂" aria-pressed="true">
+        <svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/><path class="slash" d="M3 3l18 18"/></svg>
+      </button>
+      <button class="btn-icon sm pm-btn" id="pmSfx" data-pm="sfx" aria-label="音效" title="音效" aria-pressed="true">
+        <svg viewBox="0 0 24 24"><path d="M4 9.5v5h4l5 4v-13l-5 4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="slash" d="M3 3l18 18"/></svg>
+      </button>
+      <button class="btn-icon sm" id="reloadBtn" aria-label="重新載入">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg>
+      </button>
+      <button class="btn-icon sm" id="fsBtn" aria-label="全螢幕">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+    <iframe id="frame" title="game" allow="fullscreen; gamepad; autoplay"
+      sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups"></iframe>
+  </div>
+
+  <!-- 登入視窗（Big Picture 全螢幕風格） -->
+  <div class="modal bp" id="loginModal" hidden>
+    <button class="modal-x" data-close aria-label="返回"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <div class="modal-logo"><svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01"/></svg></div>
+      <h3 id="loginTitle">登入 MiniHub</h3>
+      <p class="modal-sub">選擇登入方式，同步你的玩家資料</p>
+      <button class="btn-google" data-provider="google" data-autofocus>
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+        <span>使用 Google 登入</span>
+      </button>
+      <button class="btn-google" data-provider="github">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#181717" d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
+        <span>使用 GitHub 登入</span>
+      </button>
+      <button class="btn-ghost full" data-close>取消</button>
+      <p class="modal-fine">按下登入前，需先確認<a href="#" class="legal-link" data-legal="terms">服務條款</a></p>
+    </div>
+    <div class="bp-hints"><span><kbd>↑</kbd><kbd>↓</kbd> 選擇</span><span><kbd>Enter</kbd> 確認</span><span><kbd>T</kbd> 服務條款</span><span><kbd>Esc</kbd> 返回</span></div>
+  </div>
+
+  <!-- 首次登入：建立資料視窗（必須完成，不可關閉） -->
+  <div class="modal" id="profileModal" data-lock hidden>
+    <div class="modal-box left" role="dialog" aria-modal="true" aria-labelledby="profTitle">
+      <div class="modal-logo"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 4-6 8-6s7.2 2 8 6"/></svg></div>
+      <h3 id="profTitle" class="c">歡迎來到 MiniHub</h3>
+      <p class="modal-sub c">首次登入，請先建立你的遊戲資料</p>
+
+      <div class="pdots" id="profDots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+
+      <section class="pstep on" data-step="1">
+        <label class="field-label">電子郵件</label>
+        <div class="field ro" id="profEmail"></div>
+
+        <label class="field-label" for="profName">使用者名稱</label>
+        <div class="field"><input id="profName" type="text" maxlength="24" autocomplete="off" placeholder="2–12 個字" spellcheck="false" enterkeyhint="next"><span class="count" id="profCount">0/12</span></div>
+        <p class="field-hint" id="profHint">可使用中文、英文、數字、底線 _</p>
+      </section>
+
+      <section class="pstep" data-step="2">
+        <label class="field-label">遊戲 UID</label>
+        <div class="field uid"><b id="profUid">000000000</b><button type="button" class="reroll" id="profReroll" aria-label="重新產生"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg><span>換一組</span></button></div>
+        <p class="field-hint">9 位數字，由系統產生</p>
+        <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>遊戲 UID 建立後<b>無法更改</b>，且一個電子郵件只能擁有一個 UID。</p></div>
+      </section>
+
+      <section class="pstep" data-step="3">
+        <div class="pub-row">
+          <div class="set-text"><b>允許加入排行榜</b><small>開啟後才能在遊戲中進行排名比較；之後可在「設定 &gt; 隱私」變更</small></div>
+          <button class="switch" role="switch" type="button" aria-checked="true" id="profJoin" aria-label="允許加入排行榜"><i></i></button>
+        </div>
+        <div class="pub-row">
+          <div class="set-text"><b>允許公開使用者名稱</b><small>開啟時排行榜顯示完整名稱，關閉則部分以 * 遮蔽</small></div>
+          <button class="switch" role="switch" type="button" aria-checked="true" id="profPublic" aria-label="允許公開使用者名稱"><i></i></button>
+        </div>
+      </section>
+
+      <p class="prof-err" id="profErr" role="alert" hidden></p>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" id="profCancel">取消</button>
+        <button class="btn-ghost" id="profBack" hidden>上一步</button>
+        <button class="btn-primary sm" id="profNext" hidden><span>下一步</span></button>
+        <button class="btn-primary sm" id="profOk" disabled><span>建立並進入</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 遊戲中點左側導覽：已暫停，詢問是否退出 -->
+  <div class="modal" id="exitModal" data-lock hidden>
+    <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="exitTitle">
+      <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></svg></div>
+      <h3 id="exitTitle">遊戲暫停</h3>
+      <p class="modal-text">你確認要退出遊戲嗎？</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="exitNo" data-autofocus>繼續遊戲</button>
+        <button class="btn-primary sm danger" id="exitOk"><span>退出遊戲</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 確認登出 -->
+  <div class="modal" id="logoutModal" hidden>
+    <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="logoutTitle">
+      <div class="modal-logo"><svg viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M14 8l4 4-4 4M18 12H8"/></svg></div>
+      <h3 id="logoutTitle">確定要登出嗎？</h3>
+      <p class="modal-text">登出後需要重新登入，才能使用帳號功能。</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" data-close>取消</button>
+        <button class="btn-primary sm danger" id="logoutOk"><span>登出</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 刪除帳號 -->
+  <div class="modal" id="deleteModal" hidden>
+    <div class="modal-box left" role="alertdialog" aria-modal="true" aria-labelledby="delTitle">
+      <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg></div>
+      <h3 id="delTitle" class="c">刪除帳號</h3>
+      <p class="modal-text">刪除後，你的使用者名稱、遊戲 UID 與所有玩家資料都會<b>永久清除、無法復原</b>，之後需要重新註冊。</p>
+      <p class="modal-text">為了安全，系統會請你再登入一次確認身分。</p>
+      <label class="field-label" for="delInput">請輸入「刪除」以確認</label>
+      <div class="field"><input id="delInput" type="text" maxlength="4" autocomplete="off" placeholder="刪除" spellcheck="false"></div>
+      <div class="modal-actions">
+        <button class="btn-ghost" data-close>取消</button>
+        <button class="btn-primary sm danger" id="delOk" disabled><span>永久刪除</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 修改使用者名稱 -->
+  <div class="modal" id="nameModal" hidden>
+    <div class="modal-box left" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
+      <h3 id="nameTitle" class="c">修改使用者名稱</h3>
+      <label class="field-label">目前名稱</label>
+      <div class="field ro" id="nameCur"></div>
+      <label class="field-label" for="nameNew">新的使用者名稱</label>
+      <div class="field"><input id="nameNew" type="text" maxlength="24" autocomplete="off" placeholder="2–12 個字" spellcheck="false"><span class="count" id="nameCount">0/12</span></div>
+      <p class="field-hint" id="nameHint"></p>
+      <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>使用者名稱每 <b>14 天</b>只能變更一次，變更後 14 天內無法再次修改。</p></div>
+      <div class="modal-actions">
+        <button class="btn-ghost" data-close>取消</button>
+        <button class="btn-primary sm" id="nameOk" disabled><span>確認變更</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 服務條款確認視窗 -->
+  <div class="modal" id="termsModal" hidden>
+    <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="termsTitle">
+      <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg></div>
+      <h3 id="termsTitle">請先確認</h3>
+      <p class="modal-text">登入即視同你已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="termsCancel">取消</button>
+        <button class="btn-primary sm" id="termsOk"><span>同意並繼續</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 未登入：開始 / 繼續遊玩前的同意確認（必須按同意才能玩） -->
+  <div class="modal" id="playConsentModal" data-lock hidden>
+    <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="consentTitle">
+      <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg></div>
+      <h3 id="consentTitle">目前未登入</h3>
+      <p class="modal-text">開始遊玩視同已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p>
+      <div class="modal-actions">
+        <button class="btn-ghost" id="consentNo" data-autofocus>不同意</button>
+        <button class="btn-primary sm" id="consentOk" disabled><span>同意並遊玩</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 公告（資料來自 Google 試算表；進站自動彈出，點左上角 MiniHub 可再開） -->
+  <div class="modal" id="noticeModal" hidden>
+    <div class="modal-box ann-box" role="dialog" aria-modal="true" aria-labelledby="noticeTitle">
+      <button class="modal-x" data-close aria-label="關閉"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <header class="ann-top">
+        <div class="ann-ico"><svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 21h4"/></svg></div>
+        <div class="ann-top-text"><h3 id="noticeTitle">公告</h3><p id="annMeta"></p></div>
+      </header>
+      <div class="ann-list" id="noticeList"></div>
+      <footer class="ann-foot">
+        <span class="ann-hint"><kbd>Enter</kbd><kbd>Esc</kbd> 關閉</span>
+        <button class="btn-primary sm" data-close data-autofocus><span>我知道了</span></button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 同 email 已用其他方式註冊：請用原本的方式登入以連結 -->
+  <div class="modal" id="linkModal" hidden>
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="linkTitle">
+      <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></div>
+      <h3 id="linkTitle">此電子郵件已註冊過</h3>
+      <p class="modal-text" id="linkText"></p>
+      <button class="btn-google" data-link="google"><span>用 Google 登入並連結</span></button>
+      <button class="btn-google" data-link="github"><span>用 GitHub 登入並連結</span></button>
+      <button class="btn-ghost full" data-close>取消</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <!-- 腳本由上方 <head> 內的載入程式依序載入（games → sfx → app → settings → remote → firebase） -->
+</body>
+</html>
