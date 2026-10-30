@@ -1,7 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-<rect x="10" y="10" width="108" height="108" rx="20" fill="#1d1a4d" stroke="#8b7bff" stroke-width="6"/>
-<rect x="24" y="24" width="38" height="38" rx="9" fill="#a99cff"/>
-<rect x="66" y="24" width="38" height="38" rx="9" fill="#6f5fe6"/>
-<rect x="24" y="66" width="38" height="38" rx="9" fill="#6f5fe6"/>
-<rect x="66" y="66" width="38" height="38" rx="9" fill="#f5c96a"/>
+<rect x="10" y="10" width="108" height="108" rx="20" fill="#cbd0d4"/>
+<rect x="18" y="18" width="27" height="27" rx="7" fill="#e9e4d8"/>
+<text x="31.5" y="38.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#656d70">2</text>
+<rect x="51" y="18" width="27" height="27" rx="7" fill="#d8e6dc"/>
+<text x="64.5" y="38.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#587467">4</text>
+<rect x="84" y="18" width="27" height="27" rx="7" fill="#e3e5e4"/>
+<rect x="18" y="51" width="27" height="27" rx="7" fill="#d8e6dc"/>
+<text x="31.5" y="71.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#587467">4</text>
+<rect x="51" y="51" width="27" height="27" rx="7" fill="#85c3b7"/>
+<text x="64.5" y="69.5" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="14" fill="#ffffff">16</text>
+<rect x="84" y="51" width="27" height="27" rx="7" fill="#e3e5e4"/>
+<rect x="18" y="84" width="27" height="27" rx="7" fill="#e9e4d8"/>
+<text x="31.5" y="104.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#656d70">2</text>
+<rect x="51" y="84" width="27" height="27" rx="7" fill="#acd5ca"/>
+<text x="64.5" y="104.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#315e58">8</text>
+<rect x="84" y="84" width="27" height="27" rx="7" fill="#e9e4d8"/>
+<text x="97.5" y="104.0" text-anchor="middle" font-family="Noto Sans TC,Segoe UI,Arial,sans-serif" font-weight="900" font-size="18" fill="#656d70">2</text>
 </svg>
