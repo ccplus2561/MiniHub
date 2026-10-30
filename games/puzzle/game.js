@@ -612,6 +612,7 @@
       paintRank();
     } });
     window.addEventListener("pagehide", submitScore);
+    hub.onPause(() => { submitScore(); cancelMode(); rankPop.hidden = true; paintRank(); });   // 回合制，無計時器；暫停時送出成績並收起面板
   }
 
   startGame();
