@@ -27,9 +27,11 @@ window.GAMES = [
     tags: { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true }
   },
   {
-    id: "puzzle", title: "數字方塊", category: "益智", emoji: "🧩",
-    colors: ["#5b4bd6", "#2a2178"], path: "",
-    desc: "把相同數字合併，挑戰更高分。", featured: true
+    id: "puzzle", title: "數字方塊", category: "益智", emoji: "🧩", icon: "icons/puzzle.svg",
+    colors: ["#5b4bd6", "#2a2178"], path: "games/puzzle/index.html",
+    desc: "以 2048 為靈感的數字合併益智遊戲，5 × 5 棋盤，合成 2048 後仍可繼續挑戰。\n規則：相同數字相鄰時合併成兩倍；棋盤全滿且無法合併即結束；可用分數購買清除、交換、復原道具。\n操作：方向鍵／WASD、滑鼠拖曳／滾輪，或在畫面上滑動。",
+    how: "", featured: true, board: { order: "desc", unit: "分" },
+    tags: { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true }
   },
   {
     id: "memory", title: "翻牌配對", category: "益智", emoji: "🃏",
