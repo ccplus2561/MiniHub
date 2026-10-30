@@ -35,7 +35,7 @@
 
   function prefs() {
     var o = {}, k, src = {};
-    try { if (P && P.MiniHubPrefs) src = P.MiniHubPrefs() || {}; } catch (e) {}
+    try { if (P) { var f = P.MiniHubGamePrefs || P.MiniHubPrefs; if (f) src = f() || {}; } } catch (e) {}
     for (k in DEFAULTS) o[k] = DEFAULTS[k];
     for (k in src) o[k] = src[k];
     return o;

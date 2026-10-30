@@ -218,6 +218,7 @@
   function launchGame(g, el) {
     if (!g.path) { sfx("deny"); return toast("「" + g.title + "」" + (g.badge || "即將推出") + "，敬請期待！"); }
     sfx("open");
+    if (window.MiniHubTemp) { MiniHubTemp.music = MiniHubTemp.sfx = true; paintAudio(); }   // 每次開啟遊戲都恢復為設定值
     current = g;
     srcEl = el || $("#libraryRow .card.selected");
     $("#playerTitle").textContent = g.title;
@@ -287,10 +288,10 @@
   }, true);
   $("#exitNo").addEventListener("click", () => settleLeave(false));
   $("#exitOk").addEventListener("click", () => settleLeave(true));
-  /* 音樂 / 音效：頂端按鈕直接切換大廳設定（等同設定頁的開關） */
+  /* 音樂 / 音效：頂端按鈕只暫時開關目前這款遊戲，不改設定頁 */
   const audioBtns = { music: $("#musicBtn"), sfx: $("#sfxBtn") };
   const paintAudio = () => {
-    const p = window.MiniHubPrefs ? MiniHubPrefs() : { music: true, sfx: true };
+    const p = window.MiniHubGamePrefs ? MiniHubGamePrefs() : { music: true, sfx: true };
     Object.keys(audioBtns).forEach(k => {
       const on = !p.mute && p[k];
       audioBtns[k].classList.toggle("off", !on);
@@ -298,8 +299,9 @@
     });
   };
   Object.keys(audioBtns).forEach(k => audioBtns[k].addEventListener("click", () => {
-    const sw = document.querySelector('.switch[data-set="' + k + '"]');
-    if (sw) sw.click();
+    if (window.MiniHubTemp) MiniHubTemp[k] = !MiniHubTemp[k];   // 只影響目前遊戲，不改設定
+    paintAudio(); sfx(MiniHubTemp[k] ? "on" : "off");
+    document.dispatchEvent(new CustomEvent("minihub:prefs"));   // 通知遊戲立即套用
     try { frame.focus(); frame.contentWindow.focus(); } catch (e) {}
   }));
   document.addEventListener("minihub:prefs", paintAudio);
