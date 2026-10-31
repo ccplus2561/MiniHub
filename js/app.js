@@ -906,6 +906,11 @@
       raf = 0;
       glow.style.setProperty("--mx", mx + "px");
       glow.style.setProperty("--my", my + "px");
+      if (document.body.dataset.view === "home") {   // 首頁：滑鼠位置的聚光燈（座標換算成首頁區塊內的位置）
+        const hg = $("#homeGlow"), r = hg.getBoundingClientRect();
+        hg.style.setProperty("--hx", (mx - r.left) + "px");
+        hg.style.setProperty("--hy", (my - r.top) + "px");
+      }
       if (target) {
         const r = target.getBoundingClientRect();
         // 卡片被放大時，座標以元素實際大小換算
@@ -914,6 +919,9 @@
       }
     });
   }, { passive: true });
+  document.documentElement.addEventListener("pointerleave", () => {   // 滑鼠離開視窗 → 收起聚光燈
+    const hg = $("#homeGlow"); if (hg) { hg.style.setProperty("--hx", "-999px"); hg.style.setProperty("--hy", "-999px"); }
+  });
   document.addEventListener("pointerleave", () => glow.style.setProperty("--mx", "-999px"));
 
   /* ---------- 載入畫面（遠端資料抓完才收起；最多等 3 秒） ---------- */

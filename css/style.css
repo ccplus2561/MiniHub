@@ -575,7 +575,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .info-card::before {
   content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5;
   opacity: 0; transition: opacity .25s;
-  background: radial-gradient(80px circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, .22), transparent 70%);
+  background: radial-gradient(80px circle at var(--px, 50%) var(--py, 50%), rgba(255, 255, 255, .34), transparent 70%);
 }
 .card:hover::before,
 .set-item:hover::before,
@@ -1026,3 +1026,11 @@ body.no-anim .hw-logo, body.no-anim .hw-logo path, body.no-anim .hw-title { anim
 .hw-intro > *:nth-child(3) { animation-delay: 330ms; }
 .hw-intro > *:nth-child(4) { animation-delay: 420ms; }
 body.no-anim .view *, body.no-anim .nav-item svg { animation: none !important; }
+
+/* ---------- 首頁：滑鼠光影（疊在圖卡牆上、暗色漸層下；只在滑鼠裝置有作用） ---------- */
+.hw-glow { position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(120px circle at var(--hx, -999px) var(--hy, -999px), rgba(255, 255, 255, .34), transparent 70%),
+    radial-gradient(340px circle at var(--hx, -999px) var(--hy, -999px), rgba(102, 192, 244, .4), transparent 72%); }
+body.no-anim .hw-glow, body.m .hw-glow { display: none; }
+@media (hover: none), (pointer: coarse) { .hw-glow { display: none; } }
