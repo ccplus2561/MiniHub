@@ -958,7 +958,7 @@ body.m .hw { --hw-w: 34vw; left: 14%; right: -40%; transform: perspective(1200px
 body.m .hw-shade { background: linear-gradient(0deg, var(--bg) 0%, rgba(14, 20, 27, .85) 30%, transparent 62%), linear-gradient(180deg, rgba(14, 20, 27, .6), transparent 18%); }
 body.m .hw-intro { left: 20px; right: 20px; bottom: 26px; }
 body.no-anim .hw-track { animation: none; }
-.hw-brand { display: flex; align-items: center; gap: clamp(10px, 1.4vw, 18px); }
+.hw-brand { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(6px, 1vh, 12px); }
 .hw-logo { width: clamp(44px, 6.5vw, 80px); height: clamp(44px, 6.5vw, 80px); flex: none; overflow: visible; stroke: var(--accent-2); stroke-width: 1.5;
   filter: drop-shadow(0 0 12px var(--a3)); animation: hwFloat 4.5s ease-in-out infinite, hwGlow 3s ease-in-out infinite; }
 .hw-logo path { stroke-dasharray: 1; stroke-dashoffset: 0; animation: hwDraw 6s ease-in-out infinite; }
