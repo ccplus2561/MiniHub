@@ -61,14 +61,9 @@
   let picked = null;         // 交換道具：已選的第一個方塊
   let used = { remove: 0, swap: 0 };   // 本局道具使用次數（影響價格）
 
-  function readBest() {
-    try { return Number(localStorage.getItem("tileBloom2048Best")) || 0; }
-    catch (_) { return 0; }
-  }
-  function saveBest() {
-    try { localStorage.setItem("tileBloom2048Best", String(best)); }
-    catch (_) { /* localStorage 可能無法使用 */ }
-  }
+  // 本機最高分只存在記憶體（不寫入 localStorage）；登入後的最高分由大廳 SDK 同步
+  function readBest() { return 0; }
+  function saveBest() {}
 
   /* ---------- 里程碑特效（粒子 / 光環 / 閃光） ---------- */
   const boardWrap = document.querySelector(".board-wrap");

@@ -699,9 +699,8 @@ body.no-anim .ann { animation: none; }
   .ann-hint { display: none; } .ann-foot { justify-content: stretch; } .ann-foot .btn-primary { width: 100%; justify-content: center; }
 }
 
-/* ---------- 禁止選取 / 複製文字（輸入框除外） ---------- */
-html, body, body * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-input, textarea { -webkit-user-select: text; user-select: text; }
+/* ---------- 按鈕 / 圖卡上的文字不要被拖曳選取（其餘文字可正常選取、複製） ---------- */
+button, .card, .nav-item, .chip { -webkit-user-select: none; user-select: none; }
 img { -webkit-user-drag: none; }
 
 /* ---------- 載入畫面 ---------- */

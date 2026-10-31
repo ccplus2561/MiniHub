@@ -2,10 +2,8 @@
 (() => {
   "use strict";
 
-  const KEY = "tileBloom2048Audio";
   const prefs = { music: true, sfx: true };
   // 音樂／音效改由大廳頂端按鈕控制，不再讀取舊的本機設定
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (_) { /* 略過 */ } };
 
   // 大廳設定（全部靜音／音樂／音效）優先；單獨開啟本頁時 MiniHub 不存在或皆預設開啟
   const hubSfx = () => { try { return !window.MiniHub || MiniHub.sfxOn(); } catch (_) { return true; } };
@@ -159,7 +157,6 @@
   }
   function toggle(kind) {
     prefs[kind] = !prefs[kind];
-    save();
     syncBuses();
     if (prefs[kind]) { unlock(); if (kind === "sfx") setTimeout(sfx.click, 30); }
   }

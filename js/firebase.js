@@ -174,7 +174,12 @@ async function deleteAccount() {
     await batch.commit();
   }
   SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
-  await F.deleteUser(user);   // 之後 onAuthStateChanged 會回報已登出
+  // 資料已先清除；刪登入帳號失敗（網路等）時重試一次，仍失敗就丟出明確錯誤，讓畫面提示再按一次
+  try { await F.deleteUser(user); }
+  catch (e) {
+    try { await F.deleteUser(user); }
+    catch (e2) { throw Object.assign(new Error("account-delete-failed"), { code: "account-delete-failed" }); }
+  }   // 之後 onAuthStateChanged 會回報已登出
 }
 
 // 伺服器狀態檢查：向 Firestore 讀一次；只要伺服器有回應（含被規則拒絕）就代表連得上。未登入不連線。

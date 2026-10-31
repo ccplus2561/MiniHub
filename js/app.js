@@ -577,6 +577,7 @@
       const c = e.code || "";
       if (/popup-closed|cancelled-popup|popup-blocked/.test(c)) toast("未完成身分驗證，帳號沒有被刪除");
       else if (c === "permission-denied") toast("伺服器規則不允許刪除，帳號沒有被刪除");
+      else if (c === "account-delete-failed") toast("玩家資料已清除，但登入帳號尚未刪除，請再按一次「永久刪除」");
       else toast("刪除失敗：" + (c || e.message));
     }
     deleting = false; $("span", delOk).textContent = "永久刪除";
@@ -872,14 +873,6 @@
     });
   }, { passive: true });
   document.addEventListener("pointerleave", () => glow.style.setProperty("--mx", "-999px"));
-
-  /* ---------- 禁止複製文字（輸入框除外） ---------- */
-  const isField = e => e.target && e.target.closest && e.target.closest("input, textarea");
-  ["copy", "cut", "dragstart", "selectstart", "contextmenu"].forEach(t =>
-    document.addEventListener(t, e => { if (!isField(e)) e.preventDefault(); }));
-  document.addEventListener("keydown", e => {
-    if ((e.ctrlKey || e.metaKey) && /^[acxsu]$/i.test(e.key) && !isField(e)) e.preventDefault();
-  }, true);
 
   /* ---------- 載入畫面（遠端資料抓完才收起；最多等 3 秒） ---------- */
   const splashT0 = Date.now();
