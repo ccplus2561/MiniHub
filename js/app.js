@@ -124,6 +124,44 @@
     select(i);   // 原本選的還在清單裡就維持選取，否則收起底部資訊
   }
 
+  /* ---------- 首頁圖卡牆：用遊戲庫全部圖卡排成斜向牆面，各欄上下交錯緩慢漂移 ---------- */
+  function renderHome() {
+    const wall = $("#homeWall");
+    if (!wall) return;
+    const list = games.slice();
+    const sub = $("#homeSub");
+    if (sub) sub.textContent = list.length ? `${list.length} 款遊戲，隨時開玩` : "小遊戲大集合";
+    wall.innerHTML = "";
+    if (!list.length) return;
+    const COLS = 9, PER = Math.max(8, list.length);   // 每欄一組至少 8 張，確保比螢幕高
+    for (let c = 0; c < COLS; c++) {
+      const col = document.createElement("div");
+      col.className = "hw-col";
+      col.style.setProperty("--dur", (70 + (c * 37) % 40) + "s");     // 各欄速度略有不同
+      col.style.setProperty("--off", "-" + ((c * 17) % 50) + "s");    // 各欄起點錯開
+      if (c % 2) col.style.animationDirection = "reverse";             // 奇偶欄方向相反
+      const track = document.createElement("div");
+      track.className = "hw-track";
+      for (let rep = 0; rep < 2; rep++) {                              // 內容複製兩份，捲動 -50% 即可無縫循環
+        for (let k = 0; k < PER; k++) {
+          const g = list[(k + c * 2) % list.length];
+          const el = document.createElement("div");
+          el.className = "hw-card" + (g.path ? "" : " soon");
+          el.style.setProperty("--c1", g.colors[0]);
+          el.style.setProperty("--c2", g.colors[1]);
+          el.innerHTML = (g.icon ? `<img src="${esc(g.icon)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : `<span class="e">${esc(g.emoji || "🎮")}</span>`) +
+            `<b>${esc(g.title)}</b>`;
+          const im = $("img", el);
+          if (im) im.addEventListener("error", () => { const s = document.createElement("span"); s.className = "e"; s.textContent = g.emoji || "🎮"; im.replaceWith(s); });
+          track.appendChild(el);
+        }
+      }
+      col.appendChild(track);
+      wall.appendChild(col);
+    }
+  }
+  $("#homeGo") && $("#homeGo").addEventListener("click", () => { sfx("confirm"); showView("library"); });
+
   /* ---------- 頁面切換 ---------- */
   function showView(name) {
     $$(".view").forEach(v => v.classList.toggle("active", v.id === "view-" + name));
@@ -471,7 +509,7 @@
       return;
     }
     if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
-    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); return; }   // 首頁暫時清空
+    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); else if (enter) $("#homeGo").click(); return; }   // 首頁：Enter 進入遊戲庫
     if (dir) {
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);
@@ -890,6 +928,7 @@
   paintHints();
   renderChips();
   renderLibrary();
+  renderHome();
 
   /* ---------- 遠端內容（公告 / 開發中遊戲，由 js/remote.js 呼叫） ---------- */
   window.MiniHubAddGames = list => {
@@ -897,7 +936,7 @@
     const add = list.filter(g => !have.has(g.id));
     if (!add.length) return;
     games.push(...add);
-    renderChips(); renderLibrary();
+    renderChips(); renderLibrary(); renderHome();
     const m2 = location.hash.match(/play=([\w-]+)/);   // 分享連結指向外部遊戲
     if (m2 && player.hidden) { const g = add.find(x => x.id === m2[1]); if (g) openGame(g); }
   };
@@ -905,7 +944,7 @@
   window.MiniHubSetExternalGames = list => {
     for (let i = games.length - 1; i >= 0; i--) if (String(games[i].id).startsWith("ext-")) games.splice(i, 1);
     games.push(...list);
-    renderChips(); renderLibrary();
+    renderChips(); renderLibrary(); renderHome();
     const m2 = location.hash.match(/play=([\w-]+)/);   // 分享連結指向外部遊戲
     if (m2 && player.hidden) { const g = list.find(x => x.id === m2[1]); if (g) openGame(g); }
   };

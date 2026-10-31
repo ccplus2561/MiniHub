@@ -100,8 +100,19 @@
     <!-- 主要內容 -->
     <main class="main">
 
-      <!-- 首頁（暫時清空） -->
-      <section class="view active" id="view-home"></section>
+      <!-- 首頁：遊戲圖卡牆（由 app.js 依遊戲庫產生） -->
+      <section class="view active" id="view-home">
+        <div class="hw" id="homeWall" aria-hidden="true"></div>
+        <div class="hw-shade" aria-hidden="true"></div>
+        <div class="hw-intro">
+          <h1 class="hw-title">MiniHub</h1>
+          <p class="hw-sub" id="homeSub">小遊戲大集合</p>
+          <button class="btn-primary hw-go" id="homeGo" type="button">
+            <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>
+            <span>進入遊戲庫</span>
+          </button>
+        </div>
+      </section>
 
       <!-- 遊戲庫：選到圖卡放大，底部跳出名稱與開始遊戲 -->
       <section class="view" id="view-library">
