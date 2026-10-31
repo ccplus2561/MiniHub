@@ -160,7 +160,10 @@
       wall.appendChild(col);
     }
   }
-  $("#homeGo") && $("#homeGo").addEventListener("click", () => { sfx("confirm"); showView("library"); });
+  $("#homeGo") && $("#homeGo").addEventListener("click", () => {
+    sfx("confirm");
+    if (signedIn) showView("library"); else $("#loginBtn").click();   // 未登入 → 開啟登入視窗
+  });
 
   /* ---------- 頁面切換 ---------- */
   function showView(name) {
@@ -509,7 +512,7 @@
       return;
     }
     if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
-    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); else if (enter) $("#homeGo").click(); return; }   // 首頁：Enter 進入遊戲庫
+    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); else if (enter) $("#homeGo").click(); return; }   // 首頁：Enter 登入 / 進入遊戲庫
     if (dir) {
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);
@@ -823,6 +826,7 @@
     if (show && img.getAttribute("src") !== photo) img.src = photo;
     btn.classList.toggle("has-avatar", !!show);
     btn.classList.toggle("signed", signedIn);
+    const hg = $("#homeGoText"); if (hg) hg.textContent = signedIn ? "進入遊戲庫" : "登入遊玩";   // 首頁主按鈕隨登入狀態切換
   }
   $("#loginAvatar").addEventListener("error", () => $("#loginBtn").classList.remove("has-avatar"));   // 載入失敗 → 退回預設圖示
 

@@ -958,3 +958,16 @@ body.m .hw { --hw-w: 34vw; left: 14%; right: -40%; transform: perspective(1200px
 body.m .hw-shade { background: linear-gradient(0deg, var(--bg) 0%, rgba(14, 20, 27, .85) 30%, transparent 62%), linear-gradient(180deg, rgba(14, 20, 27, .6), transparent 18%); }
 body.m .hw-intro { left: 20px; right: 20px; bottom: 26px; }
 body.no-anim .hw-track { animation: none; }
+.hw-brand { display: flex; align-items: center; gap: clamp(10px, 1.4vw, 18px); }
+.hw-logo { width: clamp(44px, 6.5vw, 80px); height: clamp(44px, 6.5vw, 80px); flex: none; overflow: visible; stroke: var(--accent-2); stroke-width: 1.5;
+  filter: drop-shadow(0 0 12px var(--a3)); animation: hwFloat 4.5s ease-in-out infinite, hwGlow 3s ease-in-out infinite; }
+.hw-logo path { stroke-dasharray: 1; stroke-dashoffset: 0; animation: hwDraw 6s ease-in-out infinite; }
+.hw-logo .hw-dot { stroke-dasharray: none; stroke-width: 2.4; animation: hwBlink 1.6s ease-in-out infinite; }
+.hw-logo .hw-dot.d2 { animation-delay: .8s; }
+.hw-title { background: linear-gradient(100deg, #fff 35%, var(--accent-2) 50%, #fff 65%) 0 0 / 250% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: hwShine 5s ease-in-out infinite; }
+@keyframes hwDraw { 0% { stroke-dashoffset: 1; } 30%, 100% { stroke-dashoffset: 0; } }
+@keyframes hwFloat { 50% { transform: translateY(-6px) rotate(-5deg); } }
+@keyframes hwGlow { 50% { filter: drop-shadow(0 0 22px var(--accent-2)); } }
+@keyframes hwBlink { 50% { opacity: .25; } }
+@keyframes hwShine { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0 0; } }
+body.no-anim .hw-logo, body.no-anim .hw-logo path, body.no-anim .hw-title { animation: none; }
