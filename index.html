@@ -36,7 +36,7 @@
     var JS = ["js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
     var WARM_ONLY = ["js/minihub-sdk.js"];   // 遊戲頁會載入的共用檔：進站時一併向伺服器確認，不注入大廳
     var MOD = "js/firebase.js";
-    var warm = function (u) { return fetch(u, { cache: "no-cache" }).catch(function () {}); };
+    var warm = function (u) { return Promise.race([fetch(u, { cache: "no-cache" }).catch(function () {}), new Promise(function (r) { setTimeout(r, 4000); })]); };   // 最多等 4 秒，避免網路卡住時一直停在載入畫面
     var ready = function (fn) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", fn); else fn(); };
     function inject() {
       var l = document.createElement("link"); l.rel = "stylesheet"; l.href = CSS; document.head.appendChild(l);

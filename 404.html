@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-TW"><head><meta charset="UTF-8"><meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>轉向中…</title>
-<script>location.replace('/');</script>
-</head><body><p>轉向中…<a href="/">回到首頁</a></p></body></html>
+<script>
+// GitHub Pages 專案站（xxx.github.io/MiniHub/）的首頁在 /MiniHub/，不是 "/"；自訂網域或使用者站則是 "/"
+// （repo 改名時請同步修改這裡的 MiniHub）
+var base = /^\/MiniHub(\/|$)/.test(location.pathname) ? "/MiniHub/" : "/";
+location.replace(base);
+</script>
+</head><body><p>轉向中…<a href="./">回到首頁</a></p></body></html>

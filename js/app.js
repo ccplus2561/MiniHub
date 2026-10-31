@@ -186,8 +186,8 @@
   // 遊戲「下一局」前呼叫：已登入直接 true；未登入需同意，不同意則回首頁並回傳 false
   window.MiniHubRequestNext = () => new Promise(res => {
     if (signedIn) return res(true);
-    const shown = askConsent(() => { res(true); try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} }, () => { res(false); closeGame(); });
-    if (!shown) res(false);
+    const asked = askConsent(() => { res(true); try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} }, () => { res(false); closeGame(); });
+    if (!asked) res(false);
   });
   // 跨網域的外部遊戲：postMessage({type:"minihub:next"}) → 回覆 {type:"minihub:next-result", ok}
   window.addEventListener("message", e => {
@@ -197,7 +197,7 @@
 
   function openGame(g, el) {
     if (g.path) {
-      if (!authReady && window.MiniHubAuth && MiniHubAuth.hasSession()) {   // 還在還原登入狀態：等結果再決定
+      if (!authReady) {   // 還在還原登入狀態（firebase.js 是最後才載入的模組，此時 MiniHubAuth 可能還不存在）：等第一次回報再決定
         let done = false; const go = () => { if (done) return; done = true; openGame(g, el); };
         document.addEventListener("minihub:auth", go, { once: true }); setTimeout(() => { authReady = true; go(); }, 5000);
         return;

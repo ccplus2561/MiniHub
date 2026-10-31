@@ -499,7 +499,7 @@
         submitScore();
         revealRankOnGameOver();
         refreshPowerups();
-        setTimeout(() => showOverlay("沒有可移動的方塊", `本局分數：${score.toLocaleString("en-US")}`), 250);
+        setTimeout(() => { if (gameOver) showOverlay("沒有可移動的方塊", `本局分數：${score.toLocaleString("en-US")}`); }, 250);   // 250ms 內按了「復原」就不要再顯示
       }
     };
     pending = { timer: setTimeout(fn, SLIDE_MS), fn };
