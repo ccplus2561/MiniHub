@@ -155,13 +155,13 @@ body:not([data-view="library"]) .backdrop { opacity: 0; }   /* 只有遊戲庫�
 .card.selected:hover { transform: translateY(-5px) scale(1.18); }
 .card-art {
   position: absolute; inset: 0; overflow: hidden;
-  display: grid; place-items: center; font-size: 64px;
+  display: grid; place-items: center; font-size: calc(var(--card-w, 168px) * .38);
   background: linear-gradient(150deg, var(--c1), var(--c2));
 }
-.card-art .emoji { display: inline-block; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1); margin-bottom: 36px; }
+.card-art .emoji { display: inline-block; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1); margin-bottom: calc(var(--card-w, 168px) * .214); }
 .card:hover .card-art .emoji, .card.selected .card-art .emoji { transform: scale(1.22) rotate(-6deg); }
 .card:hover .card-art .emoji { transform: scale(1.3) rotate(-10deg); }
-.card-art .icon { width: 84px; height: 84px; object-fit: contain; margin-bottom: 36px; border-radius: 16px; transition: transform .4s cubic-bezier(.3, 1.6, .5, 1); }
+.card-art .icon { width: calc(var(--card-w, 168px) * .5); height: calc(var(--card-w, 168px) * .5); object-fit: contain; margin-bottom: calc(var(--card-w, 168px) * .214); border-radius: calc(var(--card-w, 168px) * .095); transition: transform .4s cubic-bezier(.3, 1.6, .5, 1); }
 .card:hover .card-art .icon, .card.selected .card-art .icon { transform: scale(1.18) rotate(-4deg); }
 .card-art::after {
   content: ""; position: absolute; inset: 0;
@@ -173,8 +173,8 @@ body:not([data-view="library"]) .backdrop { opacity: 0; }   /* 只有遊戲庫�
   position: absolute; left: 0; right: 0; bottom: 0; padding: 36px 14px 13px;
   background: linear-gradient(0deg, rgba(5, 9, 14, .92), transparent);
 }
-.card-name { font-size: 19px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
-.card-sub { font-size: 14px; font-weight: 600; color: var(--text); margin-top: 2px; }
+.card-name { font-size: calc(var(--card-w, 168px) * .113); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+.card-sub { font-size: calc(var(--card-w, 168px) * .083); font-weight: 600; color: var(--text); margin-top: 2px; }
 .badge {
   position: absolute; top: 10px; left: 10px; z-index: 3;
   padding: 4px 12px; border-radius: 999px;
@@ -757,8 +757,8 @@ body.m .chips::-webkit-scrollbar { display: none; }
 body.m .chip { flex: none; padding: 8px 16px; font-size: 15px; }
 body.m .card-row { margin: 0 -16px; padding: 22px 24px 24px; gap: 16px; }
 body.m .card { width: var(--card-w, 140px); border-radius: 12px; }
-body.m .card-name { font-size: 16px; }
-body.m .card-sub { font-size: 12px; }
+body.m .card-name { font-size: calc(var(--card-w, 140px) * .114); }
+body.m .card-sub { font-size: calc(var(--card-w, 140px) * .086); }
 body.m .badge { top: 8px; left: 8px; padding: 2px 9px; font-size: 11px; }
 body.m .hero { flex-direction: column; align-items: stretch; gap: 14px; padding: 8px 2px 4px; }
 body.m .hero h1 { font-size: 30px; }
