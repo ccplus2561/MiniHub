@@ -10,7 +10,7 @@
  *   desc      一句話介紹
  *   featured  是否顯示在首頁精選
  *   tags      遊戲特色（true = ✔、false = ✘、不寫 = ─）：
- *               single 單人遊玩／multi 多人連線／desktop 支援電腦／mobileP 手機直式／mobileL 手機橫式／
+ *               single 單人遊玩／multi 多人連線／desktop 支援電腦／mobileP 手機直式／
  *               kbd 鍵盤控制／touch 觸碰滑動／score 成績紀錄（個人最高與排行榜）／cloud 雲端存檔（登入後進度存雲端，預留）
  *   board     排行榜規格（沒有排行榜的遊戲不要寫）：
  *               order   "desc" = 分數越高越好；"asc" = 越低越好（例如用時）
@@ -27,21 +27,21 @@ window.GAMES = [
     colors: ["#1f7a4d", "#0c3b2a"], path: "games/snake/index.html",
     desc: "經典街機遊戲，操控小蛇吃食物、越長越高分。\n規則：20 × 20 地圖，撞牆或撞到自己即結束。\n操作：方向鍵／WASD，或在畫面上滑動、拖曳。",
     how: "", featured: true, board: { order: "desc", unit: "分", max: 400 },
-    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, mobileL: true, score: true, cloud: false }
+    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
   },
   {
     id: "puzzle", title: "2048", category: "益智", emoji: "🧩", icon: "icons/puzzle.svg",
     colors: ["#5b4bd6", "#2a2178"], path: "games/puzzle/index.html",
     desc: "合併相同數字，湊出 2048！\n規則：相同數字相鄰就合併成兩倍，棋盤全滿且無法合併即結束；可用分數買道具。\n操作：方向鍵／WASD，或滑動畫面。",
     how: "", featured: true, board: { order: "desc", unit: "分", max: 5000000 },
-    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, mobileL: true, score: true, cloud: false }
+    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
   },
   {
     id: "bingo", title: "兵果彩盤", category: "桌遊", emoji: "🧧", icon: "icons/bingo.svg",
     colors: ["#a8142a", "#4a0a14"], path: "games/bingo/index.html",
     desc: "聚會用的賓果抽號彩盤：抽號、彩池與獎金一目了然。\n規則：主持人抽號、玩家用紙卡對號，登錄名次後自動分配獎金。\n操作：滑鼠／觸控點擊，建議用電腦或平板橫向投屏。",
     how: "", featured: false,
-    tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: false, touch: true, mobileL: false, score: false, cloud: false }
+    tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: false, touch: true, score: false, cloud: false }
   },
   {
     id: "memory", title: "翻牌配對", category: "益智", emoji: "🃏",

@@ -76,9 +76,9 @@
 
   /* ---------- 遊戲標籤（✔ / ✘） ---------- */
   const TAG_DEFAULT = {};   // 未設定 = 「─」；true = ✔；false = ✘
-  // 兩欄由左到右、由上到下排列：單人／多人、電腦／鍵盤、手機直式／觸碰、手機橫式／成績、雲端存檔
-  const TAGS = [["single", "單人遊玩"], ["multi", "多人連線"], ["desktop", "支援電腦"], ["kbd", "鍵盤控制"], ["mobileP", "手機直式"],
-                ["touch", "觸碰滑動"], ["mobileL", "手機橫式"], ["score", "成績紀錄"], ["cloud", "雲端存檔"]];
+  // 兩欄由左到右、由上到下排列：左欄 單人遊玩／支援電腦／鍵盤控制／成績紀錄，右欄 多人連線／手機直式／觸碰滑動／雲端存檔
+  const TAGS = [["single", "單人遊玩"], ["multi", "多人連線"], ["desktop", "支援電腦"], ["mobileP", "手機直式"],
+                ["kbd", "鍵盤控制"], ["touch", "觸碰滑動"], ["score", "成績紀錄"], ["cloud", "雲端存檔"]];
   function setTagsOpen(open) {
     const box = $("#gameTags"), btn = $("#tagsToggle");
     box.classList.toggle("open", open);
