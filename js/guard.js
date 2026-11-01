@@ -34,7 +34,11 @@
 
   // 離開網站 / 關閉分頁 / 切到背景：清除（登入狀態只存在分頁的 sessionStorage，分頁關閉即登出；重新整理仍保留登入）
   window.addEventListener("pagehide", function () { wipeLight(); wipeIDB(); });
-  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "hidden") wipeLight(); });
+  var hideTimer = 0;   // 手機切去別的 App 再回來不應被登出 / 重置：停留在背景超過 60 秒才清除（回到畫面即取消）
+  document.addEventListener("visibilitychange", function () {
+    clearTimeout(hideTimer);
+    if (document.visibilityState === "hidden") hideTimer = setTimeout(wipeLight, 60000);
+  });
   window.MiniHubWipeLight = wipeLight;
 
   /* ---------- 防止手機誤退出 ---------- */
