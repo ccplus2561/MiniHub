@@ -372,28 +372,43 @@
   position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column;
   background: var(--paper);
 }
-.receipt-scroll { flex: 1; overflow-y: auto; padding: 16px 14px; }
-.receipt {
-  max-width: 560px; margin: 0 auto; padding: 22px 20px;
-  background: var(--card); border: 3px double var(--gold-500); border-radius: var(--radius-lg);
+.receipt-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex: none;
+  padding: 12px 24px; background: var(--card); border-bottom: 2px solid var(--gold-500);
 }
-.rc-title { font-family: var(--font-brand); font-size: 1.8rem; color: var(--red-700); text-align: center; }
-.rc-sub { text-align: center; color: var(--muted); font-size: var(--fs-sm); margin: 4px 0 14px; }
-.rc-sec { padding: 12px 0; border-top: 2px dashed var(--line); }
-.rc-h { font-size: var(--fs-lg); color: var(--red-900); margin-bottom: 6px; }
-.rc-total { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--fs-xl); margin-bottom: 6px; }
-.rc-total strong { font-size: 2rem; color: var(--red-700); font-variant-numeric: tabular-nums; }
-.rc-row { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: var(--fs-lg); }
+.rc-title { font-family: var(--font-brand); font-size: 1.8rem; color: var(--red-700); }
+.rc-sub { color: var(--muted); font-size: var(--fs-sm); }
+.receipt-actions { display: flex; gap: 10px; flex: none; }
+.receipt-actions .btn { min-height: 46px; padding: 0 22px; font-size: 1.05rem; white-space: nowrap; }
+.receipt-scroll { flex: 1; overflow-y: auto; padding: 20px 24px; }
+.receipt { max-width: 1320px; margin: 0 auto; }
+.rc-body { display: flex; flex-direction: column; gap: 18px; }
+.rc-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.rc-kpi { display: flex; flex-direction: column; gap: 4px; padding: 16px 20px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+.rc-kpi-label { color: var(--muted); font-weight: 600; }
+.rc-kpi-value { font-size: 2rem; font-variant-numeric: tabular-nums; color: var(--ink); line-height: 1.2; }
+.rc-kpi.is-main { background: var(--red-700); border-color: var(--red-900); }
+.rc-kpi.is-main .rc-kpi-label { color: var(--gold-100); }
+.rc-kpi.is-main .rc-kpi-value { color: #fff; font-size: 2.4rem; }
+.rc-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.rc-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 16px 20px 12px; }
+.rc-h { font-family: var(--font-brand); font-size: var(--fs-lg); color: var(--red-700); margin-bottom: 8px; padding-left: 10px; border-left: 5px solid var(--gold-500); }
+.rc-row { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; font-size: 1.1rem; border-bottom: 1px dashed var(--line); }
+.rc-row:last-child { border-bottom: 0; }
 .rc-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .rc-row.is-prize .rc-value { color: var(--red-700); }
 .rc-row.is-none { color: var(--muted); }
-.rc-row.is-sum { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 8px; }
-.receipt-actions {
-  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
-  background: var(--card); border-top: 2px solid var(--gold-500);
-}
-.receipt-actions .btn { flex: 1 1 140px; padding: 0 10px; }
+.rc-row.is-sum { border-top: 1px solid var(--line); border-bottom: 0; margin-top: 4px; font-weight: 800; }
+.rc-table { width: 100%; border-collapse: collapse; font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.rc-table th { text-align: left; color: var(--muted); font-size: var(--fs-sm); font-weight: 700; padding: 6px 8px; border-bottom: 2px solid var(--line); }
+.rc-table td { padding: 11px 8px; border-bottom: 1px dashed var(--line); }
+.rc-table .num { text-align: right; white-space: nowrap; }
+.rc-table tr.is-none td { color: var(--muted); }
+.rc-table tr.is-prize td:last-child { color: var(--red-700); font-weight: 800; }
+.rc-table tfoot td { border-bottom: 0; border-top: 2px solid var(--line); font-weight: 800; }
+.rc-table tfoot td:last-child { text-align: right; }
+.rc-plain .rc-card { max-width: 640px; }
+@media (max-width: 1100px) { .rc-grid { grid-template-columns: 1fr; } }
 
 .modal-wide .modal-body { max-height: 60vh; overflow-y: auto; }
 

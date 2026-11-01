@@ -55,37 +55,55 @@ export function openReceipt() {
     toast('已開新局');
   };
 
+  const kpi = (label, value, cls = '') =>
+    el('div', { class: `rc-kpi ${cls}` }, el('span', { class: 'rc-kpi-label' }, label), el('strong', { class: 'rc-kpi-value' }, value));
+  const card = (title, ...body) => el('section', { class: 'rc-card' }, el('h3', { class: 'rc-h' }, title), ...body);
+
+  // 前三名：表格（名次／人數／每人／小計）
+  const prizeTable = () => el('table', { class: 'rc-table' },
+    el('thead', {}, el('tr', {}, ...['名次', '得獎人數', '每人金額', '小計'].map((t, i) => el('th', { class: i ? 'num' : '' }, t)))),
+    el('tbody', {}, ...r.prizeLines.map((l) => {
+      if (l.status === 'none') return el('tr', { class: 'is-none' }, el('td', {}, `第 ${l.position} 名`), el('td', { colSpan: 3, class: 'num' }, '無人得獎'));
+      if (l.status === 'merged') return el('tr', { class: 'is-none' }, el('td', {}, `第 ${l.position} 名`), el('td', { colSpan: 3, class: 'num' }, `併入第 ${l.mergedInto} 名平分`));
+      const range = l.positions.length > 1 ? `（第 ${l.positions[0]}～${l.positions.at(-1)} 名平分）` : '';
+      return el('tr', { class: 'is-prize' }, el('td', {}, `🏆 第 ${l.position} 名${range}`),
+        el('td', { class: 'num' }, `${l.winners} 人`), el('td', { class: 'num' }, formatMoney(l.perPerson)), el('td', { class: 'num' }, formatMoney(l.subtotal)));
+    })),
+    el('tfoot', {}, el('tr', {}, el('td', { colSpan: 3 }, '前三名合計'), el('td', { class: 'num' }, formatMoney(r.prizePaid)))));
+
+  const body = plain
+    ? el('div', { class: 'rc-body rc-plain' },
+        el('div', { class: 'rc-kpis' }, kpi('抽號次數', `${formatNumber(r.drawCount)} 次`), kpi('已抽出號碼', `${r.drawnCount} / 75`), kpi('登錄名次', `${state.game.ranks.length} 個`)),
+        card('名次', ...(state.game.ranks.length
+          ? state.game.ranks.map((k) => line(`🏆 第 ${k.rank} 名`, k.tieCount > 1 ? `同時 ${k.tieCount} 人` : '1 人', 'is-prize'))
+          : [line('名次', '無人登錄', 'is-none')])))
+    : el('div', { class: 'rc-body' },
+        el('div', { class: 'rc-kpis' },
+          kpi('總收入', formatMoney(r.totalPool), 'is-main'),
+          kpi('前三名實領', formatMoney(r.prizePaid)),
+          kpi('安慰獎', formatMoney(r.consolation.total)),
+          kpi('主持人辛苦費', formatMoney(r.hostFee))),
+        el('div', { class: 'rc-grid' },
+          card('收入明細',
+            line('新卡', formatMoney(r.pool.newCards)),
+            line('續卡', formatMoney(r.pool.renewCards)),
+            line('付費抽號', formatMoney(r.pool.paidDraws)),
+            line('總收入', formatMoney(r.totalPool), 'is-sum')),
+          card('前三名實領', prizeTable()),
+          card('其他',
+            line(`安慰獎（${formatNumber(r.consolation.people)} 人 × ${formatMoney(r.consolation.unit)}）`, formatMoney(r.consolation.total)),
+            line('主持人辛苦費', formatMoney(r.hostFee)),
+            line('零頭', formatMoney(r.remainder)))));
+
   const overlay = el('div', { class: 'receipt-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': '本局結算收據' },
-    el('div', { class: 'receipt-scroll' },
-      el('article', { class: 'receipt' },
+    el('header', { class: 'receipt-head' },
+      el('div', { class: 'rc-headtext' },
         el('h2', { class: 'rc-title' }, plain ? '🧧 本局結果' : '🧧 本局結算收據'),
-        el('p', { class: 'rc-sub' }, plain ? `${when}｜抽號 ${formatNumber(r.drawCount)} 次` : `${when}｜參加 ${formatNumber(r.players)} 人｜抽號 ${formatNumber(r.drawCount)} 次`),
-        plain ? el('section', { class: 'rc-sec' },
-          el('h3', { class: 'rc-h' }, '名次'),
-          ...(state.game.ranks.length
-            ? state.game.ranks.map((k) => line(`🏆 第 ${k.rank} 名`, k.tieCount > 1 ? `同時 ${k.tieCount} 人` : '1 人', 'is-prize'))
-            : [line('名次', '無人登錄', 'is-none')]),
-          line('已抽出號碼', `${r.drawnCount} / 75`, 'is-sum')) : null,
-        ...(plain ? [] : [
-        el('section', { class: 'rc-sec' },
-          el('div', { class: 'rc-total' }, el('span', {}, '總收入'), el('strong', {}, formatMoney(r.totalPool))),
-          line('新卡', formatMoney(r.pool.newCards)),
-          line('續卡', formatMoney(r.pool.renewCards)),
-          line('付費抽號', formatMoney(r.pool.paidDraws))),
-
-        el('section', { class: 'rc-sec' },
-          el('h3', { class: 'rc-h' }, '前三名實領'),
-          ...r.prizeLines.map(prizeRow),
-          line('前三名合計', formatMoney(r.prizePaid), 'is-sum')),
-
-        el('section', { class: 'rc-sec' },
-          el('h3', { class: 'rc-h' }, '其他'),
-          line(`安慰獎（${formatNumber(r.consolation.people)} 人 × ${formatMoney(r.consolation.unit)}）`, formatMoney(r.consolation.total)),
-          line('主持人辛苦費', formatMoney(r.hostFee)),
-          line('零頭', formatMoney(r.remainder)))]))),
-    el('div', { class: 'receipt-actions' },
-      el('button', { type: 'button', class: 'btn btn-danger-outline', onClick: onNewGame }, '🔄 開新局'),
-      el('button', { type: 'button', class: 'btn btn-primary', onClick: close }, '關閉收據')));
+        el('p', { class: 'rc-sub' }, plain ? `${when}｜抽號 ${formatNumber(r.drawCount)} 次` : `${when}｜參加 ${formatNumber(r.players)} 人｜抽號 ${formatNumber(r.drawCount)} 次`)),
+      el('div', { class: 'receipt-actions' },
+        el('button', { type: 'button', class: 'btn btn-danger-outline', onClick: onNewGame }, '🔄 開新局'),
+        el('button', { type: 'button', class: 'btn btn-primary', onClick: close }, '關閉收據'))),
+    el('div', { class: 'receipt-scroll' }, el('article', { class: 'receipt' }, body)));
 
   document.body.append(overlay);
   document.addEventListener('keydown', onKey);
