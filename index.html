@@ -9,6 +9,8 @@
   <!-- 載入畫面所需的最小樣式（完整樣式載入前先顯示，避免閃爍）；style.css 載入後會接手 -->
   <style>
     body{margin:0;background:#0e141b}
+    html,body,body *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+    input,textarea{-webkit-user-select:text;user-select:text}
     .splash{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#0e141b;color:#fff;font-family:system-ui,"Microsoft JhengHei",sans-serif}
     .splash-logo{width:110px;height:110px;fill:none;stroke:#1a9fff;stroke-width:1.5}
     .splash-name{font-size:32px;font-weight:800;letter-spacing:.04em}
@@ -42,7 +44,7 @@
     if (store) store.removeItem(KEY);
 
     var CSS = "css/style.css";
-    var JS = ["js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
+    var JS = ["js/protect.js", "js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
     var WARM_ONLY = ["js/minihub-sdk.js"];   // 遊戲頁會載入的共用檔：進站時一併向伺服器確認，不注入大廳
     var MOD = "js/firebase.js";
     var warm = function (u) { return Promise.race([fetch(u, { cache: "no-cache" }).catch(function () {}), new Promise(function (r) { setTimeout(r, 4000); })]); };   // 最多等 4 秒，避免網路卡住時一直停在載入畫面
