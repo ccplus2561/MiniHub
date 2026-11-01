@@ -1,11 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs>
+<radialGradient id="glow"><stop offset="0" stop-color="#ffd166" stop-opacity=".45"/><stop offset="1" stop-color="#ffd166" stop-opacity="0"/></radialGradient>
+<linearGradient id="box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e23a4d"/><stop offset="1" stop-color="#9c1428"/></linearGradient>
+</defs>
 <rect x="10" y="10" width="108" height="108" rx="20" fill="#18202b" stroke="#d12a3c" stroke-width="6"/>
-<g fill="#2a3547" stroke="#3b4a63" stroke-width="1.5">
-<rect x="24" y="24" width="18" height="18" rx="4"/><rect x="45" y="24" width="18" height="18" rx="4"/><rect x="66" y="24" width="18" height="18" rx="4"/><rect x="87" y="24" width="18" height="18" rx="4"/>
-<rect x="24" y="45" width="18" height="18" rx="4"/><rect x="87" y="45" width="18" height="18" rx="4"/>
-<rect x="24" y="66" width="18" height="18" rx="4"/><rect x="66" y="66" width="18" height="18" rx="4"/>
+<circle cx="64" cy="56" r="40" fill="url(#glow)"/>
+<ellipse cx="64" cy="66" rx="36" ry="9" fill="#2b0a12" stroke="#f6cf74" stroke-width="3"/>
+<g stroke="#18202b" stroke-width="1.5">
+<circle cx="42" cy="55" r="12" fill="#f6cf74"/>
+<circle cx="66" cy="50" r="13" fill="#ffffff"/>
+<circle cx="92" cy="56" r="11" fill="#4fc3d9"/>
+<circle cx="84" cy="30" r="10" fill="#ff6b81"/>
 </g>
-<g fill="#e8a92c"><rect x="45" y="45" width="18" height="18" rx="4"/><rect x="66" y="45" width="18" height="18" rx="4"/><rect x="45" y="66" width="18" height="18" rx="4"/><rect x="87" y="66" width="18" height="18" rx="4"/></g>
-<circle cx="64" cy="98" r="14" fill="#d12a3c" stroke="#fff" stroke-width="3"/>
-<text x="64" y="104" text-anchor="middle" font-family="system-ui,sans-serif" font-size="16" font-weight="700" fill="#fff">B</text>
+<g font-family="system-ui,'Microsoft JhengHei',sans-serif" font-weight="800" text-anchor="middle" fill="#7a0f1d">
+<text x="42" y="60.5" font-size="15">7</text>
+<text x="66" y="55.5" font-size="14">23</text>
+<text x="92" y="60.5" font-size="12" fill="#0b3a46">58</text>
+<text x="84" y="34" font-size="11" fill="#fff">41</text>
+</g>
+<path d="M26 66V100Q26 110 36 110H92Q102 110 102 100V66A38 9 0 0 1 26 66Z" fill="url(#box)" stroke="#f6cf74" stroke-width="3" stroke-linejoin="round"/>
+<rect x="26" y="82" width="76" height="5" fill="#f6cf74" opacity=".9"/>
+<circle cx="64" cy="98" r="7" fill="#f6cf74"/>
+<polygon points="64,92.5 65.7,96.5 70,96.9 66.8,99.7 67.8,103.9 64,101.6 60.2,103.9 61.2,99.7 58,96.9 62.3,96.5" fill="#9c1428"/>
 </svg>
