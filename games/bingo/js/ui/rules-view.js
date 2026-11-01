@@ -24,7 +24,7 @@ export function openRules({ onStart } = {}) {
       el('span', { class: 'rules-hero-icon', 'aria-hidden': 'true' }, '🧧'),
       el('div', {},
         el('h2', { class: 'rules-hero-title' }, '遊戲規則'),
-        el('p', { class: 'rules-hero-sub' }, starting ? '請所有玩家詳閱，確認後即開始抽獎' : '兵果彩盤・賓果抽獎'))),
+        el('p', { class: 'rules-hero-sub' }, starting ? '請所有玩家詳閱，確認後即開始抽獎' : '賓果抽獎盤・賓果抽獎'))),
     el('div', { class: 'rules-grid' }, ...rules.map(ruleCard)),
     rulesNote ? el('p', { class: 'rules-note' }, rulesNote) : null);
 

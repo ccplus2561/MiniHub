@@ -59,7 +59,33 @@ function syncSound() {
   else if (sound.isEnabled()) sound.setEnabled(false);
 }
 
+// 最近一次「抽獎相關音效」的時間：同一次操作已播抽獎／賓果／撤回音效時，不再疊加按鈕音效
+let lastEffectAt = -1e9;
+
+/** 依按鈕種類挑選介面音效；回傳 null 代表不播 */
+function uiSoundFor(target) {
+  const node = target.closest?.('button, summary, input[type="checkbox"]');
+  if (!node || node.disabled || node.closest('[data-nosfx]')) return null;
+  if (node.matches('input[type="checkbox"]')) return node.checked ? 'on' : 'off';
+  if (node.closest('.stepper') || node.classList.contains('rule-ico')) return 'tick';
+  if (node.matches('.btn-primary, .btn-gold, .btn-danger')) return 'confirm';
+  if (node.matches('.btn-secondary') && node.closest('.modal-actions')) return 'back';
+  return 'click';
+}
+
+/** 全頁按鈕音效（冒泡階段：目標按鈕的處理與 state 音效先執行，才能判斷是否已播抽獎音效） */
+function initUiSounds() {
+  document.addEventListener('click', (e) => {
+    const name = uiSoundFor(e.target);
+    if (!name) return;
+    syncSound();
+    if (performance.now() - lastEffectAt < 80) return;
+    sound.play(name);
+  });
+}
+
 export function initEffects() {
+  initUiSounds();
   document.addEventListener('pointerdown', syncSound, true);
   try { MiniHub.onChange(syncSound); } catch { /* 單獨開啟 */ }
   // 大廳要求暫停（玩家點左側導覽）：停掉慶祝動畫與音效
@@ -76,6 +102,7 @@ export function initEffects() {
 
   function handle(e) {
     syncSound();
+    lastEffectAt = performance.now();
     switch (e.type) {
       case 'draw': {
         const kind = e.record.type;

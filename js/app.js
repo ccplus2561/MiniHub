@@ -237,7 +237,7 @@
     MiniHubRequestNext().then(ok => { try { e.source.postMessage({ type: "minihub:next-result", ok }, "*"); } catch (x) {} });
   });
 
-  // 手機版禁止進入不支援手機的遊戲（games.js 的 tags.mobileP === false，例如橫向投屏的兵果彩盤）
+  // 手機版禁止進入不支援手機的遊戲（games.js 的 tags.mobileP === false，例如橫向投屏的賓果抽獎盤）
   const phoneBlocked = g => !!g.path && document.body.classList.contains("m") && !!g.tags && g.tags.mobileP === false;
   function denyPhone(g) { sfx("deny"); toast("「" + g.title + "」不支援手機，請改用電腦或平板開啟。"); }
   function openGame(g, el) {

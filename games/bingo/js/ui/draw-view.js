@@ -71,7 +71,7 @@ export function initDrawView(root) {
   const stepper = createStepper({ min: 1, max: 5, value: 1, label: '連抽次數', onChange: () => update() });
   const batchSub = el('small', { class: 'btn-sub' });
   const batchLabel = el('span', {});
-  const batchBtn = el('button', { type: 'button', class: 'btn btn-gold btn-batch', onClick: onBatch }, batchLabel, batchSub);
+  const batchBtn = el('button', { type: 'button', class: 'btn btn-gold btn-batch', dataset: { nosfx: '' }, onClick: onBatch }, batchLabel, batchSub);
 
   // ---- 其他操作 ----
   const rankBtn = el('button', { type: 'button', class: 'btn btn-primary btn-tool', onClick: onRankBtn });

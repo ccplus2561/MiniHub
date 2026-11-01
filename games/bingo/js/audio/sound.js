@@ -65,6 +65,46 @@ export const SOUND_DEFS = {
     duration: 0.22,
     notes: [{ t: 0, dur: 0.18, freq: 720, freqEnd: 360, type: 'sine', gain: 0.4 }],
   },
+  // ---- 介面按鈕音效（輕柔短音；與抽獎音效區隔） ----
+  click: {
+    duration: 0.18,
+    notes: [
+      { t: 0, dur: 0.07, freq: 440, type: 'triangle', gain: 0.22 },
+      { t: 0.05, dur: 0.09, freq: 587, type: 'triangle', gain: 0.22 },
+    ],
+  },
+  confirm: {
+    duration: 0.2,
+    notes: [
+      { t: 0, dur: 0.07, freq: 523, type: 'triangle', gain: 0.26 },
+      { t: 0.06, dur: 0.12, freq: 784, type: 'triangle', gain: 0.26 },
+    ],
+  },
+  back: {
+    duration: 0.2,
+    notes: [
+      { t: 0, dur: 0.07, freq: 523, type: 'triangle', gain: 0.2 },
+      { t: 0.06, dur: 0.1, freq: 392, type: 'triangle', gain: 0.2 },
+    ],
+  },
+  tick: {
+    duration: 0.08,
+    notes: [{ t: 0, dur: 0.05, freq: 660, type: 'triangle', gain: 0.2 }],
+  },
+  on: {
+    duration: 0.22,
+    notes: [
+      { t: 0, dur: 0.08, freq: 440, type: 'triangle', gain: 0.24 },
+      { t: 0.07, dur: 0.12, freq: 660, type: 'triangle', gain: 0.24 },
+    ],
+  },
+  off: {
+    duration: 0.22,
+    notes: [
+      { t: 0, dur: 0.08, freq: 660, type: 'triangle', gain: 0.2 },
+      { t: 0.07, dur: 0.12, freq: 440, type: 'triangle', gain: 0.2 },
+    ],
+  },
 };
 
 
