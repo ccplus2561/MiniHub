@@ -76,8 +76,9 @@
 
   /* ---------- 遊戲標籤（✔ / ✘） ---------- */
   const TAG_DEFAULT = {};   // 未設定 = 「─」；true = ✔；false = ✘
-  const TAG_ROWS = [[["single", "單人模式"], ["multi", "多人連線"]], [["mobile", "支援手機"], ["desktop", "支援電腦"]],
-                    [["kbd", "鍵盤快捷"], ["touch", "觸碰滑動"]], [["rank", "排行榜"], ["personal", "個人成績"]]];
+  // 兩欄由左到右、由上到下排列：單人／多人、電腦／鍵盤、手機直式／觸碰、手機橫式／成績、雲端存檔
+  const TAGS = [["single", "單人遊玩"], ["multi", "多人連線"], ["desktop", "支援電腦"], ["kbd", "鍵盤控制"], ["mobileP", "手機直式"],
+                ["touch", "觸碰滑動"], ["mobileL", "手機橫式"], ["score", "成績紀錄"], ["cloud", "雲端存檔"]];
   function setTagsOpen(open) {
     const box = $("#gameTags"), btn = $("#tagsToggle");
     box.classList.toggle("open", open);
@@ -87,8 +88,8 @@
   $("#tagsToggle").addEventListener("click", () => setTagsOpen(!$("#gameTags").classList.contains("open")));
   function paintTags(g) {
     const t = Object.assign({}, TAG_DEFAULT, g.tags || {});
-    $("#gameTags").innerHTML = TAG_ROWS.map(r => r.map(([k, n]) =>
-      `<span class="${t[k] === true ? "yes" : t[k] === false ? "no" : "na"}"><i>${t[k] === true ? "✔" : t[k] === false ? "✘" : "─"}</i>${n}</span>`).join("")).join("");
+    $("#gameTags").innerHTML = TAGS.map(([k, n]) =>
+      `<span class="${t[k] === true ? "yes" : t[k] === false ? "no" : "na"}"><i>${t[k] === true ? "✔" : t[k] === false ? "✘" : "─"}</i>${n}</span>`).join("");
   }
 
   /* ---------- 遊戲庫 / 分類 ---------- */
