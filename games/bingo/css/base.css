@@ -1,0 +1,55 @@
+/* 基礎：reset、色票與字級變數 */
+:root {
+  --red-900: #7a0f1d;
+  --red-700: #a8142a;
+  --red-500: #d12a3c;
+  --gold-500: #e8a92c;
+  --gold-300: #f6cf74;
+  --gold-100: #fcefc9;
+  --paper: #fbf1dc;
+  --card: #fffdf7;
+  --ink: #2e1410;
+  --muted: #7d5f54;
+  --line: #ebd29c;
+  --ok: #1f7a4d;
+  --teal-700: #1f6270; /* 重複號碼 */
+  --teal-500: #2a7a86;
+  --brown-700: #4a3a34; /* 銘謝惠顧 */
+
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --tap: 48px; /* 最小點擊區 */
+
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.5rem;
+
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-brand: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-md);
+  line-height: 1.6;
+  -webkit-tap-highlight-color: transparent;
+}
+
+h1, h2, h3, p { margin: 0; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+[hidden] { display: none !important; }
+
+:focus-visible { outline: 3px solid var(--gold-500); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

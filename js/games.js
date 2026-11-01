@@ -34,6 +34,13 @@ window.GAMES = [
     tags: { single: true, multi: false, mobile: true, desktop: true, kbd: true, touch: true, rank: true, personal: true }
   },
   {
+    id: "bingo", title: "兵果彩盤", category: "桌遊", emoji: "🧧", icon: "icons/bingo.svg",
+    colors: ["#a8142a", "#4a0a14"], path: "games/bingo/index.html",
+    desc: "聚會用的賓果抽號彩盤：抽號、彩池與獎金一目了然。\n規則：主持人抽號、玩家用紙卡對號，登錄名次後自動分配獎金。\n操作：滑鼠／觸控點擊，建議用電腦或平板橫向投屏。",
+    how: "", featured: false,
+    tags: { single: false, multi: true, mobile: false, desktop: true, kbd: false, touch: true, rank: false, personal: false }
+  },
+  {
     id: "memory", title: "翻牌配對", category: "益智", emoji: "🃏",
     colors: ["#c2410c", "#7c2d12"], path: "",
     desc: "記住位置，找出所有成對的卡牌。", featured: true
