@@ -66,7 +66,7 @@
     $("#heroTitle").textContent = g.title;
     $("#heroDesc").textContent = g.desc || g.category;
     $("#heroHow").textContent = g.how || ""; $("#heroHow").hidden = !g.how;
-    $("#playBtn span").textContent = g.path ? "開始遊戲" : (g.badge || "即將推出");
+    $("#playBtn span").textContent = phoneBlocked(g) ? "僅支援電腦" : g.path ? "開始遊戲" : (g.badge || "即將推出");
     paintTags(g);
     setTagsOpen(false);   // 手機版切換遊戲時預設收合
     hero.hidden = false;
@@ -237,7 +237,11 @@
     MiniHubRequestNext().then(ok => { try { e.source.postMessage({ type: "minihub:next-result", ok }, "*"); } catch (x) {} });
   });
 
+  // 手機版禁止進入不支援手機的遊戲（games.js 的 tags.mobileP === false，例如橫向投屏的兵果彩盤）
+  const phoneBlocked = g => !!g.path && document.body.classList.contains("m") && !!g.tags && g.tags.mobileP === false;
+  function denyPhone(g) { sfx("deny"); toast("「" + g.title + "」不支援手機，請改用電腦或平板開啟。"); }
   function openGame(g, el) {
+    if (phoneBlocked(g)) return denyPhone(g);
     if (g.path) {
       if (!authReady) {   // 還在還原登入狀態（firebase.js 是最後才載入的模組，此時 MiniHubAuth 可能還不存在）：等第一次回報再決定
         let done = false; const go = () => { if (done) return; done = true; openGame(g, el); };
@@ -258,6 +262,7 @@
     fresh.then(() => { if (current === g) setFrame(bust(g.path)); });
   };
   function launchGame(g, el) {
+    if (phoneBlocked(g)) return denyPhone(g);
     if (!g.path) { sfx("deny"); return toast("「" + g.title + "」" + (g.badge || "即將推出") + "，敬請期待！"); }
     sfx("open");
     if (window.MiniHubTemp) { MiniHubTemp.music = MiniHubTemp.sfx = true; paintAudio(); }   // 每次開啟遊戲都恢復為設定值
