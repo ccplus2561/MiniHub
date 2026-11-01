@@ -98,14 +98,14 @@
   background: rgba(46, 20, 16, .6);
 }
 .modal {
-  width: 100%; max-width: 380px;
+  width: 100%; max-width: 440px;
   background: var(--card); border: 2px solid var(--gold-500); border-radius: var(--radius-lg);
   padding: 20px;
 }
 .modal-title { font-family: var(--font-brand); font-size: var(--fs-xl); color: var(--red-700); }
 .modal-message { margin: 8px 0 18px; }
 .modal-actions { display: flex; gap: 10px; }
-.modal-actions .btn { flex: 1; padding: 0 8px; }
+.modal-actions .btn { flex: 1 1 auto; padding: 0 14px; white-space: nowrap; }
 
 /* 提示 */
 #toast-root {

@@ -73,7 +73,7 @@ export const DEFAULT_SETTINGS = {
   allowBlank: true,
   hostFeePercent: 10,
   locked: false,
-  prizeEnabled: true, // 關閉後：沒有獎金池、不收費、抽號不受任何金錢限制
+  prizeEnabled: false, // 關閉後：沒有獎金池、不收費、抽號不受任何金錢限制
   rules: DEFAULT_RULES.map((r) => ({ ...r })),
   rulesNote: DEFAULT_RULES_NOTE,
 };

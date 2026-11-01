@@ -9,6 +9,7 @@
  *   path      遊戲入口；留空 = 顯示「封測中」
  *   desc      一句話介紹
  *   featured  是否顯示在首頁精選
+ *   music     false = 這款遊戲沒有背景音樂：遊戲頂端的音樂按鈕會停用（不寫 = 有音樂）
  *   tags      遊戲特色（true = ✔、false = ✘、不寫 = ─）：
  *               single 單人遊玩／multi 多人連線／desktop 支援電腦／mobileP 手機直式／
  *               kbd 鍵盤控制／touch 觸碰滑動／score 成績紀錄（個人最高與排行榜）／cloud 雲端存檔（登入後進度存雲端，預留）
@@ -40,7 +41,7 @@ window.GAMES = [
     id: "bingo", title: "兵果彩盤", category: "桌遊", emoji: "🧧", icon: "icons/bingo.svg",
     colors: ["#a8142a", "#4a0a14"], path: "games/bingo/index.html",
     desc: "聚會用的賓果抽號彩盤：抽號、彩池與獎金一目了然。\n規則：主持人抽號、玩家用紙卡對號，登錄名次後自動分配獎金。\n操作：滑鼠／觸控點擊，建議用電腦或平板橫向投屏。",
-    how: "", featured: false,
+    how: "", featured: false, music: false,
     tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: false, touch: true, score: false, cloud: false }
   },
   {

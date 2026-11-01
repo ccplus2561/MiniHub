@@ -1043,3 +1043,5 @@ body.no-anim .hw-glow, body.m .hw-glow { display: none; }
 .rot-guard small { font-size: 14px; color: var(--text-2, #a3adbd); }
 @keyframes rotHint { 0%, 30% { transform: rotate(90deg); } 70%, 100% { transform: rotate(0); } }
 body.no-anim .rot-guard svg { animation: none; }
+/* 沒有背景音樂的遊戲：音樂按鈕停用 */
+.btn-icon:disabled { opacity: .35; cursor: not-allowed; filter: grayscale(1); }

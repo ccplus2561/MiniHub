@@ -233,7 +233,7 @@
   });
   // 遊戲頂端列的音樂 / 音效按鈕：只對目前這款遊戲暫時生效，不改動上面的設定值，離開遊戲或重開遊戲即還原
   window.MiniHubTemp = { music: true, sfx: true };
-  window.MiniHubGamePrefs = () => { const p = window.MiniHubPrefs(); return { ...p, music: p.music && MiniHubTemp.music, sfx: p.sfx && MiniHubTemp.sfx }; };
+  window.MiniHubGamePrefs = () => { const p = window.MiniHubPrefs(); return { ...p, music: p.music && MiniHubTemp.music && !(window.MiniHubNoMusic && MiniHubNoMusic()), sfx: p.sfx && MiniHubTemp.sfx }; };
   window.MiniHubPrefs = () => ({ ...prefs, kbd: eff("kbd"), touch: eff("touch"), cardSize: prefs[sizeKey()] });   // 供大廳 / 音效使用的「實際生效」設定
   // 登入後套用帳號裡的「公開使用者名稱」；登出（訪客）回到預設
   document.addEventListener("minihub:account", () => {

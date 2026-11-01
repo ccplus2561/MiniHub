@@ -267,6 +267,7 @@
     sfx("open");
     if (window.MiniHubTemp) { MiniHubTemp.music = MiniHubTemp.sfx = true; paintAudio(); }   // 每次開啟遊戲都恢復為設定值
     current = g;
+    paintAudio();
     srcEl = el || $("#libraryRow .card.selected");
     $("#playerTitle").textContent = g.title;
     loadGame(g);
@@ -337,15 +338,20 @@
   $("#exitOk").addEventListener("click", () => settleLeave(true));
   /* 音樂 / 音效：頂端按鈕只暫時開關目前這款遊戲，不改設定頁 */
   const audioBtns = { music: $("#musicBtn"), sfx: $("#sfxBtn") };
+  const noMusic = () => !!(current && current.music === false);   // games.js 的 music: false = 這款遊戲沒有背景音樂
+  window.MiniHubNoMusic = noMusic;
   const paintAudio = () => {
     const p = window.MiniHubGamePrefs ? MiniHubGamePrefs() : { music: true, sfx: true };
     Object.keys(audioBtns).forEach(k => {
-      const on = !p.mute && p[k];
+      const dis = k === "music" && noMusic(), on = !dis && !p.mute && p[k];
       audioBtns[k].classList.toggle("off", !on);
+      audioBtns[k].disabled = dis;
+      audioBtns[k].title = dis ? "這款遊戲沒有背景音樂" : k === "music" ? "背景音樂" : "音效";
       audioBtns[k].setAttribute("aria-pressed", String(!!on));
     });
   };
   Object.keys(audioBtns).forEach(k => audioBtns[k].addEventListener("click", () => {
+    if (k === "music" && noMusic()) return;
     if (window.MiniHubTemp) MiniHubTemp[k] = !MiniHubTemp[k];   // 只影響目前遊戲，不改設定
     paintAudio(); sfx(MiniHubTemp[k] ? "on" : "off");
     document.dispatchEvent(new CustomEvent("minihub:prefs"));   // 通知遊戲立即套用
