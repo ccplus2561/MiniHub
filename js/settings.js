@@ -132,7 +132,26 @@
   const narrow = matchMedia("(max-width: 820px)");
   narrow.addEventListener && narrow.addEventListener("change", () => paint());
   // 手機版：鍵盤快捷鍵固定關閉、觸控滑動固定開啟（只改實際效果，不動已保存的電腦版設定）
-  const isMobile = () => prefs.display === "mobile" || (prefs.display === "auto" && narrow.matches);
+  // 手機裝置（判斷不嚴格）：觸控為主、螢幕短邊 ≤ 600px。手機橫放時寬度會超過 820px，所以自動模式也要視為手機版
+  const coarse = matchMedia("(pointer: coarse)"), land = matchMedia("(orientation: landscape)");
+  const isPhone = () => coarse.matches && Math.min(screen.width, screen.height) <= 600;
+  const isMobile = () => prefs.display === "mobile" || (prefs.display === "auto" && (narrow.matches || isPhone()));
+  land.addEventListener && land.addEventListener("change", () => paint());
+  document.addEventListener("fullscreenchange", () => paint());
+  // 手機版強制直式：Android 在全螢幕時可真的鎖定方向；其餘（含 iPhone）手機橫放時蓋上「請轉為直式」遮罩並暫停遊戲
+  let rotGuard = null;
+  function portraitGuard(mob) {
+    const need = mob && isPhone();
+    try { if (screen.orientation) { if (need) screen.orientation.lock("portrait").catch(() => {}); else screen.orientation.unlock(); } } catch (e) {}
+    const show = need && land.matches;
+    if (show && !rotGuard) {
+      rotGuard = document.createElement("div");
+      rotGuard.className = "rot-guard"; rotGuard.setAttribute("role", "alert");
+      rotGuard.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><rect x="22" y="6" width="20" height="36" rx="4"/><path d="M12 50a22 22 0 0 0 40 0M52 44v6h-6"/></svg><b>請將手機轉為直式</b><small>MiniHub 手機版僅支援直式操作</small>';
+      document.body.appendChild(rotGuard);
+      try { const f = $("#frame"); f && f.contentWindow && f.contentWindow.MiniHubPause && f.contentWindow.MiniHubPause(); } catch (e) {}   // 遊戲先暫停
+    } else if (!show && rotGuard) { rotGuard.remove(); rotGuard = null; }
+  }
   const sizeKey = () => isMobile() ? "cardSizeM" : "cardSizeD";
   const eff = k => isMobile() && k === "kbd" ? false : isMobile() && k === "touch" ? true : prefs[k];
   function paint() {
@@ -152,6 +171,7 @@
     document.body.classList.toggle("no-touch", !eff("touch"));
     document.documentElement.style.setProperty("--card-w", (mob ? SIZES_M : SIZES)[prefs[sizeKey()]] || (mob ? SIZES_M : SIZES).m);
     document.body.classList.toggle("m", mob);
+    portraitGuard(mob);
     $$('[data-group="display"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.display));
     $$('[data-group="lang"]').forEach(x => x.classList.toggle("selected", x.dataset.value === prefs.lang));
     const pv = $("#rankPreview");

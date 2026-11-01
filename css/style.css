@@ -1034,3 +1034,12 @@ body.no-anim .view *, body.no-anim .nav-item svg { animation: none !important; }
     radial-gradient(340px circle at var(--hx, -999px) var(--hy, -999px), rgba(102, 192, 244, .4), transparent 72%); }
 body.no-anim .hw-glow, body.m .hw-glow { display: none; }
 @media (hover: none), (pointer: coarse) { .hw-glow { display: none; } }
+
+/* 手機橫放提示（手機版強制直式） */
+.rot-guard { position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; text-align: center;
+  background: rgba(8, 12, 18, .96); color: var(--text); }
+.rot-guard svg { width: 72px; height: 72px; fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; animation: rotHint 2s ease-in-out infinite; }
+.rot-guard b { font-size: 22px; }
+.rot-guard small { font-size: 14px; color: var(--text-2, #a3adbd); }
+@keyframes rotHint { 0%, 30% { transform: rotate(90deg); } 70%, 100% { transform: rotate(0); } }
+body.no-anim .rot-guard svg { animation: none; }
