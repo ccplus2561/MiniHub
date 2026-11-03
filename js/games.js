@@ -38,6 +38,13 @@ window.GAMES = [
     tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
   },
   {
+    id: "fruit-slice", title: "水果忍者", category: "動作", emoji: "🍉", icon: "icons/fruit-slice.svg",
+    colors: ["#0f766e", "#073b4c"], path: "games/fruit-slice/index.html",
+    desc: "揮動刀刃切開飛出的水果，連擊越多分數越高！\n規則：60 秒內盡量得分，漏接水果會扣生命，切到炸彈直接結束。\n操作：滑鼠拖曳或手指滑動切水果；空白鍵／P 暫停。",
+    how: "", featured: true, board: { order: "desc", unit: "分", max: 5000 },
+    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
+  },
+  {
     id: "bingo", title: "賓果抽獎盤", category: "桌遊", emoji: "🧧", icon: "icons/bingo.svg",
     colors: ["#a8142a", "#4a0a14"], path: "games/bingo/index.html",
     desc: "聚會用的賓果抽獎盤：抽號、彩池與獎金一目了然。\n規則：主持人抽號、玩家用紙卡對號，登錄名次後自動分配獎金。\n操作：滑鼠／觸控點擊，建議用電腦或平板橫向投屏。",

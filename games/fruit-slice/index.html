@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071b2c">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="description" content="水果忍者 切水果小遊戲">
+  <title>水果忍者｜切水果</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="game-shell">
+    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="水果忍者">
+        <span class="brand-mark">✦</span><span>水果<b>忍者</b></span>
+      </a>
+    </header>
+
+    <section class="stage" aria-label="遊戲主視覺">
+      <div class="stage-glow"></div>
+      <div class="pagoda pagoda-left"><i></i><i></i><i></i></div>
+      <div class="pagoda pagoda-right"><i></i><i></i><i></i></div>
+      <div class="cloud cloud-a"></div><div class="cloud cloud-b"></div>
+      <div class="cloud cloud-c"></div>
+      <div class="moon"></div>
+      <div class="stage-label"><span class="label-dot"></span> 忍者水果競技場</div>
+
+      <div class="fruit fruit-watermelon"><img src="assets/fruits/watermelon.svg" alt="西瓜"></div>
+      <div class="fruit fruit-apple"><img src="assets/fruits/apple.svg" alt="蘋果"></div>
+      <div class="fruit fruit-orange"><img src="assets/fruits/orange.svg" alt="橘子"></div>
+      <div class="fruit fruit-kiwi"><img src="assets/fruits/kiwi.svg" alt="奇異果"></div>
+      <div class="fruit fruit-pineapple"><img src="assets/fruits/pineapple.svg" alt="鳳梨"></div>
+      <div class="slice-trail"></div>
+      <div class="spark spark-1">✦</div><div class="spark spark-2">✧</div>
+      <div class="spark spark-3">✦</div><div class="spark spark-4">✧</div>
+      <div class="splash splash-one"></div><div class="splash splash-two"></div>
+
+      <div class="hero-copy">
+        <p class="eyebrow">預備，開切！</p>
+        <h1>水果<span>忍者</span></h1>
+        <p class="hero-subtitle">一刀切開，好運連連！</p>
+        <div class="hero-actions">
+          <button class="primary-button" id="startButton"><span class="play-icon">▶</span> 開始遊戲</button>
+          <button class="secondary-button" id="howButton">遊戲介紹 <span>↗</span></button>
+        </div>
+        <div class="hero-note"><span>✦</span> 磨利你的刀刃，挑戰水果極限</div>
+      </div>
+
+      <div class="score-card">
+        <div class="score-card-top"><span>最高分</span><span class="trophy">♛</span></div>
+        <strong id="homeBestScore">0</strong>
+        <div class="score-line"><span></span></div>
+        <small>個人最高紀錄</small>
+        <ol class="rank-list" id="homeRank" hidden></ol>
+      </div>
+      <div class="combo-bubble"><b>+3</b><span>連擊</span></div>
+    </section>
+
+    <section class="bottom-panel">
+      <footer class="footer"><span>水果忍者 <b>© 2026</b></span><span>一刀登頂 <i>✦</i></span></footer>
+    </section>
+  </main>
+
+
+  <!-- Gameplay layer: kept separate from the home screen for easier platform embedding. -->
+  <section class="play-overlay" id="playOverlay" aria-hidden="true" aria-label="切水果遊戲">
+    <div class="play-window">
+      <header class="play-header">
+        <div>
+          <span class="play-kicker">水果忍者競技場</span>
+          <h2 id="playModeTitle">經典玩法</h2>
+        </div>
+        <div class="play-stats" aria-label="即時遊戲資訊">
+          <div><small>分數</small><b id="liveScore">0</b></div>
+          <div><small>時間</small><b id="liveTime">60</b></div>
+          <div><small>生命</small><b id="liveLives">♥ ♥ ♥</b></div>
+          <div class="best-stat"><small>最高</small><b id="liveBest">0</b></div>
+        </div>
+        <button class="play-pause" id="pauseGame" type="button" aria-label="暫停遊戲">Ⅱ</button>
+        <button class="play-exit" id="exitGame" type="button" aria-label="離開遊戲">×</button>
+      </header>
+      <div class="game-canvas-wrap">
+        <canvas id="gameCanvas" aria-label="切水果遊戲畫面"></canvas>
+        <p class="game-hint" id="gameHint">按住滑鼠或手指滑動，切開水果！</p>
+        <div class="combo-toast" id="comboToast" aria-live="polite"></div>
+        <section class="pause-screen" id="pauseScreen" hidden>
+          <p class="mini-kicker">已暫停</p><h3>遊戲暫停</h3>
+          <button class="primary-button" id="resumeGame" type="button">繼續遊戲</button>
+        </section>
+        <section class="game-over" id="gameOver" hidden aria-live="polite">
+          <p class="mini-kicker">本局結束</p>
+          <h3 id="gameOverTitle">遊戲結束</h3>
+          <p>本局得分<strong id="finalScore">0</strong></p>
+          <ol class="rank-list" id="overRank" hidden></ol>
+          <button class="primary-button" id="restartGame" type="button">再玩一次</button>
+        </section>
+      </div>
+      <p class="play-footnote">避開炸彈，連續切中水果可獲得更多分數。</p>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" id="modal" aria-hidden="true">
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="closeModal" aria-label="關閉">×</button>
+      <div class="modal-symbol">✦</div>
+      <p class="mini-kicker">水果忍者</p>
+      <h2 id="modalTitle">遊戲玩法</h2>
+      <p id="modalText">滑動滑鼠或手指切開水果，連續命中可獲得連擊加分。避開炸彈，挑戰自己的最高紀錄！</p>
+      <button class="primary-button modal-ok" id="modalOk">我知道了</button>
+    </section>
+  </div>
+  <script src="../../js/protect.js"></script>
+  <script src="../../js/minihub-sdk.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
