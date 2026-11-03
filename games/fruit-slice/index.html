@@ -42,18 +42,20 @@
         <div class="hero-note"><span>✦</span> 磨利你的刀刃，挑戰水果極限</div>
       </div>
 
-      <div class="score-card">
-        <div class="score-card-top"><span>最高分</span><span class="trophy">♛</span></div>
-        <strong id="homeBestScore">0</strong>
-        <div class="score-line"><span></span></div>
-        <small>個人最高紀錄</small>
-        <ol class="rank-list" id="homeRank" hidden></ol>
-      </div>
       <div class="combo-bubble"><b>+3</b><span>連擊</span></div>
     </section>
 
   </main>
 
+
+  <!-- 個人最高 / 排行榜：與貪吃蛇相同的右側可收合面板 -->
+  <aside id="side" hidden>
+    <button id="sideTog" type="button" aria-label="展開 / 收合" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div id="info">
+      <div class="box" id="meBox" hidden><h4>個人最高</h4><b id="homeBestScore">0</b></div>
+      <div class="box" id="rankBox" hidden><h4>排行榜</h4><ol class="rank-list" id="homeRank"></ol></div>
+    </div>
+  </aside>
 
   <!-- Gameplay layer: kept separate from the home screen for easier platform embedding. -->
   <section class="play-overlay" id="playOverlay" aria-hidden="true" aria-label="切水果遊戲">

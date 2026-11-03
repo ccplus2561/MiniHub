@@ -47,6 +47,7 @@
   const myUid = () => MiniHub.player().uid;
   function paintRank(ul) {
     ul.hidden = !(logged && rankOn);
+    if (ul.id === "homeRank") { $("rankBox").hidden = ul.hidden; syncSide(); }
     if (ul.hidden) return;
     ul.textContent = "";
     const me = myUid();
@@ -78,7 +79,25 @@
   function refreshBest() {
     bestEl.textContent = fmt(best);
     if (homeBestEl) homeBestEl.textContent = fmt(best);
+    $("meBox").hidden = !logged; syncSide();
   }
+
+  /* ================= 右側面板（同貪吃蛇）：寬螢幕固定展開，窄螢幕浮動、預設收合 ================= */
+  const side = $("side"), sideTog = $("sideTog");
+  let userSide = null, floatSide = false, floatOpen = false;
+  const sideOpen = () => floatSide ? floatOpen : userSide !== false;
+  function paintSide() {
+    const o = sideOpen();
+    side.classList.toggle("closed", !o); side.classList.toggle("float", floatSide);
+    sideTog.setAttribute("aria-expanded", o); sideTog.title = o ? "收合" : "展開";
+  }
+  function syncSide() { side.hidden = $("meBox").hidden && $("rankBox").hidden; }
+  function fitSide() { floatSide = innerWidth < 900; paintSide(); }
+  addEventListener("resize", fitSide); fitSide();
+  sideTog.addEventListener("click", () => {
+    if (floatSide) floatOpen = !floatOpen; else userSide = !sideOpen();
+    paintSide();
+  });
   function showModal(title, text) {
     modalTitle.textContent = title; modalText.textContent = text;
     modal.classList.add("open"); modal.setAttribute("aria-hidden", "false");
