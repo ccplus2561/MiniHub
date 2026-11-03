@@ -1,31 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
 <defs>
-<linearGradient id="rind" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b6f34d"/><stop offset=".5" stop-color="#3da72d"/><stop offset="1" stop-color="#145a2d"/></linearGradient>
-<radialGradient id="flesh" cx=".35" cy=".3" r=".9"><stop stop-color="#ff9b8a"/><stop offset=".6" stop-color="#f0384a"/><stop offset="1" stop-color="#c91f3a"/></radialGradient>
-<linearGradient id="slash" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#ffb632" stop-opacity="0"/><stop offset=".45" stop-color="#fff7a4"/><stop offset=".55" stop-color="#fff"/><stop offset="1" stop-color="#ffb632" stop-opacity="0"/></linearGradient>
-<filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1b6f84"/><stop offset="1" stop-color="#0a2a40"/></linearGradient>
+<radialGradient id="fl" cx=".4" cy=".35" r=".8"><stop stop-color="#ff8f8f"/><stop offset=".55" stop-color="#ff3b53"/><stop offset="1" stop-color="#d11d3f"/></radialGradient>
+<linearGradient id="rd" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9be84a"/><stop offset="1" stop-color="#1f8a3a"/></linearGradient>
+<linearGradient id="sl" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#ffc64a" stop-opacity="0"/><stop offset=".5" stop-color="#fff6b0"/><stop offset="1" stop-color="#fff" stop-opacity=".1"/></linearGradient>
+<clipPath id="a"><polygon points="-20,142 148,-10 148,142"/></clipPath>
+<clipPath id="b"><polygon points="-20,142 148,-10 -20,-10"/></clipPath>
+<clipPath id="tile"><rect x="6" y="6" width="116" height="116" rx="24"/></clipPath>
+<g id="melon">
+<circle cx="64" cy="66" r="38" fill="#0f4a2a"/>
+<circle cx="64" cy="66" r="35" fill="url(#rd)"/>
+<circle cx="64" cy="66" r="30" fill="#fff1c4"/>
+<circle cx="64" cy="66" r="27" fill="url(#fl)"/>
+<g fill="#1b1620"><ellipse cx="50" cy="60" rx="2.6" ry="5" transform="rotate(-30 50 60)"/><ellipse cx="72" cy="52" rx="2.6" ry="5" transform="rotate(20 72 52)"/><ellipse cx="58" cy="80" rx="2.6" ry="5" transform="rotate(25 58 80)"/><ellipse cx="78" cy="74" rx="2.6" ry="5" transform="rotate(-20 78 74)"/><ellipse cx="64" cy="66" rx="2.6" ry="5"/></g>
+</g>
 </defs>
-<!-- lower-left half (shifted away from the cut) -->
-<g transform="translate(-9 9)">
-<path d="M34 82A74 74 0 0 0 140 188Z" fill="#164d2b" stroke="#143e2a" stroke-width="6" stroke-linejoin="round"/>
-<path d="M38 88A68 68 0 0 0 134 182Z" fill="url(#rind)"/>
-<path d="M43 92A58 58 0 0 0 128 177Z" fill="#f6e7b0"/>
-<path d="M48 95A52 52 0 0 0 125 172Z" fill="url(#flesh)"/>
-<g fill="#20202a"><ellipse cx="72" cy="128" rx="3.5" ry="7" transform="rotate(-45 72 128)"/><ellipse cx="96" cy="140" rx="3.5" ry="7" transform="rotate(-45 96 140)"/><ellipse cx="88" cy="116" rx="3.5" ry="7" transform="rotate(-45 88 116)"/></g>
+<rect x="6" y="6" width="116" height="116" rx="24" fill="url(#bg)" stroke="#ffc64a" stroke-width="5"/>
+<g clip-path="url(#tile)">
+<g clip-path="url(#a)"><g transform="translate(9 10)"><use href="#melon"/></g></g>
+<g clip-path="url(#b)"><g transform="translate(-9 -10)"><use href="#melon"/></g></g>
+<polygon points="4,120 69,70 124,10 59,62" fill="#ffc64a" opacity=".6" style="filter:blur(4px)"/>
+<polygon points="4,120 68,69.5 124,10 60,62.5" fill="url(#sl)"/>
+<polygon points="14,112 66,67.5 112,22 62,64.5" fill="#fff" opacity=".9"/>
+<g fill="#ff4d62"><circle cx="64" cy="66" r="0"/><circle cx="52" cy="80" r="2.2"/><circle cx="77" cy="52" r="2.2"/><circle cx="90" cy="96" r="2.6"/><circle cx="36" cy="38" r="2.2"/></g>
+<path d="M98 24l2.4 7 7 2.4-7 2.4-2.4 7-2.4-7-7-2.4 7-2.4Z" fill="#fff"/>
+<path d="M26 98l1.6 4.6 4.6 1.6-4.6 1.6-1.6 4.6-1.6-4.6-4.6-1.6 4.6-1.6Z" fill="#fff7a4"/>
 </g>
-<!-- upper-right half -->
-<g transform="translate(9 -9)">
-<path d="M86 32A74 74 0 0 1 192 138Z" fill="#164d2b" stroke="#143e2a" stroke-width="6" stroke-linejoin="round"/>
-<path d="M90 38A68 68 0 0 1 186 134Z" fill="url(#rind)"/>
-<path d="M95 42A58 58 0 0 1 178 127Z" fill="#f6e7b0"/>
-<path d="M98 45A52 52 0 0 1 175 122Z" fill="url(#flesh)"/>
-<g fill="#20202a"><ellipse cx="132" cy="80" rx="3.5" ry="7" transform="rotate(-45 132 80)"/><ellipse cx="148" cy="98" rx="3.5" ry="7" transform="rotate(-45 148 98)"/><ellipse cx="120" cy="64" rx="3.5" ry="7" transform="rotate(-45 120 64)"/></g>
-</g>
-<!-- juice drops -->
-<g fill="#ff4d5e"><circle cx="112" cy="104" r="4"/><circle cx="100" cy="88" r="3"/><circle cx="126" cy="122" r="3"/><circle cx="70" cy="70" r="3.5"/><circle cx="154" cy="152" r="3.5"/></g>
-<!-- slash trail -->
-<path d="M14 196Q120 140 206 22Q100 82 14 196Z" fill="url(#slash)" filter="url(#glow)" opacity=".8"/>
-<path d="M10 200Q124 144 210 18Q96 78 10 200Z" fill="url(#slash)"/>
-<path d="M205 24l3 9 9 3-9 3-3 9-3-9-9-3 9-3Z" fill="#fff"/>
-<path d="M30 36l2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="#fff7a4"/>
 </svg>
