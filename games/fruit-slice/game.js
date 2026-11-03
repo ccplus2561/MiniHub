@@ -28,7 +28,7 @@
   const canvas = $("gameCanvas"), ctx = canvas.getContext("2d");
   const scoreEl = $("liveScore"), timeEl = $("liveTime"), livesEl = $("liveLives"), bestEl = $("liveBest");
   const homeBestEl = $("homeBestScore");
-  const gameOverEl = $("gameOver"), pauseScreen = $("pauseScreen"), pauseButton = $("pauseGame");
+  const gameOverEl = $("gameOver"), pauseScreen = $("pauseScreen");
   const hintEl = $("gameHint"), comboToast = $("comboToast");
   const modal = $("modal"), modalTitle = $("modalTitle"), modalText = $("modalText");
 
@@ -133,7 +133,6 @@
     comboToast.classList.remove("show");
     fruits.length = halves.length = particles.length = trail.length = 0;
     gameOverEl.hidden = true; pauseScreen.hidden = true; hintEl.style.display = "block";
-    pauseButton.textContent = "Ⅱ";
     paused = false; running = true; splats.length = 0; sound.unlock(); sound.musicStart();
     updateHud(); resizeCanvas();
     lastTime = performance.now(); spawnClock = 0;
@@ -166,16 +165,15 @@
   function pause() {
     if (!running || paused) return;
     paused = true; pointerDown = false; lastPoint = null;
-    pauseScreen.hidden = false; pauseButton.textContent = "▶";
+    pauseScreen.hidden = false;
     cancelAnimationFrame(raf); sound.musicStop();
   }
   function resume() {
     if (!running || !paused) return;
-    paused = false; pauseScreen.hidden = true; pauseButton.textContent = "Ⅱ";
+    paused = false; pauseScreen.hidden = true;
     lastTime = performance.now(); sound.musicStart();
     raf = requestAnimationFrame(loop);
   }
-  const togglePause = () => paused ? resume() : pause();
   MiniHub.onPause(pause);   // 大廳要求暫停（玩家點左側導覽）
 
   /* ================= 生成 / 特效 ================= */
@@ -442,7 +440,6 @@
   $("startButton").addEventListener("click", requestStart);
   $("restartGame").addEventListener("click", requestStart);
   $("exitGame").addEventListener("click", closeGame);
-  pauseButton.addEventListener("click", togglePause);
   $("resumeGame").addEventListener("click", resume);
   $("howButton").addEventListener("click", () => showModal("遊戲玩法", "按住滑鼠或手指在畫面上滑動，切開飛出的水果即可得分。連續切中可累積連擊；切到炸彈會失去所有生命。時間結束或生命歸零即結算。"));
   $("closeModal").addEventListener("click", hideModal);
@@ -451,7 +448,6 @@
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") { hideModal(); closeGame(); }
     else if (!MiniHub.kbdOn()) return;
-    else if ((e.key === " " || e.key === "p" || e.key === "P") && isOpen() && running) { e.preventDefault(); togglePause(); }
   });
   document.addEventListener("visibilitychange", () => { if (document.hidden) pause(); });   // 切到別的分頁自動暫停
   window.addEventListener("resize", () => { if (isOpen()) resizeCanvas(); });
