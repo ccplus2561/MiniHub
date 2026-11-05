@@ -980,7 +980,7 @@
     $("#annMeta").textContent = "共 " + notices.length + " 則公告";
     const fresh = d => { const t = Date.parse(d); return t && Date.now() - t < 7 * 864e5; };   // 7 天內顯示「新」
     notices.forEach((n, i) => {
-      const it = document.createElement("article"); it.className = "ann" + (n.hot ? " hot" : ""); it.style.setProperty("--i", i);
+      const it = document.createElement("article"); it.className = "ann" + (i === 0 ? " top" : "") + (n.hot ? " hot" : ""); it.style.setProperty("--i", i);
       const meta = document.createElement("div"); meta.className = "ann-meta";
       if (n.hot) { const t = document.createElement("span"); t.className = "ann-tag hot"; t.innerHTML = ICON_WARN + "重要"; meta.appendChild(t); }
       if (fresh(n.date)) { const t = document.createElement("span"); t.className = "ann-tag new"; t.textContent = "新"; meta.appendChild(t); }
@@ -988,7 +988,13 @@
       if (n.link) { const a = document.createElement("a"); a.className = "ann-link"; a.href = n.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.innerHTML = "<span>了解更多</span>" + ICON_ARROW; meta.appendChild(a); }   // 連結按鈕放在標籤列最右側
       it.appendChild(meta);
       const h = document.createElement("h4"); h.textContent = n.title; it.appendChild(h);
-      if (n.body) { const p = document.createElement("p"); p.textContent = n.body; it.appendChild(p); }
+      if (n.body) {   // 內文一行一點，掃視更快
+        const body = document.createElement("div"); body.className = "ann-body";
+        String(n.body).split(/\r?\n/).map(t => t.replace(/^\s*[•・\-*]\s*/, "").trim()).filter(Boolean).forEach(t => {
+          const l = document.createElement("div"); l.className = "ann-line"; l.textContent = t; body.appendChild(l);
+        });
+        it.appendChild(body);
+      }
       box.appendChild(it);
     });
     box.scrollTop = 0;

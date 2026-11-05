@@ -664,22 +664,35 @@ body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box
 .ann-top p { margin-top: 2px; font-size: 15px; color: var(--muted); }
 .ann-list { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--accent) transparent;
   padding: 18px 24px 8px; display: flex; flex-direction: column; gap: 14px; }
-.ann { flex: none; position: relative; overflow: hidden; padding: 20px 22px 22px 28px; border-radius: 14px;
+.ann { flex: none; position: relative; overflow: hidden; padding: 18px 20px 20px 26px; border-radius: 16px;
   background: var(--panel); border: 1px solid var(--line-2);
   animation: cardIn .45s var(--ease) both; animation-delay: calc(var(--i, 0) * 70ms + 80ms); }
-.ann::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
+.ann::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
   background: linear-gradient(180deg, var(--accent-2), var(--accent)); }
-.ann.hot { border-color: rgba(255, 207, 92, .55); background: linear-gradient(120deg, rgba(255, 207, 92, .12), var(--panel) 60%);
-  box-shadow: 0 0 26px rgba(255, 207, 92, .12); }
+/* 最新一則：主角卡片，色彩與字級都更突出 */
+.ann.top { padding: 22px 22px 24px 28px; border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  background: linear-gradient(145deg, color-mix(in srgb, var(--accent) 24%, var(--panel)), var(--panel) 70%);
+  box-shadow: 0 10px 34px color-mix(in srgb, var(--accent) 26%, transparent); }
+.ann.hot { border-color: rgba(255, 207, 92, .6); background: linear-gradient(145deg, rgba(255, 207, 92, .18), var(--panel) 70%);
+  box-shadow: 0 10px 34px rgba(255, 207, 92, .16); }
 .ann.hot::before { background: linear-gradient(180deg, #ffe08a, #f5a623); }
-.ann-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-height: 24px; }
+.ann-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-bottom: 10px; min-height: 28px; }
 .ann-tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px; border-radius: 999px; font-size: 15px; font-weight: 800; }
-.ann-tag svg { width: 14px; height: 14px; }
+.ann-tag svg { width: 15px; height: 15px; }
 .ann-tag.hot { color: #1f1f1f; background: #ffcf5c; }
 .ann-tag.new { color: #fff; background: var(--accent); }
-.ann-date { font-size: 16px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
-.ann h4 { font-size: 24px; font-weight: 800; line-height: 1.4; word-break: break-word; }
-.ann p { margin: 10px 0 0; font-size: 21px; line-height: 1.7; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+.ann-date { font-size: 15px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ann h4 { font-size: 22px; font-weight: 800; line-height: 1.4; word-break: break-word; }
+.ann.top h4 { font-size: 28px; }
+/* 內文：獨立的淺色閱讀區，一行一點，字級大、行距寬 */
+.ann-body { margin-top: 14px; padding: 14px 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px;
+  background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .1); }
+.ann-line { display: flex; align-items: flex-start; gap: 12px; font-size: 21px; line-height: 1.65; font-weight: 500; color: #fff;
+  word-break: break-word; white-space: pre-wrap; }
+.ann-line::before { content: ""; flex: none; width: 10px; height: 10px; margin-top: .62em; border-radius: 50%;
+  background: var(--accent-2); box-shadow: 0 0 10px var(--accent); }
+.ann.top .ann-line { font-size: 23px; }
+.ann.hot .ann-line::before { background: #ffcf5c; box-shadow: 0 0 10px rgba(255, 207, 92, .7); }
 .ann-link { margin-left: auto; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 14px; border-radius: 999px;
   font-size: 14px; font-weight: 700; color: var(--accent-2); border: 1.5px solid var(--btn-line); background: var(--ov-1);
   transition: background .2s, transform .2s, color .2s; }
@@ -688,6 +701,7 @@ body.kb:not(.no-kbd) .kfocus { outline: 3px solid #fff; outline-offset: 3px; box
 .ann-link:hover svg { transform: translateX(3px); }
 .ann-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 24px 18px;
   border-top: 1px solid var(--line); margin-top: 8px; }
+.ann-foot .btn-primary { font-size: 19px; padding: 12px 30px; }
 .ann-hint { color: var(--muted); font-size: 14px; }
 .ann-hint kbd { display: inline-block; min-width: 26px; margin-right: 4px; padding: 2px 8px; text-align: center; border-radius: 6px;
   background: var(--ov-2); border: 1px solid var(--btn-line); font: inherit; font-size: 13px; }
@@ -807,10 +821,15 @@ body.m .ann-top h3 { font-size: 22px; }
 body.m .ann-top p { font-size: 13px; }
 body.m .ann-box .modal-x { top: 12px; right: 12px; }
 body.m .ann-list { gap: 12px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
-body.m .ann { padding: 14px 14px 14px 20px; }
+body.m .ann { padding: 16px 14px 16px 20px; border-radius: 14px; }
+body.m .ann.top { padding: 18px 14px 18px 20px; }
 body.m .ann-meta { flex-wrap: wrap; row-gap: 6px; }
 body.m .ann h4 { font-size: 21px; }
-body.m .ann p { font-size: 18px; line-height: 1.65; }
+body.m .ann.top h4 { font-size: 24px; }
+body.m .ann-body { margin-top: 12px; padding: 12px 12px; gap: 8px; }
+body.m .ann-line { font-size: 19px; line-height: 1.6; gap: 10px; }
+body.m .ann.top .ann-line { font-size: 20px; }
+body.m .ann-line::before { width: 9px; height: 9px; }
 body.m .player-title { font-size: 17px; visibility: hidden; }   /* 手機版不顯示遊戲名稱（保留 flex 佔位讓右側按鈕不跑位） */
 /* 手機版：保留頂部列與底部分頁列 */
 body.m .player.with-rail { left: 0; top: 54px; bottom: calc(62px + env(safe-area-inset-bottom)); }
