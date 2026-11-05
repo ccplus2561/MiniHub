@@ -92,7 +92,7 @@ body {
 
 /* 按鈕 */
 .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
-.btn { min-height: 58px; padding: 0 12px; font: 700 1.2rem/1 inherit; font-family: inherit; color: var(--ink); background: var(--panel);
+.btn { min-height: 64px; padding: 0 12px; font-family: inherit; font-weight: 700; font-size: 1.45rem; line-height: 1; color: var(--ink); background: var(--panel);
   border: 2px solid var(--panel-line); border-radius: 14px; cursor: pointer; box-shadow: 0 4px 0 var(--panel-line); touch-action: manipulation;
   transition: transform .12s, box-shadow .12s, filter .15s; -webkit-tap-highlight-color: transparent; }
 .btn:hover { filter: brightness(1.2); }
@@ -117,7 +117,7 @@ dialog h2 { margin: 0 0 8px; font-size: 1.6rem; } dialog p { margin: 0 0 20px; f
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
-@media (max-width: 360px) { .grid { gap: 4px; } .card { padding: 8px; } .btn { font-size: 1.05rem; padding: 0 6px; } }
+@media (max-width: 360px) { .grid { gap: 4px; } .card { padding: 8px; } .btn { font-size: 1.2rem; padding: 0 6px; } }
 @media (min-width: 700px) { .app { max-width: 640px; padding-top: 40px; } }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -125,8 +125,8 @@ dialog h2 { margin: 0 0 8px; font-size: 1.6rem; } dialog p { margin: 0 0 20px; f
 
 .board { position: relative; }
 .lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 3; }
-.lines line { stroke: var(--gold2); stroke-width: 9; stroke-linecap: round; opacity: .85; stroke-dasharray: 1; stroke-dashoffset: 1;
-  animation: draw .6s ease-out forwards; filter: drop-shadow(0 0 6px var(--gold)); }
+.lines line { stroke: var(--gold2); stroke-width: 6; stroke-linecap: round; opacity: .3; stroke-dasharray: 1; stroke-dashoffset: 1;
+  animation: draw .6s ease-out forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .cell .num:disabled { cursor: default; }
 [data-mode="play"] .actions { grid-template-columns: repeat(2, 1fr); }

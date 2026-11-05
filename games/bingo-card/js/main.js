@@ -262,3 +262,9 @@ refresh();
 
 // 大廳要求暫停（點左側導覽）：關閉開啟中的對話框與提示
 MiniHub.onPause(() => { const d = $('dlg'); if (d.open) d.close('cancel'); $('toast').classList.remove('show'); });
+
+// 所有按鈕（含對話框內）的點擊音效；是否播放由大廳音效設定決定
+document.addEventListener('click', e => {
+  const b = e.target.closest('.btn');
+  if (b && !b.disabled) beep(b.classList.contains('primary') ? 880 : 520, .07, 'triangle', .1);
+});
