@@ -130,3 +130,15 @@ dialog h2 { margin: 0 0 8px; font-size: 1.6rem; } dialog p { margin: 0 0 20px; f
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .cell .num:disabled { cursor: default; }
 [data-mode="play"] .actions { grid-template-columns: repeat(2, 1fr); }
+
+/* 寬螢幕：左邊賓果卡、右邊狀態與按鈕 */
+@media (min-width: 900px) {
+  .app { max-width: 1060px; display: grid; grid-template-columns: minmax(0, 560px) minmax(300px, 1fr);
+    grid-template-rows: auto auto auto auto 1fr; column-gap: 36px; align-items: start; }
+  .head { grid-column: 1 / -1; }
+  .card { grid-column: 1; grid-row: 2 / 6; }
+  .banner { grid-column: 2; grid-row: 2; margin-top: 0; }
+  .status { grid-column: 2; grid-row: 3; margin-top: 0; }
+  .actions, [data-mode="play"] .actions { grid-column: 2; grid-row: 4; grid-template-columns: 1fr; margin-top: 8px; }
+  #btn-done { grid-column: auto; }
+}

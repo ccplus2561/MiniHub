@@ -33,10 +33,17 @@ function newMarked() {
 }
 
 /* ---------- 小工具：對話框、提示、震動 ---------- */
+// 不用 <form method="dialog">（嵌在大廳的 CSP form-action 會讓它卡住），改由按鈕直接關閉
 function ask(title, text, okLabel = '確定') {
   const dlg = $('dlg');
   $('dlg-title').textContent = title; $('dlg-text').textContent = text; $('dlg-ok').textContent = okLabel;
-  return new Promise(res => { dlg.addEventListener('close', () => res(dlg.returnValue === 'ok'), { once: true }); dlg.showModal(); });
+  return new Promise(res => {
+    const onClick = e => { const v = e.target.closest('[data-v]')?.dataset.v; if (v) dlg.close(v); };
+    dlg.addEventListener('click', onClick);
+    dlg.addEventListener('close', () => { dlg.removeEventListener('click', onClick); res(dlg.returnValue === 'ok'); }, { once: true });
+    dlg.returnValue = '';
+    dlg.showModal();
+  });
 }
 let toastTimer;
 function toast(msg) {

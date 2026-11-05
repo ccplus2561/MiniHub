@@ -52,14 +52,14 @@
   </main>
 
   <dialog id="dlg" aria-labelledby="dlg-title">
-    <form method="dialog">
+    <div>
       <h2 id="dlg-title"></h2>
       <p id="dlg-text"></p>
       <div class="dlg-actions">
-        <button value="cancel" class="btn">取消</button>
-        <button value="ok" id="dlg-ok" class="btn primary">確定</button>
+        <button type="button" data-v="cancel" id="dlg-cancel" class="btn">取消</button>
+        <button type="button" data-v="ok" id="dlg-ok" class="btn primary">確定</button>
       </div>
-    </form>
+    </div>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script type="module" src="js/main.js"></script>
