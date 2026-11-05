@@ -52,11 +52,11 @@ window.GAMES = [
     tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: false, touch: true, score: false, cloud: false }
   },
   {
-    id: "bingo-card", title: "賓果卡", category: "桌遊", emoji: "🎱", icon: "icons/bingo-card.svg",
+    id: "bingo-card", title: "賓果電子卡", category: "桌遊", emoji: "🎱", icon: "icons/bingo-card.svg",
     colors: ["#1f6a80", "#143b49"], path: "games/bingo-card/index.html",
-    desc: "自己填號碼的 5 × 5 賓果卡，連線就 BINGO！\n規則：填入 24 格不重複的 1～75 號碼（中央 FREE），鎖定後點擊被叫出的號碼標記，連成線即得分。\n操作：滑鼠／觸控點擊，編輯時可用方向鍵切換格子。",
+    desc: "自己填號碼的 5 × 5 賓果卡，連線就 BINGO！\n規則：填入 24 格不重複的 1～75 號碼（中央 FREE），鎖定後點擊被叫出的號碼標記，連成線即得分。\n操作：滑鼠／觸控點擊。",
     how: "", featured: false, music: false,
-    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: false, cloud: false }
+    tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: false, cloud: false }
   },
   {
     id: "memory", title: "翻牌配對", category: "益智", emoji: "🃏",
