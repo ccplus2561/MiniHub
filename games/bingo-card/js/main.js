@@ -14,7 +14,6 @@ let notice = '';
 let prevLines = 0;
 let ended = false; // 玩家手動結束後不能再標記
 let animate = true; // 只在整張重建時播放入場動畫
-let clearOnRestart = true; // 重新開始時是否清除上局填寫的數值
 
 const $ = id => document.getElementById(id);
 const gridEl = $('grid'), progressEl = $('progress'), messagesEl = $('messages');
@@ -35,13 +34,15 @@ function newMarked() {
 
 /* ---------- 小工具：對話框、提示、震動 ---------- */
 // 不用 <form method="dialog">（嵌在大廳的 CSP form-action 會讓它卡住），改由按鈕直接關閉
-function ask(title, text, okLabel = '確定') {
-  const dlg = $('dlg');
+function ask(title, text, okLabel = '確定', altLabel = '') {
+  // 有 altLabel 時多一個按鈕，回傳 'ok' / 'alt' / false；否則回傳 true / false
+  const dlg = $('dlg'), alt = $('dlg-alt');
   $('dlg-title').textContent = title; $('dlg-text').textContent = text; $('dlg-ok').textContent = okLabel;
+  alt.hidden = !altLabel; alt.textContent = altLabel;
   return new Promise(res => {
     const onClick = e => { const v = e.target.closest('[data-v]')?.dataset.v; if (v) dlg.close(v); };
     dlg.addEventListener('click', onClick);
-    dlg.addEventListener('close', () => { dlg.removeEventListener('click', onClick); res(dlg.returnValue === 'ok'); }, { once: true });
+    dlg.addEventListener('close', () => { dlg.removeEventListener('click', onClick); res(altLabel ? (dlg.returnValue === 'ok' || dlg.returnValue === 'alt') && dlg.returnValue : dlg.returnValue === 'ok'); }, { once: true });
     dlg.returnValue = '';
     dlg.showModal();
   });
@@ -222,9 +223,10 @@ async function complete() {
 }
 
 async function restart() {
-  const msg = clearOnRestart ? '會清除這張卡片與所有標記，且無法復原。' : '會清除所有標記並回到填寫畫面，卡片上的數字會保留。';
-  if (!await ask('重新開始？', msg, '重新開始')) return;
-  mode = 'edit'; ended = false; if (clearOnRestart) grid = emptyGrid(); marked = newMarked(); prevLines = 0; notice = ''; animate = true;
+  // 每次重新開始時才選擇：保留數字（預設、主按鈕）或清空整張卡片
+  const r = await ask('重新開始？', '標記都會清除並回到填寫畫面。\n要保留卡片上的數字，還是連數字一起清空（無法復原）？', '保留數字', '清空數字');
+  if (!r) return;
+  mode = 'edit'; ended = false; if (r === 'alt') grid = emptyGrid(); marked = newMarked(); prevLines = 0; notice = ''; animate = true;
   buildGrid(); refresh();
 }
 
@@ -260,7 +262,6 @@ btn.end.addEventListener('click', endGame);
 btn.unmark.addEventListener('click', unmarkAll);
 btn.restart.addEventListener('click', restart);
 
-$('opt-clear').addEventListener('change', e => { clearOnRestart = e.target.checked; queueSave(); });
 
 /* ---------- 雲端存檔（登入後：記住卡片數字、標記與上次遊玩狀態） ---------- */
 const cloud = MiniHub.cloud ? MiniHub.cloud('bingo-card') : null;
@@ -268,7 +269,7 @@ let cloudUid = '', cloudBusy = false; // cloudUid：已完成讀取（才允許�
 const myUid = () => { try { return MiniHub.player().uid || ''; } catch { return ''; } };
 function queueSave() {
   if (!cloud || !cloudUid || cloudUid !== myUid()) return;
-  cloud.save({ v: 1, mode, ended, grid, marked, clearOnRestart });
+  cloud.save({ v: 1, mode, ended, grid, marked });
 }
 const hasLocalData = () => mode === 'play' || grid.some(row => row.some(v => v !== ''));
 function cleanGrid(g) {
@@ -293,7 +294,6 @@ function applySave(d) {
   const mk = newMarked();
   if (m === 'play' && Array.isArray(d.marked)) for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (d.marked[r] && d.marked[r][c] === true) mk[r][c] = true;
   grid = g; mode = m; marked = mk; ended = m === 'play' && d.ended === true;
-  clearOnRestart = d.clearOnRestart !== false; $('opt-clear').checked = clearOnRestart;
   prevLines = findCompletedLines(marked).length; notice = ''; animate = true;
   buildGrid(); refresh();
   return true;

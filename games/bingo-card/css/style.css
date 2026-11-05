@@ -91,13 +91,6 @@ body {
 [hidden] { display: none !important; }
 
 /* 選項開關 */
-.opt { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: .95rem; font-weight: 600; color: var(--soft); cursor: pointer; white-space: nowrap; user-select: none; -webkit-user-select: none; }
-.opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.opt i { position: relative; flex: none; width: 44px; height: 24px; border-radius: 99px; background: var(--panel); border: 2px solid var(--panel-line); transition: background .2s; }
-.opt i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--soft); transition: transform .2s, background .2s; }
-.opt input:checked + i { background: var(--head2); border-color: var(--accent); }
-.opt input:checked + i::after { transform: translateX(20px); background: #fff; }
-.opt input:focus-visible + i { outline: 3px solid var(--gold); outline-offset: 2px; }
 
 /* 按鈕 */
 .actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
@@ -121,7 +114,7 @@ dialog { border: 2px solid var(--panel-line); border-radius: 20px; padding: 24px
 dialog::backdrop { background: rgba(10, 25, 32, .55); backdrop-filter: blur(3px); }
 dialog[open] { animation: pop .3s ease-out; }
 dialog h2 { margin: 0 0 8px; font-size: 1.6rem; } dialog p { margin: 0 0 20px; font-size: 1.15rem; color: var(--soft); }
-.dlg-actions { display: flex; gap: 10px; } .dlg-actions .btn { flex: 1; }
+.dlg-actions { display: flex; flex-wrap: wrap; gap: 10px; } .dlg-actions .btn { flex: 1; }
 .toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
   background: var(--gold); color: #143b49; padding: 12px 22px; border-radius: 99px; font-weight: 800; font-size: 1.15rem; box-shadow: var(--shadow); transition: .25s; z-index: 20; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -152,3 +145,5 @@ dialog h2 { margin: 0 0 8px; font-size: 1.6rem; } dialog p { margin: 0 0 20px; f
   .actions, [data-mode="play"] .actions { grid-column: 2; grid-row: 4; grid-template-columns: 1fr; margin-top: 8px; }
   #btn-done { grid-column: auto; }
 }
+#dlg-text { white-space: pre-line; }
+.dlg-actions .btn { min-width: 6.5em; }
