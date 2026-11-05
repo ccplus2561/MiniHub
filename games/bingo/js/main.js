@@ -11,11 +11,12 @@ import { initRulesView } from './ui/rules-view.js';
 import { openReceipt } from './ui/receipt-view.js';
 import { el } from './utils/dom.js';
 import { createDeskBrand } from './ui/more-menu.js';
+import { initCloudSave } from './core/cloud-save.js';
 
 const STATUS_TEXT = { setup: '設定中', playing: '遊戲進行中', ended: '已結束' };
 
 function start() {
-  // 資料不保存：順手清掉舊版本留在瀏覽器裡的存檔
+  // 資料不存本機：順手清掉舊版本留在瀏覽器裡的存檔（雲端存檔另見 cloud-save.js）
   try { localStorage.removeItem('bingo-board-v1'); } catch { /* 忽略 */ }
   setState({ ui: { layout: 'desktop' } });
   initTabs(document.querySelectorAll('[data-panel]'));
@@ -57,6 +58,8 @@ function start() {
   };
   updateBadge();
   subscribe(updateBadge);
+
+  initCloudSave(); // 登入後：遊戲進行中自動雲端存檔，結束即清除
 
   // 離開網站的保護由大廳（guard.js）負責，這裡不再另外攔截
 
