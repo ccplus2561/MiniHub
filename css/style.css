@@ -811,7 +811,7 @@ body.m .ann { padding: 14px 14px 14px 20px; }
 body.m .ann-meta { flex-wrap: wrap; row-gap: 6px; }
 body.m .ann h4 { font-size: 18px; }
 body.m .ann p { font-size: 15px; line-height: 1.65; }
-body.m .player-title { font-size: 17px; }
+body.m .player-title { font-size: 17px; visibility: hidden; }   /* 手機版不顯示遊戲名稱（保留 flex 佔位讓右側按鈕不跑位） */
 /* 手機版：保留頂部列與底部分頁列 */
 body.m .player.with-rail { left: 0; top: 54px; bottom: calc(62px + env(safe-area-inset-bottom)); }
 body.m .player.with-rail:fullscreen { top: 0; bottom: 0; }
