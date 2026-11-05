@@ -12,7 +12,7 @@
  *   music     false = 這款遊戲沒有背景音樂：遊戲頂端的音樂按鈕會停用（不寫 = 有音樂）
  *   tags      遊戲特色（true = ✔、false = ✘、不寫 = ─）：
  *               single 單人遊玩／multi 多人連線／desktop 支援電腦／mobileP 手機直式／
- *               kbd 鍵盤控制／touch 觸碰滑動／score 成績紀錄（個人最高與排行榜）／cloud 雲端存檔（登入後進度存雲端，預留）
+ *               kbd 鍵盤控制／touch 觸碰滑動／score 成績紀錄（個人最高與排行榜）／cloud 雲端存檔（登入後進度存雲端；遊戲內用 MiniHub.cloud(id) 讀寫）
  *   board     排行榜規格（沒有排行榜的遊戲不要寫）：
  *               order   "desc" = 分數越高越好；"asc" = 越低越好（例如用時）
  *               unit    單位文字（例如 "分"、"秒"）
@@ -56,7 +56,7 @@ window.GAMES = [
     colors: ["#1f6a80", "#143b49"], path: "games/bingo-card/index.html",
     desc: "自己填號碼的 5 × 5 賓果卡，連線就 BINGO！\n規則：填入 24 格不重複的 1～75 號碼（中央 FREE），鎖定後點擊被叫出的號碼標記，連成線即得分。\n操作：滑鼠／觸控點擊。",
     how: "", featured: false, music: false,
-    tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: false, cloud: false }
+    tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: false, cloud: true }
   },
   {
     id: "memory", title: "翻牌配對", category: "益智", emoji: "🃏",

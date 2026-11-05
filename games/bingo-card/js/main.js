@@ -5,7 +5,7 @@ import { findCompletedLines, LINES } from './bingo.js';
 import { launchConfetti } from './confetti.js';
 import { beep, fanfare } from './sound.js';
 
-// 遊戲資料只存在記憶體（不使用 localStorage / IndexedDB）
+// 遊戲資料只存在記憶體（不使用 localStorage / IndexedDB）；登入後才會透過 MiniHub.cloud 存到雲端
 let mode = 'edit'; // 'edit' | 'play'
 let grid = emptyGrid();
 let marked = newMarked();
@@ -14,6 +14,7 @@ let notice = '';
 let prevLines = 0;
 let ended = false; // 玩家手動結束後不能再標記
 let animate = true; // 只在整張重建時播放入場動畫
+let clearOnRestart = true; // 重新開始時是否清除上局填寫的數值
 
 const $ = id => document.getElementById(id);
 const gridEl = $('grid'), progressEl = $('progress'), messagesEl = $('messages');
@@ -120,6 +121,7 @@ function focusNext(r, c, step) { // 依閱讀順序（跳過 FREE）移動
 
 /* ---------- 更新畫面 ---------- */
 function refresh(poppedKey) {
+  queueSave();
   const playing = mode === 'play';
   for (const b of [btn.random, btn.fill, btn.clear, btn.done]) b.hidden = playing;
   btn.restart.hidden = !playing;
@@ -220,8 +222,9 @@ async function complete() {
 }
 
 async function restart() {
-  if (!await ask('重新開始？', '會清除這張卡片與所有標記，且無法復原。', '重新開始')) return;
-  mode = 'edit'; ended = false; grid = emptyGrid(); marked = newMarked(); prevLines = 0; notice = ''; animate = true;
+  const msg = clearOnRestart ? '會清除這張卡片與所有標記，且無法復原。' : '會清除所有標記並回到填寫畫面，卡片上的數字會保留。';
+  if (!await ask('重新開始？', msg, '重新開始')) return;
+  mode = 'edit'; ended = false; if (clearOnRestart) grid = emptyGrid(); marked = newMarked(); prevLines = 0; notice = ''; animate = true;
   buildGrid(); refresh();
 }
 
@@ -256,6 +259,69 @@ btn.done.addEventListener('click', complete);
 btn.end.addEventListener('click', endGame);
 btn.unmark.addEventListener('click', unmarkAll);
 btn.restart.addEventListener('click', restart);
+
+$('opt-clear').addEventListener('change', e => { clearOnRestart = e.target.checked; queueSave(); });
+
+/* ---------- 雲端存檔（登入後：記住卡片數字、標記與上次遊玩狀態） ---------- */
+const cloud = MiniHub.cloud ? MiniHub.cloud('bingo-card') : null;
+let cloudUid = '', cloudBusy = false; // cloudUid：已完成讀取（才允許寫入）的帳號
+const myUid = () => { try { return MiniHub.player().uid || ''; } catch { return ''; } };
+function queueSave() {
+  if (!cloud || !cloudUid || cloudUid !== myUid()) return;
+  cloud.save({ v: 1, mode, ended, grid, marked, clearOnRestart });
+}
+const hasLocalData = () => mode === 'play' || grid.some(row => row.some(v => v !== ''));
+function cleanGrid(g) {
+  if (!Array.isArray(g) || g.length !== SIZE) return null;
+  const out = emptyGrid();
+  for (let r = 0; r < SIZE; r++) {
+    if (!Array.isArray(g[r]) || g[r].length !== SIZE) return null;
+    for (let c = 0; c < SIZE; c++) {
+      const v = String(g[r][c] ?? '');
+      if (isFree(r, c)) continue;
+      if (!/^\d{0,2}$/.test(v)) return null;
+      out[r][c] = v;
+    }
+  }
+  return out;
+}
+function applySave(d) {
+  const g = cleanGrid(d && d.grid);
+  if (!g) return false;
+  let m = d.mode === 'play' ? 'play' : 'edit';
+  if (m === 'play') { const v = validateGrid(g); if (v.filled < FILLABLE || v.messages.length) m = 'edit'; }
+  const mk = newMarked();
+  if (m === 'play' && Array.isArray(d.marked)) for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (d.marked[r] && d.marked[r][c] === true) mk[r][c] = true;
+  grid = g; mode = m; marked = mk; ended = m === 'play' && d.ended === true;
+  clearOnRestart = d.clearOnRestart !== false; $('opt-clear').checked = clearOnRestart;
+  prevLines = findCompletedLines(marked).length; notice = ''; animate = true;
+  buildGrid(); refresh();
+  return true;
+}
+async function syncCloud() {
+  if (!cloud) return;
+  const uid = myUid();
+  if (!uid) { cloudUid = ''; return; }
+  if (uid === cloudUid || cloudBusy) return;
+  cloudBusy = true;
+  try {
+    const r = await cloud.load();
+    if (!r.ok) return; // 讀取失敗：不寫入，避免覆蓋雲端資料；下次狀態改變再試
+    if (r.data && cleanGrid(r.data.grid)) {
+      if (!hasLocalData() || await ask('載入雲端存檔？', '偵測到你上次的卡片與進度，要載入嗎？目前畫面上的內容會被取代。', '載入')) {
+        if (applySave(r.data)) toast(mode === 'play' ? '已載入上次的遊玩狀態' : '已載入上次填寫的數字');
+      }
+    }
+    cloudUid = uid;
+    if (hasLocalData()) queueSave();
+  } finally { cloudBusy = false; }
+}
+if (cloud) {
+  MiniHub.onChange(syncCloud);
+  syncCloud();
+  addEventListener('pagehide', () => cloud.flush());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cloud.flush(); });
+}
 
 buildGrid();
 refresh();

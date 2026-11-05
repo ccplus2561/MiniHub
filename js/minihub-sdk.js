@@ -142,6 +142,30 @@
     return { submit: submit, setMode: setMode, state: st, destroy: destroy, refresh: refresh };
   }
 
+  /* ---------- 雲端存檔（登入後才會讀寫；遊戲需在 games.js 設 tags.cloud = true） ----------
+     var c = MiniHub.cloud(\"遊戲id\");  c.load() → Promise<{ ok, data }>（ok=false 代表讀取失敗，請勿覆蓋）
+     c.save(物件)  延遲約 1.2 秒合併寫入；c.flush() 立刻寫入；c.available() 是否已登入可用 */
+  function cloud(game) {
+    var A = function () { try { return P && P.MiniHubAuth && P.MiniHubAuth.scores; } catch (e) { return null; } };
+    var timer = 0, pend = null, has = false;
+    function can() { var a = A(); return !!(a && a.loadSave && player().loggedIn); }
+    function flush() {
+      clearTimeout(timer); timer = 0;
+      if (!has) return Promise.resolve();
+      var d = pend; pend = null; has = false;
+      if (!can()) return Promise.resolve();
+      return A().saveSave(game, d).then(noop, noop);
+    }
+    return {
+      available: can, flush: flush,
+      load: function () {
+        if (!can()) return Promise.resolve({ ok: true, data: null });
+        return A().loadSave(game).then(function (r) { return r || { ok: true, data: null }; }, function () { return { ok: false, data: null }; });
+      },
+      save: function (d) { pend = d; has = true; clearTimeout(timer); timer = setTimeout(flush, 1200); }
+    };
+  }
+
   /* ---------- 同步大廳的幻彩主題色 ---------- */
   function theme() {
     try { var v = getComputedStyle(P.document.documentElement).getPropertyValue("--accent").trim(); if (v) document.documentElement.style.setProperty("--accent", v); } catch (e) {}
@@ -156,6 +180,6 @@
     touchOn: function () { return prefs().touch !== false; },
     onChange: onChange,
     onPause: function (fn) { window.MiniHubPause = fn; },
-    requestNext: requestNext, player: player, board: board
+    requestNext: requestNext, player: player, board: board, cloud: cloud
   };
 })();

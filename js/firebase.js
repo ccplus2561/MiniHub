@@ -172,6 +172,8 @@ async function deleteAccount() {
       batch.delete(F.doc(colB(x.id, m), user.uid)); batch.delete(F.doc(colR(x.id, m), user.uid));
     }));
     await batch.commit();
+    // 雲端存檔（盡力刪除；規則尚未開放時略過，不影響刪除帳號）
+    for (const x of (window.GAMES || []).filter(x => x.tags && x.tags.cloud)) { try { await F.deleteDoc(F.doc(F.db, "games", x.id, "saves", user.uid)); } catch (e) {} }
   }
   SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
   // 資料已先清除；刪登入帳號失敗（網路等）時重試一次，仍失敗就丟出明確錯誤，讓畫面提示再按一次
@@ -215,6 +217,7 @@ const suf = m => m ? "_" + m : "";
 const ctx = (g, m) => { const spec = gameSpec(g); return spec ? { spec, mode: modeOf(spec, m), desc: spec.order !== "asc" } : null; };
 const colB = (g, m) => F.collection(F.db, "games", g, "bests" + suf(m));
 const colR = (g, m) => F.collection(F.db, "games", g, "ranks" + suf(m));
+const cloudOK = g => { try { const x = (window.GAMES || []).find(v => v.id === g); return !!(x && x.tags && x.tags.cloud); } catch (e) { return false; } };
 const scoreUid = () => (F && F.auth.currentUser ? F.auth.currentUser.uid : "");
 const cleanExtra = (spec, x) => {
   const o = {}, keys = Array.isArray(spec.fields) ? spec.fields : [];
@@ -239,6 +242,23 @@ const scores = {
       bump(s.size || 1, 0);
       cb(s.docs.map(d => ({ uid: d.id, name: String(d.data().name || "").slice(0, 40), score: Number(d.data().score) || 0, extra: d.data().extra || {} })));
     }, NOP);
+  },
+  // 雲端存檔：games/{game}/saves/{uid} 只有本人可讀寫；遊戲需在 js/games.js 設 tags.cloud = true。資料以 JSON 字串存放（Firestore 不支援巢狀陣列）
+  async loadSave(game) {
+    const u = scoreUid();
+    if (!u || !cloudOK(game) || !SAVE_PROFILE) return { ok: true, data: null };
+    bump(1, 0);
+    const s = await F.getDoc(F.doc(F.db, "games", game, "saves", u));
+    if (!s.exists()) return { ok: true, data: null };
+    try { return { ok: true, data: JSON.parse(String(s.data().data || "")) }; } catch (e) { return { ok: true, data: null }; }
+  },
+  async saveSave(game, obj) {
+    const u = scoreUid();
+    if (!u || !cloudOK(game) || !SAVE_PROFILE) return;
+    const str = JSON.stringify(obj);
+    if (str.length > 20000) return;
+    bump(0, 1);
+    await F.setDoc(F.doc(F.db, "games", game, "saves", u), { data: str, updatedAt: F.serverTimestamp() });
   },
   // 目前名次 = 比我好的人數 + 1
   async rankOf(game, score, mode) {
