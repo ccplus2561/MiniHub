@@ -64,25 +64,5 @@ window.GAMES = [
     desc: "自己填號碼的 5 × 5 賓果卡，連線就 BINGO！\n規則：填入 24 格不重複的 1～75 號碼（中央 FREE），鎖定後點擊被叫出的號碼標記，連成線即得分。\n操作：滑鼠／觸控點擊。",
     how: "", featured: false, music: false,
     tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: false, cloud: true }
-  },
-  {
-    id: "memory", title: "翻牌配對", category: "益智", emoji: "🃏",
-    colors: ["#c2410c", "#7c2d12"], path: "",
-    desc: "記住位置，找出所有成對的卡牌。", featured: true
-  },
-  {
-    id: "racer", title: "極速賽車", category: "街機", emoji: "🏎️",
-    colors: ["#b91c1c", "#4c0f0f"], path: "",
-    desc: "閃避障礙，跑得越遠分數越高。", featured: true
-  },
-  {
-    id: "shooter", title: "星際防衛", category: "射擊", emoji: "🚀",
-    colors: ["#0e7490", "#14284b"], path: "",
-    desc: "擊退來襲的外星艦隊。", featured: true
-  },
-  {
-    id: "rhythm", title: "節奏點點", category: "音樂", emoji: "🎵",
-    colors: ["#be185d", "#4a0d2e"], path: "",
-    desc: "跟著節拍點擊，連擊越高越爽。", featured: true
   }
 ];
