@@ -12,6 +12,8 @@
  *   MiniHub.onChange(fn)        設定或登入狀態改變時呼叫 fn；回傳取消函式（離開頁面會自動取消）
  * ── 大廳互動 ──────────────────────────────────────────
  *   MiniHub.onPause(fn)         大廳要求暫停時（玩家點左側導覽）呼叫 fn
+ *   MiniHub.action({ title, path, onClick })  在大廳頂端「背景音樂」左邊放一顆遊戲專屬按鈕（path = 24×24 線條圖示的 SVG path）；傳 null 移除
+ *   MiniHub.onRestart(fn)       登記後，大廳頂端的「重新載入」改由遊戲自己處理（可先彈確認視窗）
  *   MiniHub.requestNext()       開始下一局前呼叫；未登入時大廳會詢問同意條款。回傳 Promise<boolean>
  * ── 玩家 / 排行榜 ─────────────────────────────────────
  *   MiniHub.player()            { loggedIn, uid, name, canRank, displayName, maskName(name) }
@@ -180,6 +182,8 @@
     touchOn: function () { return prefs().touch !== false; },
     onChange: onChange,
     onPause: function (fn) { window.MiniHubPause = fn; },
+    onRestart: function (fn) { window.MiniHubRestart = fn; },
+    action: function (cfg) { try { if (P && P.MiniHubGameAction) P.MiniHubGameAction(cfg); } catch (e) {} },
     requestNext: requestNext, player: player, board: board, cloud: cloud
   };
 })();

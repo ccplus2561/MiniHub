@@ -92,7 +92,7 @@ const $ = id => document.getElementById(id);
 const el = {
   board: $('board'), wrap: $('boardWrap'), fx: $('fx'), overlay: $('overlay'), tray: $('pieceTray'),
   score: $('score'), powers: $('powers'), best: $('bestScore'), trend: $('trend'), msg: $('message'),
-  pause: $('pauseButton'), book: $('bookButton'), bookModal: $('bookModal'), bookGrid: $('bookGrid'), bookClose: $('bookClose'), restart: $('restartButton'), sound: $('soundButton')
+  book: $('bookButton'), bookModal: $('bookModal'), bookGrid: $('bookGrid'), bookClose: $('bookClose')
 };
 const fmt = n => n.toLocaleString('zh-TW');
 const snd = (t, l) => window.GameAudio && GameAudio.play(t, l);
@@ -656,10 +656,9 @@ function showPause() {
 function togglePause() {
   if (over || busy || modal) return;
   paused = !paused;
-  el.pause.classList.toggle('is-paused', paused);
-  el.pause.setAttribute('aria-label', paused ? '繼續遊戲' : '暫停');
   el.board.classList.toggle('is-paused', paused);
   if (paused) showPause(); else hideOverlay();
+  syncMusic();
   if (drag) onCancel();
 }
 // 下一局：未登入時由大廳詢問是否同意條款（不同意就不開始）；單獨開啟本頁時直接開始
@@ -683,7 +682,7 @@ function askRestart() {
   });
 }
 function gameOver() {
-  over = true; selected = -1; updateSelection();
+  over = true; selected = -1; updateSelection(); syncMusic();
   submitScore();
   const record = score > bestAtStart && score > 0;
   say('沒有可以放置的位置了。');
@@ -706,7 +705,6 @@ function start() {
   board = emptyBoard();
   score = 0; peak = 0; combo = 0; selected = -1;
   paused = false; over = false; busy = false; modal = false; bestAtStart = best;
-  el.pause.classList.remove('is-paused');
   el.board.classList.remove('is-paused');
   hideOverlay();
   el.fx.innerHTML = '';
@@ -716,11 +714,12 @@ function start() {
   renderBoard(); renderPieces();
   say('拖曳下方方塊到棋盤，填滿一整排或一整列即可消除。');
   saveGame();
+  syncMusic();
 }
-function syncSound() {
-  const on = GameAudio.isEnabled();
-  el.sound.setAttribute('aria-pressed', String(on));
-  el.sound.classList.toggle('muted', !on);
+// 背景音樂：遊戲進行中播放；暫停／結束就停（音樂開關由大廳頂端的按鈕控制）
+function syncMusic() {
+  if (!window.GameAudio) return;
+  if (!paused && !over) GameAudio.musicStart(); else GameAudio.musicStop();
 }
 
 let bookBuilt = false;
@@ -761,13 +760,12 @@ el.bookClose.addEventListener('click', closeBook);
 el.bookModal.addEventListener('click', e => { if (e.target === el.bookModal) closeBook(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && MH.kbdOn()) closeBook(); });
 
-el.pause.addEventListener('click', togglePause);
-el.restart.addEventListener('click', askRestart);
-el.sound.addEventListener('click', () => {
-  const on = GameAudio.toggle(); syncSound();
-  say(on ? '音效已開啟。' : '音效已關閉。');
-  if (on) snd('select');
-});
+// 方塊圖鑑：在大廳裡放到頂端「背景音樂」左邊；單獨開啟本頁時才顯示頁面內的按鈕
+if (MH.embedded) {
+  document.body.classList.add('embedded');
+  MH.action({ title: '方塊圖鑑', path: 'M12 6.5C10.3 5.2 8 4.7 4 4.8v12.9c4-.1 6.3.4 8 1.7 1.7-1.3 4-1.8 8-1.7V4.8c-4-.1-6.3.4-8 1.7z M12 6.5v12.9', onClick: openBook });
+}
+MH.onRestart(askRestart);   // 大廳頂端的「重新載入」＝重新開始（會先確認）
 document.addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'P') && MH.kbdOn()) togglePause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && !paused && !over && !busy && !modal) togglePause(); });
 document.addEventListener('contextmenu', e => { if (e.target.closest('.piece-slot')) e.preventDefault(); });
@@ -807,6 +805,7 @@ function paintRank() {
 MH.onPause(() => { if (!paused && !over && !busy && !modal) togglePause(); });
 addEventListener('pagehide', submitScore);
 
-initBoard(); buildPowers(); syncSound(); if (!restoreGame()) start();
+initBoard(); buildPowers(); if (!restoreGame()) start();
+syncMusic();
 lb.refresh();
 })();

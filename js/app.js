@@ -258,9 +258,21 @@
   // 這樣遊戲頁面載入 SDK 時一定拿到最新的，不會吃到瀏覽器的舊快取
   const SDK_URL = "js/minihub-sdk.js";
   const loadGame = g => {
+    setGameAction(null);   // 遊戲自己的頂端按鈕（例如方塊圖鑑）由新頁面載入後重新登記
     const fresh = Promise.race([fetch(SDK_URL, { cache: "no-cache" }).catch(() => {}), new Promise(r => setTimeout(r, 1500))]);
     fresh.then(() => { if (current === g) setFrame(bust(g.path)); });
   };
+  /* 遊戲可在頂端列「背景音樂」左邊放一顆自己的按鈕（MiniHub.action）；沒登記就不顯示 */
+  const actBtn = $("#gameActBtn");
+  let actFn = null;
+  function setGameAction(cfg) {
+    actFn = cfg && typeof cfg.onClick === "function" ? cfg.onClick : null;
+    actBtn.hidden = !actFn;
+    actBtn.title = actBtn.ariaLabel = actFn ? String(cfg.title || "") : "";
+    actBtn.innerHTML = actFn ? '<svg viewBox="0 0 24 24"><path d="' + String(cfg.path || "").replace(/"/g, "") + '"/></svg>' : "";
+  }
+  window.MiniHubGameAction = setGameAction;
+  actBtn.addEventListener("click", () => { if (actFn) { try { actFn(); } catch (e) {} } try { frame.focus(); frame.contentWindow.focus(); } catch (e) {} });
   function launchGame(g, el) {
     if (phoneBlocked(g)) return denyPhone(g);
     if (!g.path) { sfx("deny"); return toast("「" + g.title + "」" + (g.badge || "即將推出") + "，敬請期待！"); }
@@ -359,7 +371,13 @@
   }));
   document.addEventListener("minihub:prefs", paintAudio);
   paintAudio();
-  $("#reloadBtn").addEventListener("click", () => { if (current) MiniHubRequestNext().then(ok => { if (ok && current) loadGame(current); }); });
+  $("#reloadBtn").addEventListener("click", () => {
+    if (!current) return;
+    // 遊戲有登記 MiniHub.onRestart 就交給遊戲自己重新開始（會先確認）；否則照舊重新載入
+    let w = null; try { w = frame.contentWindow; } catch (e) {}
+    if (w && typeof w.MiniHubRestart === "function") { try { return w.MiniHubRestart(); } catch (e) {} }
+    MiniHubRequestNext().then(ok => { if (ok && current) loadGame(current); });
+  });
   $("#fsBtn").addEventListener("click", () => {
     if (document.fullscreenElement) document.exitFullscreen();
     else player.requestFullscreen && player.requestFullscreen();
