@@ -879,6 +879,16 @@ function revealRankOnGameOver() {   // 已登入且允許排行榜時，遊戲�
 MH.onPause(() => { floatOpen = false; paintSide(); if (!paused && !over && !busy && !modal) togglePause(); });
 addEventListener('pagehide', submitScore);
 
+// 底部鍵盤快捷提示（同 2048）：大廳設定開啟「鍵盤快捷鍵」且不是純觸控裝置才顯示
+const touchOnly = matchMedia('(hover: none) and (pointer: coarse)').matches;
+function applyKbd() {
+  const on = MH.kbdOn() && !touchOnly;
+  $('kbd').hidden = !on;
+  document.body.classList.toggle('has-kbd', on);
+}
+MH.onChange(applyKbd);
+applyKbd();
+
 initBoard(); buildPowers(); if (!restoreGame()) start();
 syncMusic();
 lb.refresh();

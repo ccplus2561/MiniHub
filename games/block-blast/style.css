@@ -27,7 +27,7 @@ h2{margin:0;font-size:clamp(22px,5.6vw,24px)}
 @keyframes float{to{transform:translate(40px,-50px) scale(1.15)}}
 
 .app{position:relative;z-index:1;width:min(100%,1180px);margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;gap:8px;
-  padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left))}
+  padding:max(8px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) calc(max(8px,env(safe-area-inset-bottom)) + var(--kbd-h,0px)) max(8px,env(safe-area-inset-left))}
 
 /* 頂部列 */
 .topbar{display:flex;align-items:center;justify-content:flex-end;height:52px}
@@ -178,7 +178,7 @@ button:focus-visible{outline:2px solid #9ac8ff;outline-offset:3px}
 
 /* 平板／電腦：左棋盤、右資訊 */
 @media (min-width:820px),(orientation:landscape) and (max-height:560px) and (min-width:600px){
-  :root{--board:max(300px,min(100dvh - 110px,720px))}
+  :root{--board:max(300px,min(100dvh - 110px - var(--kbd-h,0px),720px))}
   .layout{display:grid;grid-template-columns:auto minmax(300px,400px);grid-template-areas:"board stats" "board tray" "board end";
     grid-template-rows:auto auto 1fr;justify-content:center;align-content:center;align-items:start;gap:16px 26px}
   .board-wrap{grid-area:board}
@@ -224,3 +224,11 @@ button:focus-visible{outline:2px solid #9ac8ff;outline-offset:3px}
 #rankList li.empty{color:#7f90b8}
 #rankList li.gap{display:block;text-align:center;color:#7f90b8;line-height:8px}
 #rankList .sc{font-weight:700}
+
+/* 鍵盤快捷介面（大廳設定「鍵盤快捷鍵」開啟、且不是純觸控裝置時才顯示） */
+body.has-kbd{--kbd-h:48px}
+#kbd{position:fixed;left:0;right:0;bottom:0;z-index:6;height:48px;display:flex;align-items:center;justify-content:flex-end;gap:28px;padding:0 28px;font-size:16px;color:#9fb2dc;white-space:nowrap;
+  background:linear-gradient(0deg,#060b1ceb,#060b1c80);border-top:1px solid #ffffff1f}
+#kbd[hidden]{display:none}
+#kbd kbd{display:inline-block;min-width:28px;margin-right:4px;padding:1px 9px;text-align:center;border-radius:8px;font:700 14px/22px system-ui,sans-serif;color:#0a1128;background:#9fb2dc}
+@media (max-width:819px){#kbd span:last-child{display:none}}
