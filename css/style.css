@@ -243,6 +243,13 @@ body.m .game-tags { font-size: 13px; padding: 10px 12px; gap: 6px 10px; }
 .btn-primary:hover::after { transform: translateX(120%); transition: transform .7s; }
 .btn-primary:hover svg { transform: translateX(3px) scale(1.2); }
 .btn-primary:active { transform: scale(.96); }
+/* 電腦版：遊戲特色＋開始遊戲區塊放大（約 1.65 倍） */
+body:not(.m) .hero-actions { align-items: stretch; gap: 26px; min-width: 430px; }
+body:not(.m) .game-tags { gap: 16px 36px; padding: 24px 32px; border-radius: 22px; font-size: 25px; }
+body:not(.m) .game-tags span { gap: 14px; }
+body:not(.m) .game-tags i { width: 30px; font-size: 26px; }
+body:not(.m) #playBtn { min-width: 0; height: 96px; gap: 16px; padding: 0 56px; border-radius: 16px; font-size: 36px; }
+body:not(.m) #playBtn svg { width: 36px; height: 36px; }
 
 .btn-icon {
   width: 56px; height: 56px; display: grid; place-items: center;
