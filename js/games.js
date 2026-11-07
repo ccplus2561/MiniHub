@@ -38,6 +38,13 @@ window.GAMES = [
     tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
   },
   {
+    id: "block-blast", title: "方塊消消樂", category: "益智", emoji: "🟦", icon: "icons/block-blast.svg",
+    colors: ["#2b62e0", "#0a1128"], path: "games/block-blast/index.html",
+    desc: "把方塊放進棋盤，填滿整排或整列就消除！\n規則：10 × 10 棋盤，每次有 3 個方塊可放；連續消除有加成，可花分數換方塊、炸彈、清橫排；沒位置可放且買不起道具即結束。\n操作：拖曳方塊到棋盤，或點選方塊後點棋盤；電腦可按 P 暫停。",
+    how: "", featured: true, music: false, board: { order: "desc", unit: "分", max: 2000000 },
+    tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: true, cloud: false }
+  },
+  {
     id: "fruit-slice", title: "水果忍者", category: "動作", emoji: "🍉", icon: "icons/fruit-slice.svg",
     colors: ["#0f766e", "#073b4c"], path: "games/fruit-slice/index.html",
     desc: "揮動刀刃切開飛出的水果，連擊越多分數越高！\n規則：60 秒內盡量得分，漏接水果會扣生命，切到炸彈直接結束。\n操作：滑鼠拖曳或手指滑動切水果。",
