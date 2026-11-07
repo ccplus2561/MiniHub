@@ -579,12 +579,15 @@ function finishTurn() {
   saveGame();
 }
 function saveGame() {
-  if (over) return store.del(KEY_GAME);
-  store.set(KEY_GAME, JSON.stringify({ board, pieces, score, peak, combo, bestAtStart, themeIdx, themeMilestone }));
+  if (over) { store.del(KEY_GAME); queueCloud(null); return; }
+  const d = { board, pieces, score, peak, combo, bestAtStart, themeIdx, themeMilestone };
+  store.set(KEY_GAME, JSON.stringify(d));
+  queueCloud(d);
 }
-function restoreGame() {
+function restoreGame(fromCloud) {
   let s;
-  try { s = JSON.parse(store.get(KEY_GAME)); } catch (e) { return false; }
+  if (fromCloud) s = fromCloud;
+  else { try { s = JSON.parse(store.get(KEY_GAME)); } catch (e) { return false; } }
   const okCell = c => Array.isArray(c) && c.length === 2 && Number.isInteger(c[0]) && Number.isInteger(c[1]) && c[0] >= 0 && c[0] < N && c[1] >= 0 && c[1] < N;
   if (!s || !Array.isArray(s.board) || s.board.length !== N || !s.board.every(r => Array.isArray(r) && r.length === N)) return false;
   if (!Array.isArray(s.pieces) || s.pieces.length !== 3) return false;
@@ -599,7 +602,7 @@ function restoreGame() {
   themeMilestone = Math.max(0, s.themeMilestone | 0); applyTheme(Math.max(0, s.themeIdx | 0));
   el.score.textContent = fmt(score); updatePowerUI();
   setTrend(); renderBoard(); renderPieces();
-  say('已還原上次的進度。');
+  say(fromCloud ? '已載入雲端存檔。' : '已還原上次的進度。');
   saveGame();
   return true;
 }
@@ -681,6 +684,19 @@ function askRestart() {
     ]
   });
 }
+// 結束遊戲：結算本局成績並清除、重新開局
+function askEnd() {
+  if (over || busy || modal || score === 0 && peak === 0) return;
+  if (drag) onCancel();
+  modal = true;
+  showOverlay({
+    icon: '■', title: '結束遊戲？', text: `將結算本局成績（${fmt(peak)}）並重新開局`,
+    buttons: [
+      { label: '取消', fn: () => { modal = false; if (paused) showPause(); else hideOverlay(); } },
+      { label: '結束並重開', primary: true, fn: nextGame }
+    ]
+  });
+}
 function gameOver() {
   over = true; selected = -1; updateSelection(); syncMusic();
   revealRankOnGameOver();
@@ -757,6 +773,7 @@ function closeBook() {
   modal = false;
 }
 el.book.addEventListener('click', openBook);
+$('endButton').addEventListener('click', askEnd);
 el.bookClose.addEventListener('click', closeBook);
 el.bookModal.addEventListener('click', e => { if (e.target === el.bookModal) closeBook(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && MH.kbdOn()) closeBook(); });
@@ -773,6 +790,35 @@ document.addEventListener('contextmenu', e => { if (e.target.closest('.piece-slo
 
 /* ---------- 大廳整合：個人最高 / 排行榜 / 暫停 ---------- */
 const GAME = 'block-blast';
+/* ---------- 雲端存檔（登入後保留上局狀態，下次可繼續玩） ---------- */
+const cloud = MH.cloud ? MH.cloud(GAME) : null;
+let cloudUid = '', cloudBusy = false;   // cloudUid：已完成讀取（才允許寫入）的帳號
+const myUid = () => { try { return MH.player().uid || ''; } catch (e) { return ''; } };
+function queueCloud(d) {
+  if (!cloud || !cloudUid || cloudUid !== myUid()) return;
+  cloud.save(d ? { v: 1, s: d } : { v: 1, s: null });   // null = 這局已結束，沒有可繼續的進度
+}
+const untouched = () => score === 0 && peak === 0 && board.every(r => r.every(v => !v));
+async function syncCloud() {
+  if (!cloud) return;
+  const uid = myUid();
+  if (!uid) { cloudUid = ''; return; }
+  if (uid === cloudUid || cloudBusy) return;
+  cloudBusy = true;
+  try {
+    const r = await cloud.load();
+    if (!r.ok) return;   // 讀取失敗：不寫入，避免覆蓋雲端資料；下次狀態改變再試
+    // 目前這局還沒動過才載入雲端進度；已經在玩就保留目前的，並覆蓋雲端
+    if (r.data && r.data.s && !over && untouched()) restoreGame(r.data.s);
+    cloudUid = uid;
+    if (!over) saveGame();
+  } finally { cloudBusy = false; }
+}
+if (cloud) {
+  MH.onChange(syncCloud);
+  addEventListener('pagehide', () => cloud.flush());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cloud.flush(); });
+}
 const side = $('side'), tog = $('sideTog'), PW = 260;
 let userSide = null, floatSide = false, floatOpen = false;   // 寬螢幕：固定在右側並記住展開／收合；窄螢幕（含手機）：浮在棋盤上，預設收合
 let hub = { logged: false, rankOn: false, myName: '', uid: '', best: 0, top: [], myRank: 0 };
@@ -836,4 +882,5 @@ addEventListener('pagehide', submitScore);
 initBoard(); buildPowers(); if (!restoreGame()) start();
 syncMusic();
 lb.refresh();
+syncCloud();
 })();
