@@ -257,6 +257,7 @@ body.m .game-tags { font-size: 13px; padding: 10px 12px; gap: 6px 10px; }
 #closeBtn:hover svg { transform: translateX(-3px) scale(1.15); }
 .btn-icon:active { transform: scale(.92); }
 .btn-icon.sm { width: 44px; height: 44px; }
+.btn-icon[hidden] { display: none; }
 .btn-icon .slash { display: none; }
 .btn-icon.off { opacity: .55; }
 .btn-icon.off .slash { display: block; }
@@ -293,7 +294,8 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
   display: flex; align-items: center; gap: 10px; padding: 8px 14px;
   background: var(--bar); border-bottom: 1px solid var(--line);
 }
-.player-title { flex: 1; font-size: 20px; font-weight: 800; padding-left: 6px; color: #fff; }
+.player-title { flex: 1; min-width: 0; font-size: 20px; font-weight: 800; padding-left: 6px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player-bar .btn-icon { flex: none; }
 .player iframe { flex: 1; width: 100%; border: 0; background: #000; }
 
 /* ---------- 設定頁（Steam 設定清單風） ---------- */

@@ -778,11 +778,7 @@ el.bookClose.addEventListener('click', closeBook);
 el.bookModal.addEventListener('click', e => { if (e.target === el.bookModal) closeBook(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && MH.kbdOn()) closeBook(); });
 
-// 方塊圖鑑：在大廳裡放到頂端「背景音樂」左邊；單獨開啟本頁時才顯示頁面內的按鈕
-if (MH.embedded) {
-  document.body.classList.add('embedded');
-  MH.action({ title: '方塊圖鑑', path: 'M12 6.5C10.3 5.2 8 4.7 4 4.8v12.9c4-.1 6.3.4 8 1.7 1.7-1.3 4-1.8 8-1.7V4.8c-4-.1-6.3.4-8 1.7z M12 6.5v12.9', onClick: openBook });
-}
+// 方塊圖鑑按鈕位於「結束遊戲」上方（手機、電腦相同）
 MH.onRestart(askRestart);   // 大廳頂端的「重新載入」＝重新開始（會先確認）
 document.addEventListener('keydown', e => { if ((e.key === 'p' || e.key === 'P') && MH.kbdOn()) togglePause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && !paused && !over && !busy && !modal) togglePause(); });
