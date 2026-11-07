@@ -946,7 +946,9 @@ img { max-width: 100%; }
 }
 
 /* 遊戲庫選取項目的多段說明保留換行。 */
-#heroDesc { white-space: pre-line; }
+#heroDesc .ln { display: block; }
+/* 手機版：選擇遊戲時只顯示「規則」，避免大段文字影響遊玩感受 */
+body.m #heroDesc .ln:not(.ln-rule), body.m #heroHow { display: none; }
 
 /* ---------- 首頁：圖卡牆 ---------- */
 #view-home { padding: 0; position: relative; overflow: hidden; }

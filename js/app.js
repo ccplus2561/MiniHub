@@ -64,7 +64,15 @@
     const cards = $$("#libraryRow .card");
     cards.forEach((c, idx) => c.classList.toggle("selected", idx === selected));
     $("#heroTitle").textContent = g.title;
-    $("#heroDesc").textContent = g.desc || g.category;
+    // 說明分行顯示；手機版只留「規則」那一行（CSS 用 .ln-rule 判斷），電腦版全部顯示
+    const dEl = $("#heroDesc"), lines = String(g.desc || g.category).split("\n");
+    const hasRule = lines.some(t => /^規則[:：]/.test(t));
+    dEl.textContent = "";
+    lines.forEach(t => {
+      const d = document.createElement("span");
+      d.className = "ln" + (!hasRule || /^規則[:：]/.test(t) ? " ln-rule" : "");
+      d.textContent = t; dEl.appendChild(d);
+    });
     $("#heroHow").textContent = g.how || ""; $("#heroHow").hidden = !g.how;
     $("#playBtn span").textContent = phoneBlocked(g) ? "僅支援電腦" : g.path ? "開始遊戲" : (g.badge || "即將推出");
     paintTags(g);
