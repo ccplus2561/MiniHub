@@ -454,6 +454,16 @@
 
   addEventListener("pagehide", () => { if (running && score > 0) board.submit(score); });
 
+  /* ================= 底部鍵盤快捷提示（同 2048） ================= */
+  const touchOnly = matchMedia("(hover: none) and (pointer: coarse)").matches;
+  function applyKbd() {
+    const on = MiniHub.kbdOn() && !touchOnly;
+    $("kbd").hidden = !on;
+    document.body.classList.toggle("has-kbd", on);
+  }
+  MiniHub.onChange(applyKbd);
+  applyKbd();
+
   /* ================= 啟動 ================= */
   const board = MiniHub.board("fruit-slice", { top: 3, onUpdate: st => {
     logged = st.logged; rankOn = st.rankOn; myName = st.myName; serverBest = st.best; top = st.top;
