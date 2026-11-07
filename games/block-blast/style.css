@@ -199,13 +199,24 @@ button:focus-visible{outline:2px solid #9ac8ff;outline-offset:3px}
 @media (max-width:360px){.note{font-size:12px}.stat{padding:8px 10px}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
-/* 排行榜（登入且開啟排行榜時顯示） */
-.rank{margin-top:10px;padding:8px 12px;border-radius:14px;border:1px solid #ffffff1a;background:#ffffff08}
-.rank[hidden]{display:none}
-.rank h4{margin:0 0 4px;color:#77aaff;font-size:14px;letter-spacing:.08em}
-.rank ol{list-style:none;margin:0;padding:0;color:#e4ecff;font-size:15px}
-.rank li{display:grid;grid-template-columns:44px 1fr auto;gap:8px;padding:2px 0}
-.rank li.me{color:#ffd37a;font-weight:700}
-.rank li.empty{color:#7f90b8}
-.rank li.gap{display:block;text-align:center;color:#7f90b8;line-height:8px}
-.rank .sc{font-weight:700;font-variant-numeric:tabular-nums}
+/* 右側資訊面板（個人最高 / 排行榜）：可展開 / 收合；登入且允許才顯示 */
+#side{position:fixed;right:12px;top:12px;width:260px;z-index:7;transition:transform .28s cubic-bezier(.2,.8,.2,1)}
+#side[hidden]{display:none}
+#side.closed{transform:translateX(calc(100% + 12px))}
+#info{display:flex;flex-direction:column;gap:12px;padding:12px;overflow-y:auto;max-height:inherit;background:#101c44;border:1.5px solid #3a63c4;border-radius:14px;box-shadow:0 0 22px #2b62e040}
+#side.closed #info{visibility:hidden;transition:visibility 0s .28s}
+#side.float #info{background:#14224f;box-shadow:0 10px 30px #00000080}
+#info .box{background:#1a2a60;border:1px solid #3a63c4aa;border-radius:12px;padding:10px 14px;min-width:0}
+#info .box[hidden]{display:none}
+#info h4{margin:0 0 4px;font-size:14px;font-weight:700;color:#b9d0ff;letter-spacing:.06em}
+#meBest{display:block;font-size:28px;color:#82b6ff;font-variant-numeric:tabular-nums}
+#sideTog{position:absolute;left:-34px;top:0;width:34px;height:56px;display:grid;place-items:center;padding:0;cursor:pointer;color:#82b6ff;background:#101c44;border:1.5px solid #3a63c4;border-right:0;border-radius:12px 0 0 12px;touch-action:manipulation}
+#sideTog:hover{filter:brightness(1.3)}
+#sideTog svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;transition:transform .28s}
+#side.closed #sideTog svg{transform:rotate(180deg)}
+#rankList{list-style:none;margin:0;padding:0;font-size:16px;color:#f1f5f9}
+#rankList li{display:grid;grid-template-columns:38px 1fr auto;gap:8px;padding:3px 0;font-variant-numeric:tabular-nums}
+#rankList li.me{color:#ffd37a;font-weight:700}
+#rankList li.empty{color:#7f90b8}
+#rankList li.gap{display:block;text-align:center;color:#7f90b8;line-height:8px}
+#rankList .sc{font-weight:700}

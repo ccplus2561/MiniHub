@@ -683,6 +683,7 @@ function askRestart() {
 }
 function gameOver() {
   over = true; selected = -1; updateSelection(); syncMusic();
+  revealRankOnGameOver();
   submitScore();
   const record = score > bestAtStart && score > 0;
   say('沒有可以放置的位置了。');
@@ -772,6 +773,8 @@ document.addEventListener('contextmenu', e => { if (e.target.closest('.piece-slo
 
 /* ---------- 大廳整合：個人最高 / 排行榜 / 暫停 ---------- */
 const GAME = 'block-blast';
+const side = $('side'), tog = $('sideTog'), PW = 260;
+let userSide = null, floatSide = false, floatOpen = false;   // 寬螢幕：固定在右側並記住展開／收合；窄螢幕（含手機）：浮在棋盤上，預設收合
 let hub = { logged: false, rankOn: false, myName: '', uid: '', best: 0, top: [], myRank: 0 };
 const lb = MH.board(GAME, { top: 3, onUpdate: st => {
   hub = st;
@@ -779,11 +782,29 @@ const lb = MH.board(GAME, { top: 3, onUpdate: st => {
   paintRank();
 } });
 function submitScore() { if (peak > 0) lb.submit(peak); }
+const sideOpen = () => floatSide ? floatOpen : userSide !== false;
+function paintSide() {
+  const o = sideOpen();
+  side.classList.toggle('closed', !o); side.classList.toggle('float', floatSide);
+  tog.setAttribute('aria-expanded', String(o)); tog.title = o ? '收合' : '展開';
+}
+function fitSide() {
+  const r = el.wrap.getBoundingClientRect(), g = document.querySelector('.app').getBoundingClientRect();
+  side.style.top = Math.max(8, Math.round(r.top)) + 'px';
+  side.style.maxHeight = Math.max(160, Math.round(r.height)) + 'px';
+  floatSide = (innerWidth - g.width) / 2 < PW + 12 + 34 + 8;
+  paintSide();
+}
 function paintRank() {
-  const box = $('rankBox'), ul = $('rankList');
-  box.hidden = !(hub.logged && hub.rankOn);
-  if (box.hidden) return;
+  const showRank = hub.logged && hub.rankOn;
+  $('meBox').hidden = !hub.logged;
+  $('rankBox').hidden = !showRank;
+  side.hidden = !hub.logged && !showRank;   // 未登入或不允許排行榜：整個面板不顯示
+  $('meBest').textContent = fmt(Math.max(hub.best || 0, peak || 0));
+  const ul = $('rankList');
   ul.textContent = '';
+  if (!side.hidden) fitSide();
+  if (!showRank) return;
   const add = (rank, name, sc, cls) => {
     const li = document.createElement('li'); if (cls) li.className = cls;
     [rank, name, sc].forEach((t, i) => { const s = document.createElement('span'); if (i === 2) s.className = 'sc'; s.textContent = t; li.appendChild(s); });
@@ -801,8 +822,15 @@ function paintRank() {
     else add('—', hub.myName, '尚無成績', 'me');
   }
 }
+tog.addEventListener('click', () => { if (floatSide) floatOpen = !floatOpen; else userSide = !sideOpen(); paintSide(); });
+addEventListener('resize', () => { if (!side.hidden) fitSide(); });
+function revealRankOnGameOver() {   // 已登入且允許排行榜時，遊戲結束自動展開
+  if (!(hub.logged && hub.rankOn)) return;
+  if (floatSide) floatOpen = true; else userSide = true;
+  paintSide();
+}
 // 大廳要求暫停（玩家點左側導覽）
-MH.onPause(() => { if (!paused && !over && !busy && !modal) togglePause(); });
+MH.onPause(() => { floatOpen = false; paintSide(); if (!paused && !over && !busy && !modal) togglePause(); });
 addEventListener('pagehide', submitScore);
 
 initBoard(); buildPowers(); if (!restoreGame()) start();

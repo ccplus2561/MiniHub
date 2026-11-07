@@ -50,10 +50,6 @@
         <div class="piece-tray" id="pieceTray"></div>
         <div class="powers" id="powers" aria-label="道具"></div>
         <p class="msg" id="message" role="status" aria-live="polite"></p>
-        <div class="rank" id="rankBox" hidden>
-          <h4>排行榜</h4>
-          <ol id="rankList"></ol>
-        </div>
       </section>
 
     </div>
@@ -65,6 +61,14 @@
       <div class="book-body" id="bookGrid"></div>
     </div>
   </div>
+
+  <aside id="side" hidden>
+    <button id="sideTog" type="button" aria-label="展開 / 收合" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div id="info">
+      <div class="box" id="meBox" hidden><h4>個人最高</h4><b id="meBest">0</b></div>
+      <div class="box" id="rankBox" hidden><h4>排行榜</h4><ol id="rankList"></ol></div>
+    </div>
+  </aside>
 
   <script src="audio.js"></script>
   <script src="game.js"></script>
