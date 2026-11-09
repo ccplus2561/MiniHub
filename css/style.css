@@ -1218,3 +1218,77 @@ body:not(.m) .hints::before { content: ""; position: absolute; left: 0; right: 0
 
 /* 登入按鈕：頂部高光 */
 .login-btn { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 6px 18px rgba(26, 159, 255, .35); }
+
+/* ---------- 設定頁美化：分類按鈕 / 面板外框 / 分隔線 / 開關滑桿 / 說明區 ---------- */
+@keyframes setShine { 0% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+@keyframes setArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+@keyframes noticeBar { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
+@keyframes meterStripe { to { background-position: 28px 0; } }
+@keyframes dangerPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 90, 90, .45); } 50% { box-shadow: 0 0 0 7px rgba(255, 90, 90, 0); } }
+@keyframes dotLive { 0%, 100% { box-shadow: 0 0 0 0 currentColor; } 50% { box-shadow: 0 0 0 6px transparent; } }
+
+/* 左側分類按鈕：側邊色條（inset 陰影，保留原本的游標光影 ::before）、箭頭 */
+.set-item { position: relative; overflow: hidden; border-radius: 14px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .015) 70%), rgba(23, 32, 45, .82);
+  transition: transform .25s var(--ease), background .25s, box-shadow .25s, border-color .25s; }
+.set-item::after { content: "›"; position: absolute; right: 20px; top: 50%; margin-top: -.62em; font-size: 30px; line-height: 1; font-weight: 700;
+  color: var(--accent-2); opacity: 0; transform: translateX(-8px); transition: opacity .25s, transform .25s; }
+.set-item:hover { border-color: rgba(214, 230, 245, .7); box-shadow: inset 4px 0 0 var(--accent-2), 0 6px 18px var(--a2); }
+.set-item:hover::after { opacity: 1; transform: none; }
+.set-item.active { background: linear-gradient(100deg, #2b78bd, #1a9fff 85%); border-color: #fff;
+  box-shadow: inset 5px 0 0 #fff, inset 0 1px 0 rgba(255, 255, 255, .35), 0 8px 24px var(--a3), 0 0 22px var(--a2); }
+.set-item.active::after { opacity: 1; color: #fff; animation: setArrow 1.6s ease-in-out infinite; }
+.set-item.active:hover { transform: translateX(3px); }
+.set-item b { position: relative; z-index: 1; }
+
+/* 區塊標題：色條 + 淡出分隔線 */
+.set-label { display: flex; align-items: center; gap: 10px; }
+.set-label::before { content: ""; flex: none; width: 4px; height: 1em; border-radius: 3px; background: linear-gradient(180deg, #fff, var(--accent-2)); box-shadow: 0 0 8px var(--a3); }
+.set-label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(255, 255, 255, .28), transparent); }
+
+/* 設定面板：漸層外框、頂部高光、列分隔線 */
+.info-card, .set-group { position: relative; border: 1.5px solid rgba(214, 230, 245, .2); border-radius: 18px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .015) 45%), var(--panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 12px 32px rgba(0, 0, 0, .35);
+  transition: border-color .3s, box-shadow .3s; }
+.info-card:hover, .set-group:hover { border-color: color-mix(in srgb, var(--accent-2) 55%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 14px 36px rgba(0, 0, 0, .4), 0 0 26px var(--a1); }
+.info-row + .info-row, .set-row + .set-row { border-top: 0; position: relative; }
+.info-row + .info-row::before, .set-row + .set-row::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .2) 15%, rgba(255, 255, 255, .2) 85%, transparent); }
+.info-row, .set-row { margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 12px; transition: transform .22s, background .25s; }
+.info-row:hover, .set-row:hover { background: linear-gradient(90deg, var(--a1), transparent 80%); }
+.info-row > svg { box-sizing: content-box; padding: 9px; border-radius: 12px; background: var(--a1); border: 1px solid var(--a2); }
+.info-row:hover > svg { box-shadow: 0 0 16px var(--a2); }
+
+/* 開關 / 滑桿 / 分段 / 進度條 */
+.switch { box-shadow: inset 0 2px 5px rgba(0, 0, 0, .3); }
+.switch[aria-checked="true"] { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 0 16px var(--a3); }
+.switch[aria-checked="true"] i { box-shadow: 0 2px 8px rgba(0, 0, 0, .45), 0 0 10px rgba(255, 255, 255, .6); }
+.range { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .4); }
+.range::-webkit-slider-thumb { border: 3px solid var(--accent); box-shadow: 0 2px 8px rgba(0, 0, 0, .5), 0 0 12px var(--a3); }
+.range::-moz-range-thumb { border: 3px solid var(--accent); box-shadow: 0 2px 8px rgba(0, 0, 0, .5), 0 0 12px var(--a3); }
+.range:active::-webkit-slider-thumb { transform: scale(1.35); }
+.seg { box-shadow: inset 0 2px 6px rgba(0, 0, 0, .3); }
+.seg button.on { background: linear-gradient(180deg, #3aa9ff, var(--accent)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 4px 14px var(--a3); }
+.meter { border: 1px solid rgba(255, 255, 255, .14); box-shadow: inset 0 1px 4px rgba(0, 0, 0, .4); }
+.meter i { background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .22) 0 8px, transparent 8px 16px) 0 0 / 28px 100%, linear-gradient(90deg, #2f7fc4, var(--accent-2));
+  animation: meterStripe 1.2s linear infinite; }
+.btn-ghost.danger:hover { border-color: #fff; }
+.btn-ghost.danger { animation: dangerPulse 3s ease-in-out infinite; }
+.btn-ghost.danger:hover { animation: none; }
+.keys kbd { border: 1px solid rgba(255, 255, 255, .7); background: linear-gradient(180deg, #fff, #cfdae6); box-shadow: 0 3px 0 rgba(0, 0, 0, .45); }
+
+/* 提示框：漸層底 + 閃動色條 */
+.notice { position: relative; overflow: hidden; border-left: 0; border: 1px solid color-mix(in srgb, var(--accent-2) 35%, transparent); border-radius: 14px;
+  background: linear-gradient(100deg, rgba(26, 159, 255, .2), rgba(26, 159, 255, .06) 70%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1); }
+.notice::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(180deg, #fff, var(--accent-2)); animation: noticeBar 2.4s ease-in-out infinite; }
+
+/* 右側說明區（電腦版）：卡片化 + 左側分隔線 */
+body:not(.m) .set-help { padding: 18px 20px 18px 24px; border-radius: 18px; border: 1px solid rgba(255, 255, 255, .1);
+  background: linear-gradient(160deg, rgba(255, 255, 255, .05), rgba(255, 255, 255, .01)), rgba(14, 21, 30, .45); }
+.help-title { position: relative; padding-bottom: 12px; }
+.help-title::after { content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: 1px; background: linear-gradient(90deg, var(--accent-2), rgba(255, 255, 255, .12) 60%, transparent); }
+.help-pane > .help-title + p { margin-top: 14px; }
+.help-pane.active > p { animation: uiUp .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+.help-pane.active > p:nth-of-type(2) { animation-delay: 80ms; }
