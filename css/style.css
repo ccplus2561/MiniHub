@@ -1292,3 +1292,14 @@ body:not(.m) .set-help { padding: 18px 20px 18px 24px; border-radius: 18px; bord
 .help-pane > .help-title + p { margin-top: 14px; }
 .help-pane.active > p { animation: uiUp .4s cubic-bezier(.2, .8, .2, 1) backwards; }
 .help-pane.active > p:nth-of-type(2) { animation-delay: 80ms; }
+
+/* 說明區清單 */
+.help-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.help-list li { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px 10px 18px; border-radius: 12px;
+  background: rgba(255, 255, 255, .04); border: 1px solid rgba(255, 255, 255, .1); transition: background .25s, border-color .25s, transform .25s var(--ease); }
+.help-list li::before { content: ""; position: absolute; left: 0; top: 18%; bottom: 18%; width: 4px; border-radius: 0 4px 4px 0; background: linear-gradient(180deg, #fff, var(--accent-2)); }
+.help-list li:hover { background: var(--a1); border-color: var(--btn-line); transform: translateX(4px); }
+.help-list b { font-size: 17px; font-weight: 800; color: var(--text); }
+.help-list span { font-size: 15px; line-height: 1.5; color: var(--muted); }
+.help-pane.active > .help-list li { animation: uiUp .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+.help-list li:nth-child(2) { animation-delay: 60ms; } .help-list li:nth-child(3) { animation-delay: 120ms; } .help-list li:nth-child(4) { animation-delay: 180ms; }
