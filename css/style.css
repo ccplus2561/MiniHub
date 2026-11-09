@@ -1066,3 +1066,45 @@ body.no-anim .rot-guard svg { animation: none; }
 #acctModal .modal-fine { text-align: center; margin-top: 10px; }
 #acctModal .notice.warn { margin: 14px 0 0; }
 #acctModal [hidden], #delPwBox[hidden] { display: none; }
+
+/* ---------- 公告視窗美化：漸層外框 / 光暈分隔線 / 卡片層次 ---------- */
+.ann-box { border: 0; border-radius: 22px;
+  background: linear-gradient(180deg, #213249 0%, #172435 55%, #131e2c 100%);
+  box-shadow: 0 0 0 1px rgba(5, 9, 14, .9), 0 28px 70px rgba(0, 0, 0, .6), 0 0 60px color-mix(in srgb, var(--accent) 16%, transparent); }
+/* 漸層描邊外框（上亮下暗），不影響內容點擊 */
+.ann-box::after { content: ""; position: absolute; inset: 0; z-index: 2; padding: 1.5px; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent-2) 85%, #fff) 0%, color-mix(in srgb, var(--accent) 35%, transparent) 38%, rgba(255, 255, 255, .08) 70%, color-mix(in srgb, var(--accent) 45%, transparent) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude; }
+/* 標題列：頂部高光 + 漸層底 + 發光分隔線 */
+.ann-top { position: relative; border-bottom: 0;
+  background: radial-gradient(520px 140px at 12% 0%, var(--a2), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, .05), transparent); }
+.ann-top::after, .ann-foot::before { content: ""; position: absolute; left: 20px; right: 20px; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-2) 70%, transparent) 20%, rgba(255, 255, 255, .28) 50%, color-mix(in srgb, var(--accent-2) 70%, transparent) 80%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent); }
+.ann-top::after { bottom: 0; }
+.ann-ico { border: 1.5px solid rgba(255, 255, 255, .35); }
+.ann-box .modal-x { background: rgba(255, 255, 255, .06); }
+/* 公告卡片：雙層邊框、內側高光、圓潤色條 */
+.ann-list { padding: 20px 24px 10px; gap: 16px; }
+.ann { border: 1.5px solid rgba(214, 230, 245, .22); border-radius: 18px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02) 60%), var(--panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 8px 22px rgba(0, 0, 0, .3); }
+.ann::before { width: 7px; border-radius: 18px 0 0 18px; box-shadow: 4px 0 16px color-mix(in srgb, var(--accent) 45%, transparent); }
+.ann.top { border-color: color-mix(in srgb, var(--accent-2) 75%, transparent); }
+.ann.hot { border-color: rgba(255, 207, 92, .7); }
+.ann.hot::before { box-shadow: 4px 0 16px rgba(255, 207, 92, .45); }
+/* 標題與內文之間的漸層分隔線 */
+.ann h4:not(:last-child)::after { content: ""; display: block; height: 1px; margin-top: 14px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08) 70%, transparent); }
+.ann.hot h4:not(:last-child)::after { background: linear-gradient(90deg, rgba(255, 207, 92, .7), rgba(255, 207, 92, .1) 70%, transparent); }
+.ann-body { margin-top: 14px; border-radius: 14px; background: rgba(8, 14, 22, .38);
+  border: 1px solid rgba(255, 255, 255, .14); box-shadow: inset 0 2px 10px rgba(0, 0, 0, .25); }
+.ann-line + .ann-line { padding-top: 10px; border-top: 1px dashed rgba(255, 255, 255, .14); }
+.ann-tag { border: 1px solid rgba(255, 255, 255, .28); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.ann-date { padding-left: 10px; border-left: 1.5px solid rgba(255, 255, 255, .22); }
+/* 底部列：發光分隔線 + 略深底色 */
+.ann-foot { position: relative; margin-top: 10px; border-top: 0; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .22)); }
+.ann-foot::before { top: 0; }
+@media (max-width: 560px) { .ann-list { padding: 14px 14px 8px; gap: 12px; } .ann-top::after, .ann-foot::before { left: 12px; right: 12px; } }
+body.m .ann-list { padding: 14px 14px 8px; }
