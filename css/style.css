@@ -1108,3 +1108,55 @@ body.no-anim .rot-guard svg { animation: none; }
 .ann-foot::before { top: 0; }
 @media (max-width: 560px) { .ann-list { padding: 14px 14px 8px; gap: 12px; } .ann-top::after, .ann-foot::before { left: 12px; right: 12px; } }
 body.m .ann-list { padding: 14px 14px 8px; }
+
+/* ---------- 動態效果：按鈕呼吸光 / 流動外框 / 彈跳回饋（遵循 no-anim 與減少動態設定） ---------- */
+@property --ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes spinAng { to { --ang: 360deg; } }
+@keyframes btnBreath { 0%, 100% { box-shadow: 0 6px 20px rgba(88, 138, 27, .45), 0 0 0 0 rgba(120, 182, 40, .45); }
+  50% { box-shadow: 0 8px 26px rgba(88, 138, 27, .6), 0 0 0 9px rgba(120, 182, 40, 0); } }
+@keyframes loginBreath { 0%, 100% { box-shadow: 0 6px 18px rgba(26, 159, 255, .35), 0 0 0 0 rgba(26, 159, 255, .45); }
+  50% { box-shadow: 0 8px 24px rgba(26, 159, 255, .55), 0 0 0 9px rgba(26, 159, 255, 0); } }
+@keyframes shineSweep { 0%, 62% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes bellRing { 0%, 55%, 100% { transform: rotate(0); } 6% { transform: rotate(16deg); } 12% { transform: rotate(-14deg); }
+  18% { transform: rotate(10deg); } 24% { transform: rotate(-7deg); } 30% { transform: rotate(3deg); } }
+@keyframes tagPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 207, 92, .55); } 50% { box-shadow: 0 0 0 7px rgba(255, 207, 92, 0); } }
+@keyframes newPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(26, 159, 255, .6); } 50% { box-shadow: 0 0 0 7px rgba(26, 159, 255, 0); } }
+@keyframes haloPulse { 0%, 100% { box-shadow: 0 0 0 4px rgba(102, 192, 244, .35), 0 22px 44px rgba(0, 0, 0, .6), 0 0 28px var(--a3); }
+  50% { box-shadow: 0 0 0 7px rgba(102, 192, 244, .18), 0 22px 44px rgba(0, 0, 0, .6), 0 0 50px var(--a3); } }
+@keyframes focusPulse { 0%, 100% { outline-offset: 3px; } 50% { outline-offset: 6px; } }
+@keyframes iconFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+
+/* 主要按鈕：呼吸光暈 + 週期性掃光 */
+.btn-primary { animation: btnBreath 2.8s ease-in-out infinite; }
+.login-btn { animation: loginBreath 3s ease-in-out infinite; }
+.btn-primary::after, .login-btn::after { animation: shineSweep 4.2s ease-in-out infinite; }
+.btn-primary:hover, .login-btn:hover { animation-play-state: paused; }
+.btn-primary:hover::after, .login-btn:hover::after { animation: none; }
+/* 按下去的回彈 */
+.btn-primary:active, .login-btn:active, .btn-icon:active, .chip:active, .set-item:active, .radio-card:active, .btn-ghost:active, .btn-google:active, .row-btn:active { transition-duration: .08s; }
+/* 次要按鈕：懸停時外框發亮 */
+.btn-ghost, .btn-google, .row-btn, .btn-icon, .chip, .set-item, .radio-card, .modal-x, .seg button { transition: transform .22s var(--ease), background .22s, box-shadow .25s, border-color .25s, color .22s, filter .22s; }
+.btn-ghost:hover, .btn-google:hover, .row-btn:hover, .modal-x:hover { border-color: #fff; box-shadow: 0 0 0 3px var(--a2), 0 0 18px var(--a2); }
+/* 鍵盤焦點：外框呼吸 */
+:focus-visible { animation: focusPulse 1.4s ease-in-out infinite; }
+/* 選取中的遊戲卡：光暈呼吸 */
+.card.selected { animation: haloPulse 2.4s ease-in-out infinite; }
+/* 設定項目被選取時外框微光 */
+.set-item.active, .radio-card.selected, .chip.active { box-shadow: 0 0 0 3px var(--a2), 0 0 20px var(--a2); }
+.switch[aria-checked="true"] { box-shadow: 0 0 12px var(--a3); }
+
+/* 視窗外框：彩光環繞流動 */
+.ann-box::after { background: conic-gradient(from var(--ang), color-mix(in srgb, var(--accent-2) 90%, #fff), color-mix(in srgb, var(--accent) 30%, transparent) 22%,
+  rgba(255, 255, 255, .06) 45%, color-mix(in srgb, var(--accent) 30%, transparent) 70%, color-mix(in srgb, var(--accent-2) 90%, #fff));
+  animation: spinAng 7s linear infinite; }
+.modal-box:not(.ann-box) { transition: box-shadow .3s; }
+/* 公告：鈴鐺搖晃、標籤脈衝 */
+.ann-ico svg { transform-origin: 50% 12%; animation: bellRing 3.6s ease-in-out 1s infinite; }
+.ann-tag.hot { animation: tagPulse 2s ease-in-out infinite; }
+.ann-tag.new { animation: newPulse 2.4s ease-in-out infinite; }
+.ann { transition: transform .25s var(--ease), box-shadow .25s, border-color .25s; }
+.ann:hover { transform: translateY(-3px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 14px 30px rgba(0, 0, 0, .42), 0 0 22px var(--a2); }
+.ann.hot:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 14px 30px rgba(0, 0, 0, .42), 0 0 22px rgba(255, 207, 92, .3); }
+/* 左側導覽圖示輕浮動（選取中） */
+.nav-item.active svg { animation: iconFloat 2.6s ease-in-out infinite; }
+@media (hover: none) { .ann:hover { transform: none; } }
