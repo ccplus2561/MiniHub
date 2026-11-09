@@ -724,7 +724,7 @@
   function needAgree() {   // 未勾選同意：禁止登入（3 種方式都一樣），提示並抖動勾選列
     if (agreeChk.checked) return false;
     const el = $("#loginAgree"); el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
-    toast("請先勾選「登入視同已閱讀並同意…」");
+    toast("請先勾選同意再繼續");
     return true;
   }
   $$("#loginModal [data-provider]").forEach(b => b.addEventListener("click", () => {
