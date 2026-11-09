@@ -1,4 +1,4 @@
-// Firebase 整合：Google / GitHub 登入（含同 email 帳號連結）+ 玩家資料（使用者名稱 / 遊戲 UID）
+// Firebase 整合：Google / GitHub / 帳號密碼 登入（含同 email 帳號連結）+ 玩家資料（使用者名稱 / 遊戲 UID）
 // 登入後會保存：帳號資料、隱私設定，以及 prefs（動畫效果、遊戲全螢幕、語言、音效、操作）；圖卡大小、顯示模式不保存。
 // 未登入時完全不連線：Firebase SDK 只在「按下登入」或「分頁內已有登入狀態」時才載入。
 
@@ -46,6 +46,19 @@ function credFromError(f, key, e) {
   return C.credentialFromError(e);
 }
 let pending = null;   // 等待連結的憑證（只存在記憶體）
+
+/* ---------- 帳號密碼（不需要電子郵件、不驗證、無法找回密碼） ----------
+   Firebase 的「電子郵件/密碼」一定要 email 格式 → 把帳號名稱（NFKC + 小寫）做 SHA-256，組成「不會寄信的內部 email」。
+   Firebase 保證 email 不重複 = 帳號名稱不重複（不分大小寫）。若 Firebase 拒絕此網域（auth/invalid-email），只需改 ACCT_DOMAIN。 */
+const ACCT_DOMAIN = "@acct.minihub.invalid";
+const acctKey = s => String(s || "").normalize("NFKC").trim().toLowerCase();
+async function acctEmail(name) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("minihub:" + acctKey(name)));
+  return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("") + ACCT_DOMAIN;
+}
+const isPwUser = u => !!u && (u.providerData || []).some(p => p.providerId === "password");
+let regName = "";   // 剛註冊時，displayName 還沒寫入前先用這個顯示帳號名稱
+const bad = code => Object.assign(new Error(code), { code });
 const load = async () => { try { return await boot(); } catch (e) { throw Object.assign(new Error("sdk-load-failed"), { code: "sdk-load-failed" }); } };
 
 /* ---------- 延遲載入 SDK ---------- */
@@ -68,7 +81,7 @@ function boot() {
         if (window.MiniHubToast) window.MiniHubToast("此帳號沒有可用的電子郵件，無法登入，請改用其他方式");
         return;
       }
-      const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "" };
+      const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "", account: isPwUser(user) ? (user.displayName || regName || "帳號") : "" };
       try {
         const profile = await loadProfile(user.uid);
         if (profile) profile.prevLoginAt = await recordLogin(user.uid, profile);
@@ -155,11 +168,16 @@ async function setJoinRank(v) {
 }
 
 // 刪除帳號：先重新驗證（刪除帳號需要「最近登入」）→ 刪 Firestore 玩家資料（users + uids）→ 刪登入帳號
-async function deleteAccount() {
+async function deleteAccount(pw) {
   const user = F && F.auth.currentUser;
   if (!user) throw Object.assign(new Error("not-signed-in"), { code: "not-signed-in" });
-  const pid = ((user.providerData[0] || {}).providerId) || "google.com";
-  await F.reauthenticateWithPopup(user, makeProvider(F, pid === "github.com" ? "github" : "google"));   // 需在點擊後立即呼叫，才不會被瀏覽器擋彈窗
+  if (isPwUser(user)) {   // 帳號密碼：用密碼重新驗證
+    if (!pw) throw bad("password-required");
+    await F.reauthenticateWithCredential(user, F.EmailAuthProvider.credential(user.email, pw));
+  } else {
+    const pid = ((user.providerData[0] || {}).providerId) || "google.com";
+    await F.reauthenticateWithPopup(user, makeProvider(F, pid === "github.com" ? "github" : "google"));   // 需在點擊後立即呼叫，才不會被瀏覽器擋彈窗
+  }
   if (SAVE_PROFILE) {
     bump(1, 6);
     const snap = await F.getDoc(F.doc(F.db, "users", user.uid));
@@ -303,6 +321,27 @@ window.MiniHubAuth = {
       }
       throw e;
     }
+  },
+  // 帳號密碼：註冊 / 登入（帳號重複會丟出 code = "account-taken"）
+  signUpPw: async (name, pw) => {
+    const n = Array.from(acctKey(name)).length;
+    if (n < 3 || n > 20 || typeof pw !== "string" || pw.length < 8 || pw.length > 64) throw bad("invalid-input");
+    const f = await load();
+    regName = String(name).trim();
+    try {
+      const r = await f.createUserWithEmailAndPassword(f.auth, await acctEmail(name), pw);
+      try { await f.updateProfile(r.user, { displayName: regName }); } catch (e) {}   // 之後登入時用來顯示帳號名稱
+      return r;
+    } catch (e) {
+      regName = "";
+      if (e && e.code === "auth/email-already-in-use") throw bad("account-taken");
+      throw e;
+    }
+  },
+  signInPw: async (name, pw) => {
+    const f = await load();
+    regName = "";
+    return f.signInWithEmailAndPassword(f.auth, await acctEmail(name), pw);
   },
   hasPending: () => !!pending,
   clearPending: () => { pending = null; },

@@ -1075,3 +1075,10 @@ body.no-anim .hw-glow, body.m .hw-glow { display: none; }
 body.no-anim .rot-guard svg { animation: none; }
 /* 沒有背景音樂的遊戲：音樂按鈕停用 */
 .btn-icon:disabled { opacity: .35; cursor: not-allowed; filter: grayscale(1); }
+
+/* 帳號密碼登入 */
+.link-btn { background: none; border: 0; padding: 6px 4px; color: var(--accent-2); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: underline; }
+#acctModal .modal-actions { margin-top: 18px; }
+#acctModal .modal-fine { text-align: center; margin-top: 10px; }
+#acctModal .notice.warn { margin: 14px 0 0; }
+#acctModal [hidden], #delPwBox[hidden] { display: none; }

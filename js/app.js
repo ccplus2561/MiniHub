@@ -502,6 +502,7 @@
       return;
     }
     if (!$("#profileModal").hidden) return;   // 建立資料視窗不可用 Esc 關閉
+    if (!$("#acctModal").hidden) { if (e.key === "Escape" && !acctBusy) closeModal("acctModal"); return; }
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
     if (!$("#deleteModal").hidden) { if (e.key === "Escape" && !deleting) closeModal("deleteModal"); return; }
@@ -600,7 +601,7 @@
   }
   function showLegal(tab) {
     if (consent) settleConsent(false);   // 看條款 = 先不遊玩（下一局的情況會回首頁）
-    ["loginModal", "termsModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "acctModal", "termsModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -637,30 +638,36 @@
   });
   /* ---------- 刪除帳號（設定 > 隱私） ---------- */
   let deleting = false;
-  const delOk = $("#delOk"), delInput = $("#delInput");
+  const delOk = $("#delOk"), delInput = $("#delInput"), delPw = $("#delPw");
+  const delReady = () => !deleting && delInput.value.trim() === "刪除" && (!curAccount || !!delPw.value);   // 帳號密碼登入者還需輸入密碼
   $("#delAccBtn").addEventListener("click", () => {
-    delInput.value = ""; delOk.disabled = true;
+    delInput.value = ""; delPw.value = ""; delOk.disabled = true;
+    $("#delPwBox").hidden = !curAccount;
     openModal("deleteModal");
-    setTimeout(() => delInput.focus(), 60);
+    setTimeout(() => (curAccount ? delPw : delInput).focus(), 60);
   });
-  delInput.addEventListener("input", () => { delOk.disabled = deleting || delInput.value.trim() !== "刪除"; });
-  delInput.addEventListener("keydown", e => { if (e.key === "Enter" && !delOk.disabled) delOk.click(); });
+  [delInput, delPw].forEach(el => {
+    el.addEventListener("input", () => { delOk.disabled = !delReady(); });
+    el.addEventListener("keydown", e => { if (e.key === "Enter" && !delOk.disabled) delOk.click(); });
+  });
   delOk.addEventListener("click", async () => {
     if (delOk.disabled || deleting || !window.MiniHubAuth) return;
     deleting = true; delOk.disabled = true; $("span", delOk).textContent = "刪除中…";
     try {
-      await MiniHubAuth.deleteAccount();
+      await MiniHubAuth.deleteAccount(delPw.value);
       closeModal("deleteModal");
       toast("帳號已刪除，所有資料已清空");
     } catch (e) {
       const c = e.code || "";
       if (/popup-closed|cancelled-popup|popup-blocked/.test(c)) toast("未完成身分驗證，帳號沒有被刪除");
+      else if (/wrong-password|invalid-credential|password-required/.test(c)) toast("密碼錯誤，帳號沒有被刪除");
+      else if (c === "auth/too-many-requests") toast("嘗試次數過多，請稍後再試");
       else if (c === "permission-denied") toast("伺服器規則不允許刪除，帳號沒有被刪除");
       else if (c === "account-delete-failed") toast("玩家資料已清除，但登入帳號尚未刪除，請再按一次「永久刪除」");
       else toast("刪除失敗：" + (c || e.message));
     }
     deleting = false; $("span", delOk).textContent = "永久刪除";
-    delOk.disabled = delInput.value.trim() !== "刪除";
+    delOk.disabled = !delReady();
   });
 
   /* ---------- 登出：顯示「登出中...」載入畫面，徹底清除網站上的登入與本機資料後重新載入 ---------- */
@@ -752,6 +759,62 @@
   }));
   $("#linkModal").addEventListener("click", e => { if (e.target.id === "linkModal" || e.target.closest("[data-close]")) MiniHubAuth.clearPending(); });
 
+  /* ---------- 帳號密碼登入 / 註冊（不需電子郵件；忘記密碼無法找回） ---------- */
+  let acctMode = "login", acctBusy = false;
+  const ACCT_MIN = 3, ACCT_MAX = 20, PW_MIN = 8;
+  const aName = $("#acctName"), aPw = $("#acctPw"), aPw2 = $("#acctPw2"), aOk = $("#acctOk");
+  function acctErr(msg) { const el = $("#acctErr"); el.hidden = !msg; el.textContent = msg || ""; }
+  function paintAcct() {
+    const reg = acctMode === "register";
+    $("#acctTitle").textContent = reg ? "建立新帳號" : "帳號密碼登入";
+    $("span", aOk).textContent = reg ? "建立並登入" : "登入";
+    $("#acctSwitch").textContent = reg ? "已有帳號？改為登入" : "沒有帳號？建立新帳號";
+    $("#acctPw2Box").hidden = !reg; $("#acctNameHint").hidden = !reg;
+    aPw.autocomplete = reg ? "new-password" : "current-password";
+    acctErr("");
+  }
+  $$("#loginModal [data-acct]").forEach(b => b.addEventListener("click", () => {
+    if (window.MiniHubAuth) MiniHubAuth.preload();
+    closeModal("loginModal"); acctMode = "login";
+    aName.value = aPw.value = aPw2.value = ""; paintAcct();
+    openModal("acctModal");
+  }));
+  $("#acctSwitch").addEventListener("click", () => { if (acctBusy) return; acctMode = acctMode === "login" ? "register" : "login"; paintAcct(); aName.focus(); });
+  [aName, aPw, aPw2].forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); aOk.click(); } }));
+  function acctFail(e) {
+    const c = (e && e.code) || "";
+    if (c === "account-taken") return "這個帳號已經有人使用，請換一個";
+    if (/invalid-credential|invalid-login|user-not-found|wrong-password/.test(c)) return "帳號或密碼錯誤";
+    if (c === "auth/too-many-requests") return "嘗試次數過多，請稍後再試";
+    if (c === "auth/operation-not-allowed") return "尚未在 Firebase 後台啟用「電子郵件/密碼」登入方式（Authentication > Sign-in method）";
+    if (c === "auth/network-request-failed") return "網路連線失敗，請稍後再試";
+    if (c === "sdk-load-failed") return "無法載入登入服務，請檢查網路後再試";
+    if (c === "auth/invalid-email") return "系統內部帳號格式被 Firebase 拒絕（auth/invalid-email）";
+    if (c === "auth/weak-password") return "密碼強度不足，請換一個更長的密碼";
+    return "失敗：" + (c || (e && e.message) || "未知錯誤");
+  }
+  aOk.addEventListener("click", async () => {
+    if (acctBusy) return;
+    const name = aName.value, pw = aPw.value, reg = acctMode === "register";
+    const len = Array.from(name.trim()).length;
+    if (!name.trim()) return acctErr("請輸入帳號");
+    if (reg) {
+      if (name !== name.trim() || /[\s\u0000-\u001f\u007f]/.test(name)) return acctErr("帳號不可包含空白或控制字元");
+      if (len < ACCT_MIN || len > ACCT_MAX) return acctErr("帳號需為 " + ACCT_MIN + "–" + ACCT_MAX + " 個字");
+      if (pw.length < PW_MIN) return acctErr("密碼至少 " + PW_MIN + " 個字元");
+      if (pw !== aPw2.value) return acctErr("兩次輸入的密碼不一致");
+    } else if (!pw) return acctErr("請輸入密碼");
+    if (!window.MiniHubAuth) return acctErr("登入服務載入失敗，請檢查網路後重新整理");
+    acctBusy = true; aOk.disabled = true; acctErr(""); $("span", aOk).textContent = reg ? "建立中…" : "登入中…";
+    try {
+      await (reg ? MiniHubAuth.signUpPw(name, pw) : MiniHubAuth.signInPw(name, pw));
+      aName.value = aPw.value = aPw2.value = "";
+      closeModal("acctModal");   // 之後由 minihub:auth 事件接手（首次登入會進入建立資料視窗）
+    } catch (e) { acctErr(acctFail(e)); }
+    acctBusy = false; aOk.disabled = false; 
+    $("span", aOk).textContent = reg ? "建立並登入" : "登入";
+  });
+
   /* ---------- 首次登入：建立使用者名稱 / 遊戲 UID ---------- */
   const NAME_MIN = 2, NAME_MAX = 12;
   const NAME_RE = /^[\u4e00-\u9fffA-Za-z0-9_]+$/;
@@ -796,9 +859,10 @@
   $("#profBack").addEventListener("click", () => { sfx("move"); goStep(pStep - 1); });
   $("#profName").addEventListener("keydown", e => { if (e.key === "Enter" && isMob() && !$("#profNext").hidden && !$("#profNext").disabled) { e.preventDefault(); $("#profNext").click(); } });
   window.addEventListener("resize", () => { if (!$("#profileModal").hidden) updateProf(); });
-  function startProfile(email) {
-    pEmail = email; pStep = 1; showErr("");
-    $("#profEmail").textContent = email;
+  function startProfile(user) {
+    pEmail = user.email; pStep = 1; showErr("");
+    $("#profEmailLabel").textContent = user.account ? "登入帳號" : "電子郵件";
+    $("#profEmail").textContent = user.account || user.email;
     $("#profName").value = "";
     $("#profPublic").setAttribute("aria-checked", "true");   // 預設開啟
     $("#profJoin").setAttribute("aria-checked", "true");
@@ -848,9 +912,10 @@
     if (window.MiniHubAuth) MiniHubAuth.signOut();   // 未完成建立就取消 → 同時登出
   });
 
+  let curAccount = "";   // 帳號密碼登入者的帳號名稱（Google / GitHub 為空字串）
   function setAccount(p) {
     window.MiniHubAccount = p
-      ? { name: p.name, uid: p.gameUid || p.uid, email: p.email, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null }
+      ? { name: p.name, uid: p.gameUid || p.uid, email: curAccount ? "" : p.email, account: curAccount, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null }
       : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null, prefs: null };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
@@ -872,11 +937,12 @@
   document.addEventListener("minihub:auth", e => {
     const { user, profile, error } = e.detail;
     photo = (user && user.photoURL) || "";
+    curAccount = (user && user.account) || "";
     if (error) { toast("讀取資料失敗：" + (error.code || error.message)); MiniHubAuth.signOut(); return; }
     if (!user) {                       // 已登出
       const wasIn = signedIn;
       signedIn = false; setAccount(null); paintLogin();
-      ["profileModal", "logoutModal", "nameModal", "linkModal", "deleteModal"].forEach(closeModal);
+      ["profileModal", "acctModal", "logoutModal", "nameModal", "linkModal", "deleteModal"].forEach(closeModal);
       if (wasIn) toast("已登出");
       return;
     }
@@ -886,7 +952,7 @@
       if (first) toast("歡迎回來，" + profile.name + "！");
     } else {                           // 首次登入
       signedIn = true; paintLogin(); closeModal("noticeModal");
-      startProfile(user.email);
+      startProfile(user);
     }
   });
   /* ---------- 修改使用者名稱（14 天一次；正式限制由 Firestore 規則強制） ---------- */

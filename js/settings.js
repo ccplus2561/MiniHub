@@ -74,8 +74,10 @@
   let showEmail = false;
   const paintEmail = () => {
     const a = window.MiniHubAccount;
-    fill($("#accEmail"), a.email ? (showEmail ? a.email : maskEmail(a.email)) : "", "登入後顯示");
+    const lab = $("#accEmailLabel"); if (lab) lab.textContent = a.account ? "登入帳號" : "電子郵件";
     const eye = $("#emailEye");
+    if (a.account) { fill($("#accEmail"), a.account); eye.hidden = true; return; }   // 帳號密碼登入：顯示帳號名稱，沒有電子郵件
+    fill($("#accEmail"), a.email ? (showEmail ? a.email : maskEmail(a.email)) : "", "登入後顯示");
     eye.hidden = !a.email;
     eye.classList.toggle("shown", showEmail);
     eye.setAttribute("aria-label", showEmail ? "隱藏電子郵件" : "顯示完整電子郵件");
