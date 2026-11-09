@@ -506,14 +506,13 @@
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
     if (!$("#deleteModal").hidden) { if (e.key === "Escape" && !deleting) closeModal("deleteModal"); return; }
-    if (!$("#termsModal").hidden) { if (e.key === "Escape") closeModal("termsModal"); return; }
     if (!$("#noticeModal").hidden) { if (e.key === "Escape" || e.key === "Enter") { closeModal("noticeModal"); e.preventDefault(); } return; }
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
       else if (kbdOn() && /^t$/i.test(e.key)) { $(".legal-link", $("#loginModal")).focus(); e.preventDefault(); }   // T：直接跳到服務條款（Enter 開啟）
       else if (kbdOn() && /^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「登入方式 / 取消」之間移動焦點（關閉快捷鍵時停用）
-        const b = $$(".btn-google, .btn-ghost, .legal-link", $("#loginModal"));
+        const b = $$(".btn-google, .btn-ghost, .login-agree input, .legal-link", $("#loginModal"));
         const up = /^(ArrowUp|w)$/i.test(e.key), i = b.indexOf(document.activeElement);
         b[(i + (up ? -1 : 1) + b.length) % b.length].focus(); e.preventDefault();
       }
@@ -601,7 +600,7 @@
   }
   function showLegal(tab) {
     if (consent) settleConsent(false);   // 看條款 = 先不遊玩（下一局的情況會回首頁）
-    ["loginModal", "acctModal", "termsModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "acctModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -633,7 +632,7 @@
   function closeModal(id) { $("#" + id).hidden = true; }
   let signedIn = false;
   $("#loginBtn").addEventListener("click", () => {
-    if (!signedIn) { if (window.MiniHubAuth) MiniHubAuth.preload(); return openModal("loginModal"); }   // 按登入才開始載入 Firebase
+    if (!signedIn) { if (window.MiniHubAuth) MiniHubAuth.preload(); $("#loginAgreeChk").checked = false; return openModal("loginModal"); }   // 按登入才開始載入 Firebase
     openModal("logoutModal");
   });
   /* ---------- 刪除帳號（設定 > 隱私） ---------- */
@@ -721,9 +720,19 @@
     location.replace(location.pathname);                              // 重新載入（同時清掉網址上的參數 / 記憶體中的狀態）
   });
   const PNAME = { google: "Google", github: "GitHub" };
-  let chosen = "google";
-  $$("#loginModal [data-provider]").forEach(b => b.addEventListener("click", () => { chosen = b.dataset.provider; openModal("termsModal"); }));   // 先確認條款
-  $("#termsCancel").addEventListener("click", () => closeModal("termsModal"));
+  const agreeChk = $("#loginAgreeChk");
+  function needAgree() {   // 未勾選同意：禁止登入（3 種方式都一樣），提示並抖動勾選列
+    if (agreeChk.checked) return false;
+    const el = $("#loginAgree"); el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+    toast("請先勾選「登入視同已閱讀並同意…」");
+    return true;
+  }
+  $$("#loginModal [data-provider]").forEach(b => b.addEventListener("click", () => {
+    if (needAgree()) return;
+    closeModal("loginModal");
+    if (!window.MiniHubAuth) return toast("登入服務載入失敗，請檢查網路後重新整理");
+    MiniHubAuth.signIn(b.dataset.provider).catch(signInFail);
+  }));
   function signInFail(e) {
     const c = e.code || "";
     if (c === "sdk-load-failed") toast("無法載入登入服務，請檢查網路後再試");
@@ -742,11 +751,6 @@
     else if (c === "auth/account-exists-with-different-credential") toast("此電子郵件已用其他方式註冊，請改用原本的登入方式");
     else if (!/popup-closed|cancelled-popup/.test(c)) toast("登入失敗：" + (c || e.message));
   }
-  $("#termsOk").addEventListener("click", () => {
-    closeModal("termsModal"); closeModal("loginModal");
-    if (!window.MiniHubAuth) return toast("登入服務載入失敗，請檢查網路後重新整理");
-    MiniHubAuth.signIn(chosen).catch(signInFail);
-  });
   // 連結：用原本的方式登入，成功後把剛才的新方式連到同一個帳號
   $$("#linkModal [data-link]").forEach(b => b.addEventListener("click", () => {
     closeModal("linkModal");
@@ -775,6 +779,7 @@
     acctErr("");
   }
   $$("#loginModal [data-acct]").forEach(b => b.addEventListener("click", () => {
+    if (needAgree()) return;
     if (window.MiniHubAuth) MiniHubAuth.preload();
     closeModal("loginModal"); acctMode = "login";
     aName.value = aPw.value = aPw2.value = ""; paintAcct();
