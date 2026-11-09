@@ -1160,3 +1160,61 @@ body.m .ann-list { padding: 14px 14px 8px; }
 /* 左側導覽圖示輕浮動（選取中） */
 .nav-item.active svg { animation: iconFloat 2.6s ease-in-out infinite; }
 @media (hover: none) { .ann:hover { transform: none; } }
+
+/* ---------- 左側導覽軌 / 底部提示列美化（電腦版） ---------- */
+@keyframes railGlow { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes railFlow { to { background-position: 0 200%; } }
+@keyframes barGlow { 0%, 100% { box-shadow: 0 0 6px var(--accent-2); } 50% { box-shadow: 0 0 14px var(--accent-2), 0 0 4px #fff; } }
+@keyframes hintIn { from { opacity: 0; transform: translateY(8px); } }
+@keyframes keyTap { 0%, 88%, 100% { transform: translateY(0); box-shadow: 0 3px 0 rgba(0, 0, 0, .45); } 94% { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .45); } }
+@keyframes iconHalo { 0%, 100% { filter: drop-shadow(0 0 0 transparent); } 50% { filter: drop-shadow(0 0 8px var(--accent-2)); } }
+
+body:not(.m) .rail { position: relative; border-right: 0;
+  background: radial-gradient(160px 260px at 0% 0%, var(--a2), transparent 70%), linear-gradient(180deg, rgba(14, 21, 30, .96), rgba(10, 15, 22, .78)); }
+/* 右側發光分隔線：由上到下流動的亮點 */
+body:not(.m) .rail::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 2px; pointer-events: none;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--accent-2) 80%, transparent) 25%, rgba(255, 255, 255, .5) 50%, color-mix(in srgb, var(--accent-2) 80%, transparent) 75%, transparent) 0 0 / 100% 200%;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 50%, transparent); animation: railFlow 6s linear infinite; }
+
+/* 品牌區 */
+body:not(.m) .brand { position: relative; padding: 10px 12px 16px; border: 1.5px solid transparent; }
+body:not(.m) .brand svg { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 60%, transparent)); animation: iconHalo 3.4s ease-in-out infinite; transition: transform .35s cubic-bezier(.3, 1.6, .5, 1); }
+body:not(.m) .brand:hover { border-color: var(--btn-line); box-shadow: 0 0 20px var(--a2); }
+body:not(.m) .brand:hover svg { transform: rotate(-10deg) scale(1.14); }
+body:not(.m) .brand::after { content: ""; position: absolute; left: 14%; right: 14%; bottom: 4px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .4), transparent); box-shadow: 0 0 8px var(--a3); }
+/* 導覽群組上下分隔線 */
+body:not(.m) .tabs { border-top: 1px solid transparent; border-bottom: 1px solid transparent; padding: 14px 0; gap: 12px;
+  border-image: linear-gradient(90deg, transparent, rgba(255, 255, 255, .22) 30%, rgba(255, 255, 255, .22) 70%, transparent) 1; }
+/* 導覽按鈕：外框 + 選取膠囊 + 發光指示條 */
+body:not(.m) .nav-item { border: 1.5px solid transparent; overflow: visible;
+  transition: transform .25s var(--ease), background .25s, box-shadow .25s, color .22s, border-color .25s; }
+body:not(.m) .nav-item:hover { border-color: rgba(214, 230, 245, .4); background: linear-gradient(160deg, var(--a2), var(--a1)); }
+body:not(.m) .nav-item.active { border-color: color-mix(in srgb, var(--accent-2) 80%, #fff 10%);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 38%, transparent), color-mix(in srgb, var(--accent) 14%, transparent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 6px 20px var(--a2), 0 0 18px var(--a2); }
+body:not(.m) .nav-item::after { left: -12px; width: 5px; top: 22%; bottom: 22%; background: linear-gradient(180deg, #fff, var(--accent-2)); }
+body:not(.m) .nav-item.active::after { animation: barGlow 2.2s ease-in-out infinite; }
+body:not(.m) .nav-item span { transition: letter-spacing .25s; }
+body:not(.m) .nav-item:hover span, body:not(.m) .nav-item.active span { letter-spacing: .06em; }
+body:not(.m) .brand-k .brand, body:not(.m) .login-k .login-btn { border-color: #fff; }
+
+/* 底部提示列 */
+body:not(.m) .hints { position: relative; border-top: 0; gap: 22px; align-items: center;
+  background: linear-gradient(0deg, rgba(8, 13, 19, .96), rgba(14, 21, 30, .6)); }
+body:not(.m) .hints::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-2) 65%, transparent) 25%, rgba(255, 255, 255, .35) 60%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 50%, transparent); }
+.hints span { display: inline-flex; align-items: center; gap: 4px; padding: 5px 14px 5px 8px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .1); background: rgba(255, 255, 255, .04);
+  animation: hintIn .35s cubic-bezier(.2, .8, .2, 1) backwards; transition: background .25s, border-color .25s, transform .25s var(--ease); }
+.hints span:nth-child(2) { animation-delay: 60ms; } .hints span:nth-child(3) { animation-delay: 120ms; }
+.hints span:hover { background: var(--a2); border-color: var(--btn-line); transform: translateY(-2px); }
+/* 鍵帽：立體按鍵 + 偶爾輕按動畫 */
+.hints kbd { margin-right: 3px; border-radius: 8px; color: #0b1118; border: 1px solid rgba(255, 255, 255, .7);
+  background: linear-gradient(180deg, #fff, #cfdae6); box-shadow: 0 3px 0 rgba(0, 0, 0, .45); animation: keyTap 5s ease-in-out infinite; }
+.hints kbd:nth-of-type(2) { animation-delay: .25s; } .hints kbd:nth-of-type(3) { animation-delay: .5s; } .hints kbd:nth-of-type(4) { animation-delay: .75s; }
+.hints span:hover kbd { animation-duration: 1.2s; }
+
+/* 登入按鈕：頂部高光 */
+.login-btn { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), 0 6px 18px rgba(26, 159, 255, .35); }
