@@ -163,8 +163,9 @@
             <h1 class="hw-title">MiniHub</h1>
           </div>
           <p class="hw-sub" id="homeSub">小遊戲大集合</p>
-          <button class="btn-primary hw-go" id="homeGo" type="button">
-            <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>
+          <button class="btn-primary hw-go is-guest" id="homeGo" type="button">
+            <svg class="go-play" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>
+            <svg class="go-login" viewBox="0 0 24 24"><path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="M14 8l4 4-4 4M18 12H9"/></svg>
             <span id="homeGoText">登入遊玩</span>
           </button>
         </div>
@@ -571,6 +572,7 @@
 
   <!-- 登入視窗（Big Picture 全螢幕風格） -->
   <div class="modal bp" id="loginModal" hidden>
+    <i class="bp-orb o1" aria-hidden="true"></i><i class="bp-orb o2" aria-hidden="true"></i>
     <button class="modal-x" data-close aria-label="返回"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
       <div class="modal-logo"><svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01"/></svg></div>

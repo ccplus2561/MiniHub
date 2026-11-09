@@ -1303,3 +1303,78 @@ body:not(.m) .set-help { padding: 18px 20px 18px 24px; border-radius: 18px; bord
 .help-list span { font-size: 15px; line-height: 1.5; color: var(--muted); }
 .help-pane.active > .help-list li { animation: uiUp .4s cubic-bezier(.2, .8, .2, 1) backwards; }
 .help-list li:nth-child(2) { animation-delay: 60ms; } .help-list li:nth-child(3) { animation-delay: 120ms; } .help-list li:nth-child(4) { animation-delay: 180ms; }
+
+
+/* ================= 首頁主按鈕：未登入（藍・登入）/ 已登入（綠・進入遊戲庫） ================= */
+.hw-go .go-login { display: none; }
+.hw-go.is-guest .go-play { display: none; }
+.hw-go.is-guest .go-login { display: block; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.hw-go.is-guest { background: linear-gradient(180deg, #3aaeff, #1a74c8); box-shadow: 0 6px 20px rgba(26, 159, 255, .45); animation-name: guestBreath; }
+.hw-go.is-guest:hover { box-shadow: 0 14px 30px rgba(26, 159, 255, .6); }
+.hw-go.is-in { background: linear-gradient(180deg, #8fd23a, #4f8a1c); box-shadow: 0 6px 20px rgba(88, 138, 27, .45), 0 0 0 1px rgba(190, 255, 120, .25) inset; }
+.hw-go.is-guest:hover .go-login { transform: translateX(3px) scale(1.12); }
+@keyframes guestBreath { 0%, 100% { box-shadow: 0 6px 20px rgba(26, 159, 255, .45), 0 0 0 0 rgba(26, 159, 255, .5); }
+  50% { box-shadow: 0 8px 26px rgba(26, 159, 255, .62), 0 0 0 9px rgba(26, 159, 255, 0); } }
+
+/* ================= 登入 MiniHub 視窗：動畫 / 外框 / 排版優化 ================= */
+.modal.bp { overflow: hidden; }
+.bp-orb { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(70px); opacity: .55; z-index: 0; }
+.bp-orb.o1 { width: 380px; height: 380px; top: -120px; right: -80px; background: rgba(26, 159, 255, .5); animation: orbA 9s ease-in-out infinite; }
+.bp-orb.o2 { width: 320px; height: 320px; bottom: -110px; left: -90px; background: rgba(102, 192, 244, .38); animation: orbA 11s ease-in-out infinite reverse; }
+@keyframes orbA { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-36px, 28px) scale(1.12); } }
+.modal.bp .modal-box, .modal.bp .modal-x, .modal.bp .bp-hints { position: relative; z-index: 1; }
+.modal.bp .modal-x { position: absolute; }
+.modal.bp .bp-hints { position: absolute; }
+
+/* Logo：旋轉光環 + 呼吸 */
+.modal.bp .modal-logo { position: relative; background: linear-gradient(150deg, var(--a3), var(--a1)); border: 0; isolation: isolate;
+  animation: logoFloat 4s ease-in-out infinite; }
+.modal.bp .modal-logo::before { content: ""; position: absolute; inset: -3px; border-radius: 31px; z-index: -1;
+  background: conic-gradient(from var(--ang), transparent 0 55%, var(--accent-2) 80%, #fff 92%, transparent 100%); animation: spinAng 3.6s linear infinite; }
+.modal.bp .modal-logo::after { content: ""; position: absolute; inset: 0; border-radius: 28px; z-index: -1; background: #14202e; }
+.modal.bp .modal-logo svg { fill: none; stroke: var(--accent-2); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 10px var(--a3)); }
+@keyframes logoFloat { 50% { transform: translateY(-6px); } }
+
+/* 標題漸層 + 副標 */
+.modal.bp h3 { background: linear-gradient(90deg, #fff, var(--accent-2) 55%, #fff); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: hwShine 5s ease-in-out infinite; }
+.modal.bp .modal-sub { position: relative; padding-bottom: 18px; }
+.modal.bp .modal-sub::after { content: ""; position: absolute; left: 50%; bottom: 0; width: 72px; height: 3px; transform: translateX(-50%); border-radius: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-2), transparent); }
+
+/* 依序進場 */
+.modal.bp:not([hidden]) .modal-box > * { animation: uiUp .5s cubic-bezier(.2, .8, .2, 1) backwards; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(1) { animation-delay: 60ms; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(2) { animation-delay: 120ms; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(3) { animation-delay: 180ms; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(4) { animation-delay: 240ms; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(5) { animation-delay: 300ms; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(6) { animation-delay: 360ms; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(7) { animation-delay: 420ms; }
+.modal.bp:not([hidden]) .modal-box > :nth-child(8) { animation-delay: 480ms; }
+
+/* 登入按鈕：外框、圖示底座、右側箭頭、依供應商配色 */
+.modal.bp .btn-google { position: relative; justify-content: flex-start; padding: 0 56px 0 22px; gap: 18px; overflow: hidden;
+  border-width: 2px; box-shadow: 0 8px 24px rgba(0, 0, 0, .35), 0 0 0 1px rgba(255, 255, 255, .06) inset; }
+.modal.bp .btn-google > svg { flex: none; padding: 6px; box-sizing: content-box; width: 32px; height: 32px; border-radius: 12px; background: rgba(0, 0, 0, .06); }
+.modal.bp .btn-google > span { flex: 1; text-align: center; margin-right: -14px; }
+.modal.bp .btn-google::after { content: ""; position: absolute; right: 22px; top: 50%; width: 11px; height: 11px; margin-top: -7px;
+  border-top: 3px solid currentColor; border-right: 3px solid currentColor; transform: rotate(45deg); opacity: .35; transition: transform .25s var(--ease), opacity .25s; }
+.modal.bp .btn-google:hover::after, .modal.bp .btn-google:focus-visible::after { transform: translateX(5px) rotate(45deg); opacity: .9; }
+.modal.bp .btn-google[data-provider="github"] { background: linear-gradient(180deg, #2b3340, #181d26); color: #fff; }
+.modal.bp .btn-google[data-provider="github"] > svg { background: #fff; }
+.modal.bp .btn-google[data-acct] { background: linear-gradient(180deg, #3aaeff, #1a74c8); color: #fff; }
+.modal.bp .btn-google[data-acct] > svg { background: rgba(255, 255, 255, .2); }
+.modal.bp .btn-google[data-provider="google"] > svg { background: #f1f3f4; }
+.modal.bp .btn-google:hover { box-shadow: 0 14px 32px rgba(0, 0, 0, .5), 0 0 24px var(--a2); }
+.modal.bp .btn-ghost { background: transparent; border-style: dashed; }
+.modal.bp .modal-fine { padding-top: 16px; border-top: 1px solid var(--line); }
+
+body.m .modal.bp .btn-google { padding: 0 44px 0 14px; gap: 12px; }
+body.m .modal.bp .btn-google > svg { width: 26px; height: 26px; }
+body.m .modal.bp .modal-logo { width: 84px; height: 84px; }
+body.m .modal.bp .modal-logo::before { border-radius: 26px; } body.m .modal.bp .modal-logo::after { border-radius: 24px; }
+body.m .bp-orb { opacity: .35; }
+
+body.no-anim .bp-orb, body.no-anim .modal.bp .modal-logo, body.no-anim .modal.bp .modal-logo::before, body.no-anim .modal.bp h3,
+body.no-anim .hw-go.is-guest { animation: none; }

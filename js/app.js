@@ -931,7 +931,8 @@
     if (show && img.getAttribute("src") !== photo) img.src = photo;
     btn.classList.toggle("has-avatar", !!show);
     btn.classList.toggle("signed", signedIn);
-    const hg = $("#homeGoText"); if (hg) hg.textContent = signedIn ? "進入遊戲庫" : "登入遊玩";   // 首頁主按鈕隨登入狀態切換
+    const hg = $("#homeGoText"); if (hg) hg.textContent = signedIn ? "進入遊戲庫" : "登入遊玩";
+    const hb = $("#homeGo"); if (hb) { hb.classList.toggle("is-guest", !signedIn); hb.classList.toggle("is-in", signedIn); }   // 首頁主按鈕隨登入狀態切換
   }
   $("#loginAvatar").addEventListener("error", () => $("#loginBtn").classList.remove("has-avatar"));   // 載入失敗 → 退回預設圖示
 
