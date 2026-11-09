@@ -726,20 +726,12 @@ body.no-anim .ann { animation: none; }
 button, .card, .nav-item, .chip { -webkit-user-select: none; user-select: none; }
 img { -webkit-user-drag: none; }
 
-/* ---------- 載入畫面 ---------- */
-.splash { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
-  background: linear-gradient(160deg, var(--bg-2), var(--bg) 70%); transition: opacity .45s ease, visibility .45s; }
+/* ---------- 載入畫面 ----------
+   外觀與動畫統一寫在 index.html 的行內樣式（先顯示、之後不再被覆蓋，避免載入中途背景 / 顏色突然跳動），這裡只負責淡出 */
+.splash { transition: opacity .45s ease, visibility .45s; }
 .splash.out { opacity: 0; visibility: hidden; pointer-events: none; }
-.splash-logo { width: 110px; height: 110px; stroke: var(--accent-2); stroke-width: 1.5; overflow: visible; filter: drop-shadow(0 0 14px var(--a3)); animation: slFloat 3.2s ease-in-out infinite, slGlow 2s ease-in-out infinite; }
-.splash-name { font-size: 32px; font-weight: 800; letter-spacing: .04em; color: #fff; }
-.splash-text { font-size: 26px; font-weight: 600; letter-spacing: .08em; color: var(--text-2); }
-.splash-spin { width: 44px; height: 44px; margin-top: 10px; border-radius: 50%; border: 4px solid var(--ov-2); border-top-color: var(--accent-2); animation: splashSpin .8s linear infinite; }
-@keyframes splashSpin { to { transform: rotate(360deg); } }
-.splash-text i { font-style: normal; animation: splashDot 1.2s infinite; opacity: .2; }
-.splash-text i:nth-child(2) { animation-delay: .2s; }
-.splash-text i:nth-child(3) { animation-delay: .4s; }
-@keyframes splashPulse { 50% { transform: scale(1.1); filter: drop-shadow(0 0 30px var(--accent-2)); } }
-@keyframes splashDot { 40% { opacity: 1; } }
+/* 載入期間先暫停介面進場動畫（避免和載入畫面搶資源而卡頓），載入畫面開始淡出時才一起播放 */
+body.booting .view *, body.booting .nav-item svg, body.booting .hw { animation: none !important; }
 
 
 #deleteModal .modal-actions { margin-top: 18px; }
@@ -1001,14 +993,6 @@ body.no-anim .hw-track { animation: none; }
 @keyframes hwBlink { 50% { opacity: .25; } }
 @keyframes hwShine { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0 0; } }
 body.no-anim .hw-logo, body.no-anim .hw-logo path, body.no-anim .hw-title { animation: none; }
-.splash-logo path { stroke-dasharray: 1; stroke-dashoffset: 0; animation: slDraw 2.4s ease-in-out infinite; }
-.splash-logo path:nth-child(2) { animation-delay: .25s; }
-.splash-logo .sl-dot { stroke-dasharray: none; stroke-width: 2.6; animation: slBlink 1s ease-in-out infinite; }
-.splash-logo .sl-dot.d2 { animation-delay: .5s; }
-@keyframes slDraw { 0% { stroke-dashoffset: 1; } 55%, 100% { stroke-dashoffset: 0; } }
-@keyframes slFloat { 50% { transform: translateY(-8px) rotate(-6deg); } }
-@keyframes slGlow { 50% { filter: drop-shadow(0 0 28px var(--accent-2)); } }
-@keyframes slBlink { 50% { opacity: .2; } }
 
 /* ---------- 介面進場動畫（只用 transform / opacity、播一次、不影響版面；關閉動畫效果或系統減少動態時自動停用） ---------- */
 @keyframes uiUp { from { opacity: 0; transform: translateY(14px); } }

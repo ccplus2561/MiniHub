@@ -59,8 +59,9 @@
     .then(d => {
       clearTimeout(t);
       if (!d || !Array.isArray(d.games) || !Array.isArray(d.notices)) return Promise.reject("bad data");
+      const same = cached && JSON.stringify({ games: d.games, notices: d.notices }) === JSON.stringify({ games: cached.games, notices: cached.notices });
       writeCache(d);
-      apply(d);
+      if (!same) apply(d);   // 內容和快取一樣就不重畫，避免整頁重新渲染 + 動畫重播造成卡頓
       ready();
     })
     .catch(() => ready());   // 失敗就安靜略過，不影響網站

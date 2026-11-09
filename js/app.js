@@ -1034,9 +1034,14 @@
   const splashT0 = Date.now();
   let splashDone = false;
   window.MiniHubSplashHide = quick => {
-    if (splashDone || !splash) return;
+    if (!splash) { document.body.classList.remove("booting"); return; }
+    if (splashDone) return;
     splashDone = true;
-    setTimeout(() => { splash.classList.add("out"); setTimeout(() => splash.remove(), 600); }, Math.max(0, (quick ? 350 : 800) - (Date.now() - splashT0)));
+    setTimeout(() => requestAnimationFrame(() => {   // 等畫面排版 / 繪製完成才開始淡出，並同時開始播放介面進場動畫
+      document.body.classList.remove("booting");
+      splash.classList.add("out");
+      setTimeout(() => splash.remove(), 600);
+    }), Math.max(0, (quick ? 350 : 800) - (Date.now() - splashT0)));
   };
   setTimeout(() => window.MiniHubSplashHide(), 3000);
 
