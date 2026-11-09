@@ -507,6 +507,7 @@
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
     if (!$("#deleteModal").hidden) { if (e.key === "Escape" && !deleting) closeModal("deleteModal"); return; }
     if (!$("#noticeModal").hidden) { if (e.key === "Escape" || e.key === "Enter") { closeModal("noticeModal"); e.preventDefault(); } return; }
+    if (!$("#helpModal").hidden) { if (e.key === "Escape") closeModal("helpModal"); return; }
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
@@ -600,7 +601,7 @@
   }
   function showLegal(tab) {
     if (consent) settleConsent(false);   // 看條款 = 先不遊玩（下一局的情況會回首頁）
-    ["loginModal", "acctModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "helpModal", "acctModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -720,6 +721,7 @@
     location.replace(location.pathname);                              // 重新載入（同時清掉網址上的參數 / 記憶體中的狀態）
   });
   const PNAME = { google: "Google", github: "GitHub" };
+  $("#helpOpen").addEventListener("click", () => openModal("helpModal"));
   const agreeChk = $("#loginAgreeChk");
   function needAgree() {   // 未勾選同意：禁止登入（3 種方式都一樣），提示並抖動勾選列
     if (agreeChk.checked) return false;
