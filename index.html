@@ -343,25 +343,41 @@
               </ul>
             </div>
             <div class="help-pane" id="help-display">
-              <div class="help-title">顯示</div><p>顯示模式：自動會依螢幕寬度與裝置切換電腦版或手機版，也可以手動指定；顯示模式不會保存。</p><p>手機版強制直式：使用手機時橫放會出現「請將手機轉為直式」的提示並暫停遊戲；Android 進入全螢幕後會直接鎖定直向（iPhone 不支援鎖定，只會顯示提示）。</p><p>圖卡大小：調整遊戲庫的卡片尺寸（含圖示與文字）（手機版自動縮小）。</p><p>動畫效果：關閉後減少轉場與停留動畫。</p><p>遊戲全螢幕：開始遊戲時自動進入全螢幕。</p><p>登入後，動畫效果、遊戲全螢幕與圖卡大小會同步到帳號（電腦版與手機版的圖卡大小各自保存）；顯示模式不保存，每次開啟都是「自動」。</p>
+              <div class="help-title">顯示</div>
+              <ul class="help-list">
+                <li><b>顯示模式</b><span>自動切換電腦版或手機版，也可手動指定；不會保存</span></li>
+                <li><b>手機版強制直式</b><span>橫放時顯示提示並暫停遊戲；iPhone 僅提示，無法鎖定</span></li>
+                <li><b>圖卡大小</b><span>調整遊戲庫卡片尺寸；手機版自動縮小</span></li>
+                <li><b>動畫效果</b><span>關閉後減少轉場與停留動畫</span></li>
+                <li><b>遊戲全螢幕</b><span>開始遊戲時自動進入全螢幕</span></li>
+                <li><b>同步</b><span>登入後，除顯示模式外都會同步到帳號</span></li>
+              </ul>
             </div>
             <div class="help-pane" id="help-audio">
-              <div class="help-title">音效</div><p>全部靜音：關閉所有聲音。</p><p>音效：按鈕、切換、進出遊戲時的提示音，音量刻意調低、音色柔和。</p><p>音樂：預留給之後的背景音樂。</p><p>登入後，這些設定會同步到帳號。</p>
+              <div class="help-title">音效</div>
+              <ul class="help-list">
+                <li><b>全部靜音</b><span>關閉所有聲音</span></li>
+                <li><b>音效</b><span>按鈕、切換、進出遊戲的提示音，音量低、音色柔和</span></li>
+                <li><b>音樂</b><span>預留給之後的背景音樂</span></li>
+                <li><b>同步</b><span>登入後，設定會同步到帳號</span></li>
+              </ul>
             </div>
             <div class="help-pane" id="help-controls">
               <div id="kbdPanel">
               <div class="help-title">鍵盤快捷鍵</div>
-              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>僅適用於 MiniHub 大廳；遊戲內的快捷鍵由各遊戲開發者自行設計。登入後，操作設定會同步到帳號；手機版固定關閉鍵盤快捷鍵，不影響電腦版的設定。</p></div>
-              <div class="set-group">
-                <div class="set-row"><div class="set-text"><b>上</b><small>切換到上一個分頁</small></div><span class="keys"><kbd>↑</kbd><kbd>W</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>下</b><small>切換到下一個分頁</small></div><span class="keys"><kbd>↓</kbd><kbd>S</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>左</b><small>選擇上一款遊戲；已在最左邊則回到分頁</small></div><span class="keys"><kbd>←</kbd><kbd>A</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>右</b><small>選擇下一款遊戲；在分頁時進入中間內容</small></div><span class="keys"><kbd>→</kbd><kbd>D</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>確認</b><small>進入內容 / 開始遊戲 / 啟用項目</small></div><span class="keys"><kbd>Enter</kbd></span></div>
-                <div class="set-row"><div class="set-text"><b>返回</b><small>從中間內容回到最左側分頁</small></div><span class="keys"><kbd>Esc</kbd></span></div>
+              <ul class="help-list">
+                <li><b>適用範圍</b><span>僅限 MiniHub 大廳，遊戲內快捷鍵由各遊戲決定</span></li>
+                <li><b>手機版</b><span>固定關閉，不影響電腦版設定</span></li>
+                <li><b>同步</b><span>登入後，操作設定會同步到帳號</span></li>
+                <li><b>上（↑ / W）</b><span>切換到上一個分頁</span></li>
+                <li><b>下（↓ / S）</b><span>切換到下一個分頁</span></li>
+                <li><b>左（← / A）</b><span>選擇上一款遊戲；最左邊則回到分頁</span></li>
+                <li><b>右（→ / D）</b><span>選擇下一款遊戲；在分頁時進入內容</span></li>
+                <li><b>確認（Enter）</b><span>進入內容 / 開始遊戲 / 啟用項目</span></li>
+                <li><b>返回（Esc）</b><span>回到最左側分頁</span></li>
+              </ul>
               </div>
-              </div>
-              <div class="notice" id="kbdOff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>鍵盤快捷鍵已關閉。要使用鍵盤操作，請先開啟左側的「允許鍵盤快捷鍵」。</p></div>
+              <div class="notice" id="kbdOff" hidden><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>鍵盤快捷鍵已關閉，請先開啟左側的「允許鍵盤快捷鍵」。</p></div>
             </div>
             <div class="help-pane" id="help-privacy">
               <div class="help-title">隱私</div>
@@ -373,10 +389,20 @@
               </ul>
             </div>
             <div class="help-pane" id="help-language">
-              <div class="help-title">語言</div><p>目前僅提供繁體中文，其他語言之後再開放。</p><p>登入後，語言設定會同步到帳號。</p>
+              <div class="help-title">語言</div>
+              <ul class="help-list">
+                <li><b>目前語言</b><span>僅提供繁體中文，其他語言之後開放</span></li>
+                <li><b>同步</b><span>登入後，語言設定會同步到帳號</span></li>
+              </ul>
             </div>
             <div class="help-pane" id="help-status">
-              <div class="help-title">伺服器狀態</div><p>Firestore 伺服器：實際向資料庫讀取一次，收到回應就代表連得上，並顯示來回時間；每檢查一次約計 1 次讀取。<b>未登入的訪客不會連線到伺服器、也不同步資料</b>，登入後才會連線並可檢查。</p><p>本次使用量：只統計這個網頁開啟期間、這台裝置的讀寫次數（估算），重新整理會歸零，不是整個專案的總用量。</p><p>專案的計費指標（所有玩家合計）只能在 Firebase 主控台 &gt; Firestore &gt; 用量 查看，網頁端無法取得。</p>
+              <div class="help-title">伺服器狀態</div>
+              <ul class="help-list">
+                <li><b>Firestore 伺服器</b><span>讀取一次資料庫，顯示來回時間；每次檢查約計 1 次讀取</span></li>
+                <li><b>訪客</b><span>不會連線伺服器，登入後才可檢查</span></li>
+                <li><b>本次使用量</b><span>僅統計此網頁、此裝置的讀寫次數（估算），重新整理會歸零</span></li>
+                <li><b>專案總用量</b><span>只能在 Firebase 主控台 &gt; Firestore &gt; 用量 查看</span></li>
+              </ul>
             </div>
           </aside>
         </div>
