@@ -762,6 +762,7 @@
   /* ---------- 帳號密碼登入 / 註冊（不需電子郵件；忘記密碼無法找回） ---------- */
   let acctMode = "login", acctBusy = false;
   const ACCT_MIN = 3, ACCT_MAX = 20, PW_MIN = 8;
+  const ASCII_OK = /^[\x21-\x7E]+$/;   // 只允許英文、數字、半形符號（不含空白、中文、全形、表情符號）
   const aName = $("#acctName"), aPw = $("#acctPw"), aPw2 = $("#acctPw2"), aOk = $("#acctOk");
   function acctErr(msg) { const el = $("#acctErr"); el.hidden = !msg; el.textContent = msg || ""; }
   function paintAcct() {
@@ -799,8 +800,9 @@
     const len = Array.from(name.trim()).length;
     if (!name.trim()) return acctErr("請輸入帳號");
     if (reg) {
-      if (name !== name.trim() || /[\s\u0000-\u001f\u007f]/.test(name)) return acctErr("帳號不可包含空白或控制字元");
-      if (len < ACCT_MIN || len > ACCT_MAX) return acctErr("帳號需為 " + ACCT_MIN + "–" + ACCT_MAX + " 個字");
+      if (!ASCII_OK.test(name)) return acctErr("帳號只能使用英文、數字與半形符號（不可有空白、中文、全形或特殊符號）");
+      if (len < ACCT_MIN || len > ACCT_MAX) return acctErr("帳號需為 " + ACCT_MIN + "–" + ACCT_MAX + " 個字元");
+      if (!ASCII_OK.test(pw)) return acctErr("密碼只能使用英文、數字與半形符號（不可有空白、中文、全形或特殊符號）");
       if (pw.length < PW_MIN) return acctErr("密碼至少 " + PW_MIN + " 個字元");
       if (pw !== aPw2.value) return acctErr("兩次輸入的密碼不一致");
     } else if (!pw) return acctErr("請輸入密碼");

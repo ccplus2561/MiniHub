@@ -335,7 +335,7 @@ window.MiniHubAuth = {
   // 帳號密碼：註冊 / 登入（帳號重複會丟出 code = "account-taken"）
   signUpPw: async (name, pw) => {
     const n = Array.from(acctKey(name)).length;
-    if (n < 3 || n > 20 || typeof pw !== "string" || pw.length < 8 || pw.length > 64) throw bad("invalid-input");
+    if (n < 3 || n > 20 || typeof pw !== "string" || pw.length < 8 || pw.length > 64 || !/^[\x21-\x7E]+$/.test(acctKey(name)) || !/^[\x21-\x7E]+$/.test(pw)) throw bad("invalid-input");
     const f = await load();
     regName = String(name).trim();
     try {
