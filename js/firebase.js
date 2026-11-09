@@ -48,13 +48,23 @@ function credFromError(f, key, e) {
 let pending = null;   // 等待連結的憑證（只存在記憶體）
 
 /* ---------- 帳號密碼（不需要電子郵件、不驗證、無法找回密碼） ----------
-   Firebase 的「電子郵件/密碼」一定要 email 格式 → 把帳號名稱（NFKC + 小寫）做 SHA-256，組成「不會寄信的內部 email」。
-   Firebase 保證 email 不重複 = 帳號名稱不重複（不分大小寫）。若 Firebase 拒絕此網域（auth/invalid-email），只需改 ACCT_DOMAIN。 */
-const ACCT_DOMAIN = "@acct.minihub.invalid";
+   Firebase 的「電子郵件/密碼」一定要 email 格式 → 把帳號名稱（NFKC + 小寫）轉成「不會寄信的內部 email」，Authentication 後台可直接辨識：
+     英數與 - 原樣保留：Alice-01 → alice-01@minihub.github
+     其他字元（中文、符號、底線）→ _編碼_：小明 → _1a8z__1n5c_@minihub.github（編碼 = Unicode 碼位的 36 進位）
+     若編碼後超過 64 字元（極少見的長中文名）→ _h_ + 雜湊，仍保證不重複。
+   Firebase 保證 email 不重複 = 帳號名稱不重複（不分大小寫）。注意：更換 ACCT_DOMAIN 或編碼規則，舊帳號會無法登入。
+   若 Firebase 拒絕此網域（auth/invalid-email），只需改 ACCT_DOMAIN。 */
+const ACCT_DOMAIN = "@minihub.github";
 const acctKey = s => String(s || "").normalize("NFKC").trim().toLowerCase();
 async function acctEmail(name) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("minihub:" + acctKey(name)));
-  return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("") + ACCT_DOMAIN;
+  const key = acctKey(name);
+  let local = "";
+  for (const ch of key) local += /^[a-z0-9-]$/.test(ch) ? ch : "_" + ch.codePointAt(0).toString(36) + "_";
+  if (!local || local.length > 64 || /^-|-$/.test(local)) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("minihub:" + key));
+    local = "_h_" + Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("").slice(0, 40);
+  }
+  return local + ACCT_DOMAIN;
 }
 const isPwUser = u => !!u && (u.providerData || []).some(p => p.providerId === "password");
 let regName = "";   // 剛註冊時，displayName 還沒寫入前先用這個顯示帳號名稱
