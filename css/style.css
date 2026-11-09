@@ -1378,3 +1378,33 @@ body.m .bp-orb { opacity: .35; }
 
 body.no-anim .bp-orb, body.no-anim .modal.bp .modal-logo, body.no-anim .modal.bp .modal-logo::before, body.no-anim .modal.bp h3,
 body.no-anim .hw-go.is-guest { animation: none; }
+
+/* ===== 登入 MiniHub：帳密第一行、Google / GitHub 第二行；背景同載入畫面；不出現捲軸 ===== */
+.modal.bp { background: radial-gradient(ellipse at 50% 40%, #16222f 0, #0e141b 65%); overflow: hidden; }
+.modal.bp .bp-orb { display: none; }
+.modal.bp > .splash-bg { z-index: 0; }
+.modal.bp .modal-box { max-height: none; overflow: visible; }
+.login-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.modal.bp .login-row .btn-google { margin-top: 0; padding: 0 14px; gap: 12px; justify-content: center; font-size: 21px; }
+.modal.bp .login-row .btn-google::after { display: none; }
+.modal.bp .login-row .btn-google > span { flex: none; margin-right: 0; }
+body.m .modal.bp .login-row .btn-google { font-size: 16px; gap: 8px; padding: 0 8px; }
+body.m .modal.bp .login-row { gap: 10px; }
+/* 矮螢幕（橫向手機等）縮小間距，確保整個視窗放得下 */
+@media (max-height: 760px) {
+  .modal.bp .modal-logo { width: 72px; height: 72px; margin-bottom: 10px; }
+  .modal.bp .modal-logo svg { width: 42px; height: 42px; }
+  .modal.bp h3 { font-size: 30px; }
+  .modal.bp .modal-sub { font-size: 15px; padding-bottom: 12px; margin-bottom: 0; }
+  .modal.bp .btn-google { height: 58px; margin-top: 18px; font-size: 20px; }
+  .modal.bp .login-row .btn-google { margin-top: 0; }
+  .modal.bp .btn-ghost { height: 50px; margin-top: 12px; font-size: 18px; }
+  .modal.bp .modal-fine { margin-top: 12px; padding-top: 10px; }
+}
+@media (max-height: 560px) {
+  .modal.bp .modal-logo, .modal.bp .modal-sub { display: none; }
+  .modal.bp h3 { font-size: 24px; }
+  .modal.bp .btn-google { height: 48px; margin-top: 12px; font-size: 17px; }
+  .modal.bp .btn-ghost { height: 42px; margin-top: 8px; font-size: 16px; }
+  .modal.bp .modal-fine { margin-top: 8px; padding-top: 8px; }
+}
