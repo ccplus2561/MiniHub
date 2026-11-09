@@ -67,6 +67,7 @@ async function acctEmail(name) {
   return local + ACCT_DOMAIN;
 }
 const isPwUser = u => !!u && (u.providerData || []).some(p => p.providerId === "password");
+let gate = null;   // 帳號密碼登入時，等「大小寫是否與註冊時一致」檢查完才讓 onAuthStateChanged 繼續
 let regName = "";   // 剛註冊時，displayName 還沒寫入前先用這個顯示帳號名稱
 const bad = code => Object.assign(new Error(code), { code });
 const load = async () => { try { return await boot(); } catch (e) { throw Object.assign(new Error("sdk-load-failed"), { code: "sdk-load-failed" }); } };
@@ -85,6 +86,8 @@ function boot() {
     F = { auth, db, ...S, ...FS };
     S.onAuthStateChanged(auth, async user => {
       if (!user) return emit({ user: null });
+      const g = gate;
+      if (g && !(await g)) return;   // 大小寫不符：已在 signInPw 內登出，這裡不處理
       if (!user.email) {   // 帳號必須有電子郵件（例如 GitHub 設為私人且無公開信箱時會沒有）
         emit({ user: null });
         try { await S.signOut(auth); } catch (e) {}
@@ -351,7 +354,17 @@ window.MiniHubAuth = {
   signInPw: async (name, pw) => {
     const f = await load();
     regName = "";
-    return f.signInWithEmailAndPassword(f.auth, await acctEmail(name), pw);
+    const email = await acctEmail(name);
+    let release; gate = new Promise(r => { release = r; });
+    let ok = false;
+    try {
+      const r = await f.signInWithEmailAndPassword(f.auth, email, pw);
+      // 帳號大小寫必須和註冊時完全一致（Firebase 內部不分大小寫，所以用註冊時存的 displayName 比對）
+      const reg = r.user.displayName;
+      if (reg && reg !== String(name).trim()) { release(false); try { await f.signOut(f.auth); } catch (e) {} throw bad("auth/invalid-credential"); }
+      ok = true; release(true);
+      return r;
+    } finally { if (!ok) release(false); gate = null; }
   },
   hasPending: () => !!pending,
   clearPending: () => { pending = null; },

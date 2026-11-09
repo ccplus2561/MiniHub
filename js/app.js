@@ -784,7 +784,7 @@
   [aName, aPw, aPw2].forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); aOk.click(); } }));
   function acctFail(e) {
     const c = (e && e.code) || "";
-    if (c === "account-taken") return "這個帳號已經有人使用，請換一個";
+    if (c === "account-taken") return "此帳號名稱無法使用，請重新取一個新的帳號名稱";
     if (/invalid-credential|invalid-login|user-not-found|wrong-password/.test(c)) return "帳號或密碼錯誤";
     if (c === "auth/too-many-requests") return "嘗試次數過多，請稍後再試";
     if (c === "auth/operation-not-allowed") return "尚未在 Firebase 後台啟用「電子郵件/密碼」登入方式（Authentication > Sign-in method）";
