@@ -811,7 +811,10 @@
     const reg = acctMode === "register";
     $("#acctTitle").textContent = reg ? "建立新帳號" : "帳號密碼登入";
     $("span", aOk).textContent = reg ? "建立並登入" : "登入";
-    $("#acctSwitch").textContent = reg ? "已有帳號？改為登入" : "沒有帳號？建立新帳號";
+    $("#acctSwitch .sc-q").textContent = reg ? "已經有帳號？" : "沒有帳號？";
+    $("#acctSwitch .sc-a").textContent = reg ? "改為登入" : "建立新帳號";
+    $("#acctSub").textContent = reg ? "建立專屬帳號，不需要電子郵件" : "輸入帳號與密碼，同步你的玩家資料";
+    $("#acctModal .auth-box").dataset.mode = acctMode;
     $("#acctPw2Box").hidden = !reg; $("#acctNameHint").hidden = !reg;
     aPw.autocomplete = reg ? "new-password" : "current-password";
     acctErr("");
@@ -884,28 +887,28 @@
     if (BANNED.some(w => v.toLowerCase().includes(w))) return "名稱含有保留字，請換一個";
     return "ok";
   }
-  /* 手機版：分 3 步（名稱 → UID → 隱私）；電腦版維持單頁 */
+  /* 分 3 步（名稱 → UID → 隱私），手機與電腦版相同 */
   let pStep = 1;
   const isMob = () => document.body.classList.contains("m");
   function showErr(msg) { const el = $("#profErr"); el.hidden = !msg; el.textContent = msg || ""; }
   function updateProf() {
-    const m = isMob(), last = pStep === 3, ok = checkName($("#profName").value) === "ok";
+    const last = pStep === 3, ok = checkName($("#profName").value) === "ok";
     $$("#profileModal .pstep").forEach(x => x.classList.toggle("on", Number(x.dataset.step) === pStep));
-    $$("#profDots i").forEach((d, i) => d.classList.toggle("on", i === pStep - 1));
-    $("#profCancel").hidden = m && pStep > 1;
-    $("#profBack").hidden = !m || pStep === 1;
-    $("#profNext").hidden = !m || last;
-    $("#profOk").hidden = m && !last;
+    $$("#profDots li").forEach((d, i) => { d.classList.toggle("on", i === pStep - 1); d.classList.toggle("done", i < pStep - 1); });
+    $("#profCancel").hidden = pStep > 1;
+    $("#profBack").hidden = pStep === 1;
+    $("#profNext").hidden = last;
+    $("#profOk").hidden = !last;
     $("#profNext").disabled = pStep === 1 ? !ok : picking;
     $("#profOk").disabled = !ok || picking;
   }
-  function goStep(n) { pStep = Math.max(1, Math.min(3, n)); showErr(""); updateProf(); if (pStep === 1) setTimeout(() => $("#profName").focus(), 60); }
+  function goStep(n) { const to = Math.max(1, Math.min(3, n)); $("#profileModal .auth-box").dataset.dir = to < pStep ? "back" : "fwd"; pStep = to; showErr(""); updateProf(); if (pStep === 1) setTimeout(() => $("#profName").focus(), 60); }
   $("#profNext").addEventListener("click", () => { if (!$("#profNext").disabled) { sfx("move"); goStep(pStep + 1); } });
   $("#profBack").addEventListener("click", () => { sfx("move"); goStep(pStep - 1); });
-  $("#profName").addEventListener("keydown", e => { if (e.key === "Enter" && isMob() && !$("#profNext").hidden && !$("#profNext").disabled) { e.preventDefault(); $("#profNext").click(); } });
+  $("#profName").addEventListener("keydown", e => { if (e.key === "Enter" && !$("#profNext").hidden && !$("#profNext").disabled) { e.preventDefault(); $("#profNext").click(); } });
   window.addEventListener("resize", () => { if (!$("#profileModal").hidden) updateProf(); });
   function startProfile(user) {
-    pEmail = user.email; pStep = 1; showErr("");
+    pEmail = user.email; pStep = 1; showErr(""); $("#profileModal .auth-box").dataset.dir = "fwd";
     $("#profEmailLabel").textContent = user.account ? "登入帳號" : "電子郵件";
     $("#profEmail").textContent = user.account || user.email;
     $("#profName").value = "";

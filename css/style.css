@@ -844,20 +844,9 @@ body.m .toast { bottom: calc(78px + env(safe-area-inset-bottom)); max-width: cal
 body.m .m-only { display: flex !important; }
 
 /* ---------- 建立資料：手機版分步驟 ---------- */
-.pdots { display: none; }
 .prof-err { margin-top: 12px; padding: 10px 12px; border-radius: 10px; font-size: 14px; line-height: 1.5; color: #ffd9de; background: rgba(229, 84, 106, .18); border: 1.5px solid rgba(229, 84, 106, .55); }
 .prof-err[hidden] { display: none; }
-#profileModal .modal-actions { margin-top: 18px; }
 #profileModal .modal-actions [hidden] { display: none; }
-body.m #profileModal .pdots { display: flex; justify-content: center; gap: 8px; margin: 4px 0 6px; }
-body.m #profileModal .pdots i { width: 8px; height: 8px; border-radius: 50%; background: var(--line-2); transition: width .25s, background .25s; }
-body.m #profileModal .pdots i.on { width: 24px; border-radius: 999px; background: var(--accent-2); }
-body.m #profileModal .pstep:not(.on) { display: none; }
-body.m #profileModal .pstep.on { animation: mFade .25s; }
-body.m #profileModal .modal-box { max-height: calc(100dvh - 28px); }
-body.m #profileModal .modal-logo { width: 52px; height: 52px; margin-bottom: 10px; }
-body.m #profileModal h3 { font-size: 21px; }
-body.m #profileModal .field-label:first-child { margin-top: 10px; }
 
 /* 登入視窗：服務條款連結可用鍵盤選取 */
 .legal-link:focus-visible { outline: 3px solid #fff; outline-offset: 4px; border-radius: 4px; color: #fff; }
@@ -1064,8 +1053,6 @@ body.no-anim .rot-guard svg { animation: none; }
 
 /* 帳號密碼登入 */
 .link-btn { background: none; border: 0; padding: 6px 4px; color: var(--accent-2); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: underline; }
-#acctModal .modal-actions { margin-top: 18px; }
-#acctModal .modal-fine { text-align: center; margin-top: 10px; }
 #acctModal .notice.warn { margin: 14px 0 0; }
 #acctModal [hidden], #delPwBox[hidden] { display: none; }
 
@@ -1577,3 +1564,140 @@ body.m .hw-perk { padding: 0 12px; }
 .pk-card b { font-size: 18px; font-weight: 800; color: var(--text); }
 @media (max-width: 420px) { .pk-grid { gap: 10px; } .pk-card b { font-size: 15.5px; } #perkModal .pk-card .pi { width: 48px; height: 48px; } #perkModal .pk-card .pi svg { width: 26px; height: 26px; } }
 
+
+
+/* ======================================================================
+   帳號密碼登入 / 建立資料視窗 — 沿用公告視窗質感：流動彩光外框、頂部光暈標題列、浮動光球與粒子
+   ====================================================================== */
+@keyframes authRise { 0% { transform: translateY(0) scale(.6); opacity: 0; } 15% { opacity: .85; } 100% { transform: translateY(-460px) scale(1); opacity: 0; } }
+@keyframes authFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes authIcoRing { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--au2) 55%, transparent), 0 0 22px color-mix(in srgb, var(--au2) 35%, transparent); }
+  50% { box-shadow: 0 0 0 9px transparent, 0 0 30px color-mix(in srgb, var(--au2) 55%, transparent); } }
+@keyframes ctaGlow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-2) 50%, transparent), inset 0 1px 0 rgba(255, 255, 255, .18); }
+  50% { box-shadow: 0 0 0 8px transparent, inset 0 1px 0 rgba(255, 255, 255, .18); } }
+@keyframes ctaArrow { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(5px); } }
+@keyframes pstepFwd { from { opacity: 0; transform: translateX(26px); } }
+@keyframes pstepBack { from { opacity: 0; transform: translateX(-26px); } }
+@keyframes stepPulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--au2) 60%, transparent); } 50% { box-shadow: 0 0 0 7px transparent; } }
+
+#acctModal, #profileModal {
+  background: radial-gradient(760px 520px at 50% 28%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 70%), rgba(5, 9, 14, .74); }
+
+.modal-box.auth-box, body.m .modal-box.auth-box {
+  --au1: var(--accent); --au2: var(--accent-2);
+  width: min(460px, 100%); padding: 0; display: flex; flex-direction: column; overflow: hidden; text-align: left;
+  max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); border: 0; border-radius: 22px;
+  background: linear-gradient(180deg, #213249 0%, #172435 55%, #131e2c 100%);
+  box-shadow: 0 0 0 1px rgba(5, 9, 14, .9), 0 28px 70px rgba(0, 0, 0, .62), 0 0 64px color-mix(in srgb, var(--au1) 20%, transparent); }
+.modal-box.auth-box[data-mode="register"], body.m .modal-box.auth-box[data-mode="register"] { --au1: #78b628; --au2: #a6e04a; }
+.auth-box.prof-box { width: min(640px, 100%); }
+/* 流動彩光外框 */
+.auth-box::after { content: ""; position: absolute; inset: 0; z-index: 3; padding: 1.5px; border-radius: inherit; pointer-events: none;
+  background: conic-gradient(from var(--ang), color-mix(in srgb, var(--au2) 92%, #fff), color-mix(in srgb, var(--au1) 30%, transparent) 22%,
+    rgba(255, 255, 255, .06) 45%, color-mix(in srgb, var(--au1) 30%, transparent) 70%, color-mix(in srgb, var(--au2) 92%, #fff));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude;
+  animation: spinAng 7s linear infinite; transition: background .4s; }
+
+/* 背景光球與粒子 */
+.auth-fx { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
+.auth-orb { position: absolute; border-radius: 50%; filter: blur(46px); opacity: .5; transition: background .5s; }
+.auth-orb.a { width: 240px; height: 240px; top: -90px; right: -70px; background: var(--au1); animation: orbA 9s ease-in-out infinite; }
+.auth-orb.b { width: 200px; height: 200px; bottom: -80px; left: -70px; background: var(--au2); opacity: .32; animation: orbA 11s ease-in-out -4s infinite reverse; }
+.auth-p { position: absolute; left: var(--x); bottom: -10px; width: var(--s); height: var(--s); border-radius: 50%; background: var(--au2);
+  box-shadow: 0 0 8px var(--au2); opacity: 0; animation: authRise var(--d) linear var(--t) infinite; }
+.auth-top, .auth-body, .auth-foot, .pstepper { position: relative; z-index: 1; }
+
+/* 標題列 */
+.auth-top { display: flex; align-items: center; gap: 16px; padding: 24px 28px 20px;
+  background: radial-gradient(520px 140px at 12% 0%, color-mix(in srgb, var(--au1) 30%, transparent), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, .05), transparent); }
+.auth-top::after, .auth-foot::before { content: ""; position: absolute; left: 20px; right: 20px; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--au2) 70%, transparent) 20%, rgba(255, 255, 255, .28) 50%, color-mix(in srgb, var(--au2) 70%, transparent) 80%, transparent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--au1) 55%, transparent); }
+.auth-top::after { bottom: 0; } .auth-foot::before { top: 0; }
+.auth-ico { flex: none; width: 56px; height: 56px; display: grid; place-items: center; border-radius: 16px; color: var(--au2);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--au1) 35%, transparent), color-mix(in srgb, var(--au1) 12%, transparent));
+  border: 1.5px solid rgba(255, 255, 255, .35); animation: authIcoRing 3s ease-in-out infinite; }
+.auth-ico svg { width: 30px; height: 30px; animation: authFloat 3.2s ease-in-out infinite; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--au2) 60%, transparent)); }
+.auth-top h3 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: .02em; text-align: left;
+  background: linear-gradient(90deg, #fff, var(--au2) 70%, #fff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.auth-top p { margin-top: 2px; font-size: 15px; color: var(--muted); }
+.auth-top-text { min-width: 0; }
+
+/* 內容與底部 */
+.auth-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 28px 14px; scrollbar-width: thin; scrollbar-color: var(--accent) transparent; overscroll-behavior: contain; }
+.auth-body .field-label:first-child, .auth-body .pstep > .field-label:first-of-type { margin-top: 14px; }
+.auth-foot { position: relative; padding: 16px 28px 20px; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .24)); }
+.auth-foot .modal-fine { text-align: center; margin-top: 12px; font-size: 13px; }
+.auth-foot .modal-actions [hidden], .auth-foot [hidden] { display: none; }
+.auth-box .field { background: rgba(8, 14, 22, .5); box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3); }
+.auth-box .field:focus-within { box-shadow: inset 0 2px 8px rgba(0, 0, 0, .3), 0 0 0 4px color-mix(in srgb, var(--au1) 30%, transparent), 0 0 20px color-mix(in srgb, var(--au1) 35%, transparent); border-color: var(--au2); }
+.auth-box .field .f-ico { flex: none; width: 20px; height: 20px; color: var(--muted); transition: color .2s, transform .25s; }
+.auth-box .field:focus-within .f-ico { color: var(--au2); transform: scale(1.12); }
+#acctPw2Box:not([hidden]) { animation: uiUp .4s cubic-bezier(.2, .8, .2, 1); }
+#acctNameHint:not([hidden]) { animation: uiUp .35s cubic-bezier(.2, .8, .2, 1); }
+
+/* 「沒有帳號？建立新帳號」：醒目的行動按鈕 */
+.switch-cta { position: relative; isolation: isolate; overflow: hidden; width: 100%; height: 52px; margin-top: 14px; padding: 0 18px;
+  display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 14px; cursor: pointer; font-size: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--au1) 34%, transparent), color-mix(in srgb, var(--au2) 12%, transparent));
+  border: 1.5px solid color-mix(in srgb, var(--au2) 85%, transparent); color: #fff; animation: ctaGlow 2.6s ease-in-out infinite;
+  transition: transform .22s var(--ease), background .25s, border-color .25s, filter .2s; }
+.switch-cta .sc-q { font-weight: 600; color: var(--text-2); }
+.switch-cta .sc-a { padding: 5px 14px; border-radius: 999px; font-weight: 800; letter-spacing: .03em; color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--au2) 80%, var(--au1)), var(--au1)); box-shadow: 0 3px 10px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .35); }
+.auth-box[data-mode="register"] .switch-cta .sc-a { color: #12200a; }
+.switch-cta svg { width: 20px; height: 20px; animation: ctaArrow 1.6s ease-in-out infinite; }
+.switch-cta::after { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: 0; width: 40%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .22), transparent); animation: perkSweep 4s ease-in-out infinite; }
+.switch-cta:hover, .switch-cta:focus-visible { transform: translateY(-2px); filter: brightness(1.12); animation-play-state: paused; }
+.switch-cta:active { transform: scale(.97); transition-duration: .08s; }
+.switch-cta:disabled { opacity: .5; pointer-events: none; }
+
+/* 進場動畫：由上而下依序浮現 */
+.modal:not([hidden]) .auth-top { animation: uiUp .45s cubic-bezier(.2, .8, .2, 1) 60ms backwards; }
+.modal:not([hidden]) .pstepper { animation: uiUp .45s cubic-bezier(.2, .8, .2, 1) 120ms backwards; }
+.modal:not([hidden]) .auth-body { animation: uiUp .45s cubic-bezier(.2, .8, .2, 1) 140ms backwards; }
+.modal:not([hidden]) .auth-foot { animation: uiUp .45s cubic-bezier(.2, .8, .2, 1) 220ms backwards; }
+
+/* 建立資料：分頁步驟列（手機 / 電腦共用） */
+.pstepper { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 18px 28px 6px; counter-reset: s; }
+.pstepper li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--muted); opacity: .7; transition: opacity .3s, color .3s; }
+.pstepper li i { position: relative; z-index: 1; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; font-style: normal; font-size: 15px; font-weight: 800;
+  background: #1a2a3c; border: 2px solid var(--line-2); transition: background .3s, border-color .3s, color .3s, transform .3s var(--ease); }
+.pstepper li + li::before, .pstepper li + li::after { content: ""; position: absolute; top: 16px; right: 50%; width: 100%; height: 3px; border-radius: 3px; }
+.pstepper li + li::before { background: var(--line-2); }
+.pstepper li + li::after { background: linear-gradient(90deg, var(--au1), var(--au2)); transform: scaleX(0); transform-origin: left; transition: transform .45s ease; box-shadow: 0 0 10px var(--au1); }
+.pstepper li.on, .pstepper li.done { opacity: 1; color: var(--text); }
+.pstepper li.on::after, .pstepper li.done::after { transform: scaleX(1); }
+.pstepper li.on i { background: linear-gradient(150deg, var(--au2), var(--au1)); border-color: #fff; color: #12200a; transform: scale(1.12); animation: stepPulse 2s ease-in-out infinite; }
+.pstepper li.done i { background: color-mix(in srgb, var(--au1) 40%, #1a2a3c); border-color: var(--au2); color: transparent; }
+.pstepper li.done i::after { content: ""; position: absolute; width: 6px; height: 12px; margin-top: -2px; border: solid #fff; border-width: 0 3px 3px 0; transform: rotate(45deg); }
+
+.pstep { display: none; }
+.pstep.on { display: block; animation: pstepFwd .35s cubic-bezier(.2, .8, .2, 1); }
+.prof-box[data-dir="back"] .pstep.on { animation-name: pstepBack; }
+.pstep-head { display: flex; flex-direction: column; gap: 3px; margin: 14px 0 2px; padding: 10px 14px; border-radius: 12px; border-left: 4px solid var(--au2);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--au1) 18%, transparent), transparent); }
+.pstep-head b { font-size: 18px; } .pstep-head small { font-size: 14px; color: var(--muted); }
+.pstep > .field-label:first-of-type { margin-top: 14px; }
+.prof-box .auth-foot .modal-actions { justify-content: flex-end; }
+.prof-box .auth-foot .modal-actions > * { flex: 0 1 190px; }
+.prof-box .auth-body { min-height: 330px; }
+.prof-box .pub-row { margin: 10px 0 0; padding: 14px 16px; background: rgba(8, 14, 22, .4); border: 1px solid rgba(255, 255, 255, .16); box-shadow: inset 0 2px 10px rgba(0, 0, 0, .22); }
+.prof-box .field.uid b { font-size: 26px; }
+
+@media (max-width: 560px) {
+  .auth-top { padding: 18px 18px 16px; gap: 12px; } .auth-ico { width: 46px; height: 46px; border-radius: 14px; } .auth-ico svg { width: 25px; height: 25px; }
+  .auth-top h3 { font-size: 22px; } .auth-top p { font-size: 13px; }
+  .auth-body { padding: 2px 18px 12px; } .auth-foot { padding: 14px 18px 16px; } .auth-top::after, .auth-foot::before { left: 12px; right: 12px; }
+  .pstepper { padding: 14px 18px 4px; } .pstepper li { font-size: 12px; } .prof-box .auth-body { min-height: 0; }
+  .prof-box .auth-foot .modal-actions > * { flex: 1; }
+  .switch-cta { height: 50px; font-size: 15px; padding: 0 12px; }
+}
+body.m .auth-top { padding: 18px 18px 16px; } body.m .auth-body { padding: 2px 18px 12px; } body.m .auth-foot { padding: 14px 18px 16px; }
+body.m .prof-box .auth-body { min-height: 0; } body.m .prof-box .auth-foot .modal-actions > * { flex: 1; }
+@media (max-height: 640px) { .auth-top { padding: 12px 18px; } .auth-ico { width: 40px; height: 40px; } .pstepper { padding-top: 8px; } .pstep-head { display: none; } }
+body.no-anim .auth-box::after, body.no-anim .auth-orb, body.no-anim .auth-p, body.no-anim .auth-ico, body.no-anim .auth-ico svg,
+body.no-anim .switch-cta, body.no-anim .switch-cta::after, body.no-anim .switch-cta svg, body.no-anim .pstepper li i { animation: none !important; }
+body.no-anim .auth-p { display: none; }
