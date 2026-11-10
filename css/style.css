@@ -1460,3 +1460,101 @@ body.m .hw-perk { flex: 1 1 0; justify-content: center; padding: 0 12px; height:
   background: rgba(26, 159, 255, .14); border: 1px solid rgba(102, 192, 244, .35); }
 #perkModal .pi svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 #perkModal .help-pane { margin-bottom: 4px; }
+
+/* ======================================================================
+   登入福利按鈕 / 登入福利視窗 / 登入說明（長按）— 沿用公告視窗的質感
+   ====================================================================== */
+@keyframes giftWiggle { 0%, 58%, 100% { transform: rotate(0) scale(1); } 64% { transform: rotate(-12deg) scale(1.1); } 70% { transform: rotate(10deg) scale(1.1); }
+  76% { transform: rotate(-7deg); } 82% { transform: rotate(4deg); } 88% { transform: rotate(0); } }
+@keyframes perkGlow { 0%, 100% { box-shadow: 0 6px 20px rgba(245, 166, 35, .28), 0 0 0 0 rgba(255, 207, 92, .5); }
+  50% { box-shadow: 0 8px 26px rgba(245, 166, 35, .45), 0 0 0 9px rgba(255, 207, 92, 0); } }
+@keyframes perkSweep { 0%, 55% { transform: translateX(-130%) skewX(-20deg); } 100% { transform: translateX(130%) skewX(-20deg); } }
+@keyframes sparkle { 0%, 100% { opacity: 0; transform: scale(.2) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(90deg); } }
+@keyframes fxLiIn { from { opacity: 0; transform: translateY(16px) scale(.94); } }
+@keyframes icoPop { 0% { transform: scale(.4) rotate(-20deg); opacity: 0; } 70% { transform: scale(1.12) rotate(4deg); } 100% { transform: none; opacity: 1; } }
+
+/* ---------- 首頁「登入福利」按鈕：金色漸層 + 流動外框 + 掃光 + 禮物搖晃 ---------- */
+.hw-perk { position: relative; isolation: isolate; overflow: hidden; gap: 10px; padding: 0 28px 0 18px; color: #3a2600; border: 0; letter-spacing: .04em;
+  background: linear-gradient(135deg, #ffe9a8 0%, #ffcf5c 45%, #f5a623 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .65), 0 6px 20px rgba(245, 166, 35, .28); animation: perkGlow 2.8s ease-in-out infinite; backdrop-filter: none; }
+.hw-perk::before { content: ""; position: absolute; inset: 0; z-index: -1; padding: 2px; border-radius: inherit; pointer-events: none;
+  background: conic-gradient(from var(--ang), #fff, rgba(255, 255, 255, .15) 25%, #fff3c4 50%, rgba(255, 255, 255, .15) 75%, #fff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); mask-composite: exclude; animation: spinAng 4s linear infinite; }
+.hw-perk::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 45%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .6), transparent); animation: perkSweep 4s ease-in-out infinite; }
+.hw-perk-ico { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: rgba(58, 38, 0, .14); box-shadow: inset 0 0 0 1px rgba(58, 38, 0, .18); }
+.hw-perk-ico svg { width: 22px; height: 22px; transform-origin: 50% 80%; animation: giftWiggle 3.6s ease-in-out infinite; }
+.hw-perk-sp { position: absolute; width: 10px; height: 10px; pointer-events: none; opacity: 0; animation: sparkle 2.6s ease-in-out infinite;
+  background: #fff; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+.hw-perk-sp.s1 { top: 7px; right: 14px; } .hw-perk-sp.s2 { bottom: 8px; right: 38px; width: 7px; height: 7px; animation-delay: .9s; } .hw-perk-sp.s3 { top: 12px; left: 56px; width: 6px; height: 6px; animation-delay: 1.7s; }
+.hw-perk:hover, .hw-perk:focus-visible { background: linear-gradient(135deg, #fff1c4 0%, #ffd978 45%, #ffb83d 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 12px 30px rgba(245, 166, 35, .5); animation-play-state: paused; }
+.hw-perk:active { transform: translateY(0) scale(.96); transition-duration: .08s; }
+.hw-perk:hover .hw-perk-ico svg { animation-duration: 1.2s; animation-delay: 0s; }
+body.m .hw-perk { padding: 0 12px; }
+
+/* ---------- 共用視窗（福利 / 說明）：沿用 .ann-box 外框，調整尺寸與內容 ---------- */
+#helpModal .fx-box, #perkModal .fx-box { width: min(540px, 100%); max-height: min(720px, calc(100dvh - 32px)); }
+.fx-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--accent) transparent; padding: 20px 24px 6px; }
+.fx-box .ann-ico svg { animation: none; }
+.fx-box .fx-ico { animation: icoPop .55s var(--ease) both; }
+.fx-ico.gold { background: linear-gradient(150deg, #ffe08a, #f5a623); color: #3a2600; box-shadow: 0 8px 22px rgba(245, 166, 35, .5); border-color: rgba(255, 255, 255, .6); }
+.fx-ico.gold svg { transform-origin: 50% 80%; animation: giftWiggle 3.6s ease-in-out 1s infinite; }
+.perk-box { background: linear-gradient(180deg, #2a3446 0%, #1a2433 55%, #131e2c 100%); }
+.perk-box .ann-top { background: radial-gradient(520px 140px at 12% 0%, rgba(255, 207, 92, .26), transparent 70%), linear-gradient(180deg, rgba(255, 255, 255, .05), transparent); }
+.perk-box .ann-top::after { background: linear-gradient(90deg, transparent, rgba(255, 207, 92, .8) 20%, rgba(255, 255, 255, .35) 50%, rgba(255, 207, 92, .8) 80%, transparent); box-shadow: 0 0 10px rgba(255, 207, 92, .5); }
+.perk-box::after { background: conic-gradient(from var(--ang), #ffe08a, rgba(245, 166, 35, .25) 22%, rgba(255, 255, 255, .06) 45%, rgba(245, 166, 35, .25) 70%, #ffe08a); }
+
+/* 清單：卡片式，左側圖示、懸停浮起、依序進場 */
+#helpModal .help-pane, #perkModal .help-pane { margin: 0; }
+#helpModal .help-pane > .help-list, #perkModal .help-list { margin-top: 0; gap: 12px; }
+#helpModal .fx-list li, #perkModal .fx-list li { flex-direction: row; align-items: center; gap: 14px; padding: 12px 16px 12px 18px; border-radius: 16px; border: 1.5px solid rgba(214, 230, 245, .2);
+  background: linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02) 60%), var(--panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 6px 18px rgba(0, 0, 0, .28);
+  transition: transform .25s var(--ease), box-shadow .25s, border-color .25s; animation: fxLiIn .45s var(--ease) backwards; animation-delay: calc(var(--n, 0) * 70ms + 80ms); }
+#helpModal .fx-list li:nth-child(1), #perkModal .fx-list li:nth-child(1) { --n: 0; } #helpModal .fx-list li:nth-child(2), #perkModal .fx-list li:nth-child(2) { --n: 1; }
+#helpModal .fx-list li:nth-child(3), #perkModal .fx-list li:nth-child(3) { --n: 2; } #perkModal .fx-list li:nth-child(4) { --n: 3; } #perkModal .fx-list li:nth-child(5) { --n: 4; } #perkModal .fx-list li:nth-child(6) { --n: 5; }
+#helpModal .fx-list li::before, #perkModal .fx-list li::before { top: 0; bottom: 0; width: 5px; border-radius: 16px 0 0 16px; background: linear-gradient(180deg, var(--accent-2), var(--accent)); box-shadow: 3px 0 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+#perkModal .fx-list li::before { background: linear-gradient(180deg, #ffe08a, #f5a623); box-shadow: 3px 0 14px rgba(255, 207, 92, .4); }
+#helpModal .fx-list li:hover, #perkModal .fx-list li:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent-2) 70%, transparent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 12px 26px rgba(0, 0, 0, .4), 0 0 20px var(--a2); background: linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02) 60%), var(--panel); }
+#perkModal .fx-list li:hover { border-color: rgba(255, 207, 92, .7); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 12px 26px rgba(0, 0, 0, .4), 0 0 20px rgba(255, 207, 92, .25); }
+#helpModal .fx-list li > div, #perkModal .fx-list li > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+#helpModal .fx-list b, #perkModal .fx-list b { font-size: 19px; }
+#helpModal .fx-list span, #perkModal .fx-list span { font-size: 15.5px; }
+#helpModal .pi, #perkModal .pi { flex: none; width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; color: #fff; font-style: normal;
+  background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 50%, #000)); border: 1px solid rgba(255, 255, 255, .3); box-shadow: 0 4px 12px var(--a2); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); }
+#perkModal .pi { color: #3a2600; background: linear-gradient(150deg, #ffe9a8, #f5a623); border-color: rgba(255, 255, 255, .55); box-shadow: 0 4px 12px rgba(245, 166, 35, .35); }
+#helpModal .pi svg, #perkModal .pi svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#helpModal .fx-list li:hover .pi, #perkModal .fx-list li:hover .pi { transform: rotate(-8deg) scale(1.12); }
+/* 登入說明：警示項目（忘記就無法找回）用琥珀色 */
+#helpBox[data-k="acct"] .fx-list li:nth-child(2) .pi { color: #3a2600; background: linear-gradient(150deg, #ffe9a8, #f5a623); }
+#helpBox[data-k="acct"] .fx-list li:nth-child(2)::before { background: linear-gradient(180deg, #ffe08a, #f5a623); }
+
+/* 底部列：發光分隔線 + 提示 + 按鈕 */
+.fx-foot { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding: 14px 24px 18px; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .22)); }
+.fx-foot::before { content: ""; position: absolute; top: 0; left: 20px; right: 20px; height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent-2) 70%, transparent) 20%, rgba(255, 255, 255, .28) 50%, color-mix(in srgb, var(--accent-2) 70%, transparent) 80%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 55%, transparent); }
+.perk-box .fx-foot::before { background: linear-gradient(90deg, transparent, rgba(255, 207, 92, .8) 20%, rgba(255, 255, 255, .3) 50%, rgba(255, 207, 92, .8) 80%, transparent); box-shadow: 0 0 10px rgba(255, 207, 92, .5); }
+.fx-foot .ann-hint { font-size: 14px; color: var(--muted); }
+.fx-foot .ann-hint kbd { display: inline-block; margin-right: 4px; padding: 2px 7px; border-radius: 6px; font-family: inherit; font-weight: 700; font-size: 13px; color: var(--text-2); border: 1px solid var(--btn-line); background: rgba(255, 255, 255, .06); }
+.perk-box .fx-foot .btn-primary { background: linear-gradient(135deg, #ffe08a, #f5a623); color: #3a2600; animation-name: perkGlow; }
+
+/* ---------- 登入視窗：長按提示膠囊 + 按壓進度光環 ---------- */
+.help-hint { width: fit-content; margin: 16px auto 0; padding: 7px 16px; border-radius: 999px; color: var(--text-2);
+  background: linear-gradient(160deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .02)); border: 1px solid rgba(214, 230, 245, .25); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1); }
+.help-hint svg { color: var(--accent-2); animation: iconFloat 2.6s ease-in-out infinite; }
+.modal.bp [data-help] { position: relative; }
+.modal [data-help].pressing { animation: none; box-shadow: 0 0 0 3px var(--accent-2), 0 0 28px var(--a3); }
+.modal [data-help].pressing::before { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(90deg, var(--a3), rgba(255, 255, 255, .25)); transform-origin: 0 50%; animation: lpFill .5s linear forwards; }
+@keyframes lpFill { from { transform: scaleX(0); opacity: .9; } to { transform: scaleX(1); opacity: .6; } }
+
+@media (max-width: 560px) {
+  .fx-body { padding: 14px 14px 4px; } .fx-foot { padding: 12px 14px 14px; } .fx-foot::before { left: 12px; right: 12px; }
+  #helpModal .fx-list li, #perkModal .fx-list li { padding: 10px 12px 10px 16px; gap: 12px; }
+  #helpModal .pi, #perkModal .pi { width: 40px; height: 40px; }
+  #helpModal .fx-list b, #perkModal .fx-list b { font-size: 17px; } #helpModal .fx-list span, #perkModal .fx-list span { font-size: 14.5px; }
+  .fx-foot .ann-hint { display: none; } .fx-foot .btn-primary { width: 100%; justify-content: center; }
+}
+@media (hover: none) { #helpModal .fx-list li:hover, #perkModal .fx-list li:hover { transform: none; } }
+@media (max-width: 700px) { #helpModal .fx-box, #perkModal .fx-box { padding: 0; } } body.m #helpModal .fx-box, body.m #perkModal .fx-box { padding: 0; }

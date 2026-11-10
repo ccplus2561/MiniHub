@@ -723,14 +723,18 @@
   });
   const PNAME = { google: "Google", github: "GitHub" };
   $("#perkOpen").addEventListener("click", () => { sfx("confirm"); openModal("perkModal"); });
+  $("#perkLogin").addEventListener("click", () => { sfx("confirm"); closeModal("perkModal"); $("#loginBtn").click(); });   // 福利視窗內直接前往登入
   /* 長按登入方式（或按 H）→ 只顯示該方式的說明 */
   const HELP_TITLE = { acct: "帳號密碼登入說明", google: "Google 登入說明", github: "GitHub 登入說明" };
+  const HELP_SUB = { acct: "自訂帳密，免信箱、即建即用", google: "官方授權，安全又快速", github: "官方授權，同信箱自動合併" };
   function openHelp(key) {
     const m = $("#helpModal");
     $$("[data-sec]", m).forEach(el => { el.hidden = el.dataset.sec !== key; el.classList.add("active"); });
     $("#helpTitle").textContent = HELP_TITLE[key] || "帳號說明";
+    $("#helpBox").dataset.k = key;
+    const hs = $("#helpSub"); if (hs) hs.textContent = HELP_SUB[key] || "了解這個登入方式";
     openModal("helpModal");
-    const box = $(".help-box", m); if (box) box.scrollTop = 0;
+    const box = $(".fx-body", m); if (box) box.scrollTop = 0;
   }
   (function longPressHelp() {
     const modal = $("#loginModal"), LP = 500;
