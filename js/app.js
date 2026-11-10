@@ -723,7 +723,6 @@
   });
   const PNAME = { google: "Google", github: "GitHub" };
   $("#perkOpen").addEventListener("click", () => { sfx("confirm"); openModal("perkModal"); });
-  $("#perkLogin").addEventListener("click", () => { closeModal("perkModal"); $("#loginBtn").click(); });   // 福利視窗 → 直接開登入視窗
   /* 長按登入方式（或按 H）→ 只顯示該方式的說明 */
   const HELP_TITLE = { acct: "帳號密碼登入說明", google: "Google 登入說明", github: "GitHub 登入說明" };
   function openHelp(key) {

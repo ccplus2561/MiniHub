@@ -1452,3 +1452,11 @@ body.no-anim .modal.bp [data-help].pressing { transform: none; transition: none;
 body.m .hw-actions { width: 100%; gap: 10px; }
 body.m .hw-actions .hw-go { flex: 1 1 0; justify-content: center; padding: 0 14px; height: 52px; font-size: 18px; }
 body.m .hw-perk { flex: 1 1 0; justify-content: center; padding: 0 12px; height: 52px; font-size: 18px; }
+
+/* 登入福利清單：左側圖示 */
+#perkModal .perk-list li { flex-direction: row; align-items: center; gap: 14px; }
+#perkModal .perk-list li > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#perkModal .pi { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--accent-2);
+  background: rgba(26, 159, 255, .14); border: 1px solid rgba(102, 192, 244, .35); }
+#perkModal .pi svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+#perkModal .help-pane { margin-bottom: 4px; }
