@@ -578,27 +578,24 @@
       <div class="modal-logo"><svg viewBox="0 0 24 24"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01"/></svg></div>
       <h3 id="loginTitle">登入 MiniHub</h3>
       <p class="modal-sub">選擇登入方式，同步你的玩家資料</p>
-      <button class="btn-google" data-acct data-autofocus>
+      <button class="btn-google" data-acct data-help="acct" data-autofocus>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"/></svg>
         <span>使用帳號密碼登入</span>
       </button>
       <div class="login-row">
-      <button class="btn-google" data-provider="google">
+      <button class="btn-google" data-provider="google" data-help="google">
         <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
         <span>Google 登入</span>
       </button>
-      <button class="btn-google" data-provider="github">
+      <button class="btn-google" data-provider="github" data-help="github">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#181717" d="M12 .5A11.5 11.5 0 0 0 .5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2c-3.2.7-3.87-1.37-3.87-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.78 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.42-2.69 5.39-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5z"/></svg>
         <span>GitHub 登入</span>
       </button>
       </div>
-      <div class="login-row login-row2">
-        <button class="btn-ghost" data-close>取消</button>
-        <button class="btn-ghost" id="helpOpen">帳號說明</button>
-      </div>
+      <p class="help-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v.1M12 11.5v4.5"/></svg><span>長按任一登入方式，可查看該方式的說明</span></p>
       <label class="login-agree" id="loginAgree"><input type="checkbox" id="loginAgreeChk"><span class="box" aria-hidden="true"></span><span class="txt">登入視同已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</span></label>
     </div>
-    <div class="bp-hints"><span><kbd>↑</kbd><kbd>↓</kbd> 選擇</span><span><kbd>Enter</kbd> 確認</span><span><kbd>T</kbd> 服務條款</span><span><kbd>Esc</kbd> 返回</span></div>
+    <div class="bp-hints"><span><kbd>↑</kbd><kbd>↓</kbd> 選擇</span><span><kbd>Enter</kbd> 確認</span><span><kbd>H</kbd> 說明</span><span><kbd>T</kbd> 服務條款</span><span><kbd>Esc</kbd> 返回</span></div>
   </div>
 
   <!-- 帳號密碼登入 / 註冊（不需電子郵件；忘記密碼無法找回） -->
@@ -755,9 +752,9 @@
     <div class="modal-box left help-box" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
       <button class="modal-x" data-close aria-label="關閉"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <h3 id="helpTitle" class="c">帳號說明</h3>
-      <p class="help-lead">MiniHub 提供三種登入方式，擇一即可。先看看哪一種最適合你。</p>
+      <p class="help-lead" data-sec="lead">MiniHub 提供三種登入方式，擇一即可。先看看哪一種最適合你。</p>
 
-      <section class="help-sec">
+      <section class="help-sec" data-sec="acct">
         <h4>🔑 帳號密碼登入</h4>
         <ul>
           <li>自己取一組帳號與密碼，<b>不需要電子郵件，也不需要驗證</b>，建立後馬上能用。</li>
@@ -767,7 +764,7 @@
         <p class="help-safe"><b>安全嗎？</b>密碼由 Firebase Authentication（Google 的帳號服務）處理，以加密雜湊方式儲存，<b>站方看不到你的明文密碼</b>。請不要使用與銀行、信箱等重要帳號相同的密碼，避免他人猜到後被盜用。</p>
       </section>
 
-      <section class="help-sec">
+      <section class="help-sec" data-sec="google">
         <h4>🟢 Google 登入</h4>
         <ul>
           <li>按下後會開啟 Google 官方的登入視窗，<b>MiniHub 不會要求你輸入 Google 密碼</b>，也看不到它。</li>
@@ -776,7 +773,7 @@
         </ul>
       </section>
 
-      <section class="help-sec">
+      <section class="help-sec" data-sec="github">
         <h4>⚫ GitHub 登入</h4>
         <ul>
           <li>同樣透過 GitHub 官方視窗登入，MiniHub 不會取得你的 GitHub 密碼。</li>
@@ -784,7 +781,7 @@
         </ul>
       </section>
 
-      <section class="help-sec good">
+      <section class="help-sec good" data-sec="good">
         <h4>🎁 登入有什麼好處？</h4>
         <ul>
           <li>每日簽到領點數</li>
@@ -798,7 +795,7 @@
         </ul>
       </section>
 
-      <p class="help-tip">小提醒：三種方式建立的是各自獨立的帳號（Google 與 GitHub 電子郵件相同者除外），請記得自己平常用哪一種登入。</p>
+      <p class="help-tip" data-sec="tip">小提醒：三種方式建立的是各自獨立的帳號（Google 與 GitHub 電子郵件相同者除外），請記得自己平常用哪一種登入。</p>
       <button class="btn-primary full" data-close><span>我知道了</span></button>
     </div>
   </div>

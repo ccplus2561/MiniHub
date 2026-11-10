@@ -1423,11 +1423,15 @@ body.m .modal.bp .login-row { gap: 10px; }
 @media (max-height: 760px) { .login-agree { margin-top: 10px; padding: 8px 10px; font-size: 13px; } }
 @media (max-height: 560px) { .login-agree { margin-top: 6px; padding: 4px 8px; font-size: 12px; } }
 
-/* 登入視窗：取消 / 帳號說明 並排 */
-.login-row2 { margin-top: 14px; }
-.modal.bp .login-row2 .btn-ghost { margin-top: 0; }
-@media (max-height: 760px) { .modal.bp .login-row2 { margin-top: 12px; } }
-@media (max-height: 560px) { .modal.bp .login-row2 { margin-top: 8px; } }
+/* 登入視窗：長按登入方式查看說明（提示文字 + 按壓回饋） */
+.help-hint { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+.help-hint svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+@media (max-height: 760px) { .help-hint { margin-top: 8px; font-size: 13px; } }
+@media (max-height: 560px) { .help-hint { display: none; } }
+.modal.bp [data-help] { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.modal.bp [data-help].pressing { transform: scale(.96); filter: brightness(1.15); transition: transform .5s ease-out, filter .5s ease-out; }
+body.no-anim .modal.bp [data-help].pressing { transform: none; transition: none; }
+#helpModal.single .help-lead, #helpModal.single .help-tip { display: none; }
 
 /* 帳號說明視窗（內容多，視窗內可捲動） */
 #helpModal .help-box { width: min(560px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; }

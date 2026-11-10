@@ -512,8 +512,8 @@
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
       else if (kbdOn() && /^t$/i.test(e.key)) { $(".legal-link", $("#loginModal")).focus(); e.preventDefault(); }   // T：直接跳到服務條款（Enter 開啟）
-      else if (kbdOn() && /^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「登入方式 / 取消」之間移動焦點（關閉快捷鍵時停用）
-        const b = $$(".btn-google, .btn-ghost, .login-agree input, .legal-link", $("#loginModal"));
+      else if (kbdOn() && /^(ArrowUp|ArrowDown|w|s)$/i.test(e.key)) {   // ↑↓ 在「登入方式 / 同意條款」之間移動焦點（關閉快捷鍵時停用）
+        const b = $$(".btn-google, .login-agree input, .legal-link", $("#loginModal"));
         const up = /^(ArrowUp|w)$/i.test(e.key), i = b.indexOf(document.activeElement);
         b[(i + (up ? -1 : 1) + b.length) % b.length].focus(); e.preventDefault();
       }
@@ -721,7 +721,37 @@
     location.replace(location.pathname);                              // 重新載入（同時清掉網址上的參數 / 記憶體中的狀態）
   });
   const PNAME = { google: "Google", github: "GitHub" };
-  $("#helpOpen").addEventListener("click", () => openModal("helpModal"));
+  /* 長按登入方式（或按 H）→ 只顯示該方式的說明 */
+  const HELP_TITLE = { acct: "帳號密碼登入說明", google: "Google 登入說明", github: "GitHub 登入說明" };
+  function openHelp(key) {
+    const m = $("#helpModal");
+    m.classList.add("single");
+    $$("[data-sec]", m).forEach(el => { el.hidden = el.dataset.sec !== key; });
+    $("#helpTitle").textContent = HELP_TITLE[key] || "帳號說明";
+    openModal("helpModal");
+    const box = $(".help-box", m); if (box) box.scrollTop = 0;
+  }
+  (function longPressHelp() {
+    const modal = $("#loginModal"), LP = 500;
+    let timer = 0, sx = 0, sy = 0, fired = false;
+    const stop = () => { clearTimeout(timer); timer = 0; $$("[data-help].pressing", modal).forEach(b => b.classList.remove("pressing")); };
+    modal.addEventListener("pointerdown", e => {
+      const b = e.target.closest("[data-help]"); if (!b || (e.pointerType === "mouse" && e.button !== 0)) return;
+      fired = false; sx = e.clientX; sy = e.clientY; b.classList.add("pressing");
+      timer = setTimeout(() => { fired = true; stop(); if (navigator.vibrate) try { navigator.vibrate(30); } catch (_) {} openHelp(b.dataset.help); }, LP);
+    });
+    modal.addEventListener("pointermove", e => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) stop(); });
+    ["pointerup", "pointercancel", "pointerleave"].forEach(t => modal.addEventListener(t, stop));
+    modal.addEventListener("contextmenu", e => { if (e.target.closest("[data-help]")) e.preventDefault(); });   // 手機長按不要跳系統選單
+    modal.addEventListener("click", e => {   // 長按放開後的 click 不算登入
+      if (fired && e.target.closest("[data-help]")) { fired = false; e.stopPropagation(); e.preventDefault(); }
+    }, true);
+    document.addEventListener("keydown", e => {   // 鍵盤 / 手把：H 開啟目前選取方式的說明（沒選取時顯示帳密說明）
+      if (modal.hidden || !$("#helpModal").hidden || e.ctrlKey || e.metaKey || e.altKey || !/^h$/i.test(e.key) || !kbdOn()) return;
+      const f = document.activeElement && document.activeElement.closest && document.activeElement.closest("[data-help]");
+      openHelp(f ? f.dataset.help : "acct"); e.preventDefault();
+    });
+  })();
   const agreeChk = $("#loginAgreeChk");
   function needAgree() {   // 未勾選同意：禁止登入（3 種方式都一樣），提示並抖動勾選列
     if (agreeChk.checked) return false;
