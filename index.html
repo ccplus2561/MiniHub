@@ -221,6 +221,7 @@
 
             <!-- 帳號 -->
             <div class="pane active" id="pane-account">
+              <div class="set-label">基本資料</div>
               <div class="info-card">
                 <div class="info-row">
                   <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 4-6 8-6s7.2 2 8 6"/></svg>
@@ -231,14 +232,9 @@
                   <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.8-2.4 3-2.4s2.4.8 3 2.4M15 10h3M15 14h3"/></svg>
                   <div class="grow"><small>遊戲 UID</small><h4 id="accUid"></h4></div>
                 </div>
-                <div class="info-row">
-                  <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-                  <div class="grow"><small>註冊遊戲時間</small><h4 id="accReg"></h4></div>
-                </div>
-                <div class="info-row">
-                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-                  <div class="grow"><small>上次登入時間</small><h4 id="accLast"></h4></div>
-                </div>
+              </div>
+              <div class="set-label">登入資訊</div>
+              <div class="info-card">
                 <div class="info-row">
                   <svg viewBox="0 0 24 24"><path d="M15 7a4 4 0 1 1-3.9 4.9L4 19v-3l2-2h2v-2h2l1.1-1.1A4 4 0 0 1 15 7z"/><path d="M16.5 9.5h.01"/></svg>
                   <div class="grow"><small>目前登入管道</small><h4 id="accProv"></h4></div>
@@ -255,6 +251,17 @@
                   <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 15v2"/></svg>
                   <div class="grow"><small>密碼</small><h4>••••••••</h4></div>
                   <button class="row-btn" id="editPwBtn" aria-label="修改密碼"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg></button>
+                </div>
+              </div>
+              <div class="set-label">時間紀錄</div>
+              <div class="info-card">
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+                  <div class="grow"><small>註冊遊戲時間</small><h4 id="accReg"></h4></div>
+                </div>
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                  <div class="grow"><small>上次登入時間</small><h4 id="accLast"></h4></div>
                 </div>
               </div>
               <div class="notice" id="guestNote"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p><b>目前是訪客模式</b>：不會連線到伺服器，也不會同步任何資料；登入後才會連線並同步你的玩家資料。</p></div>
@@ -355,9 +362,10 @@
               <ul class="help-list">
                 <li><b>使用者名稱</b><span>每 14 天可修改一次</span></li>
                 <li><b>遊戲 UID</b><span>建立後無法更改</span></li>
+                <li><b>登入管道</b><span>目前使用的登入方式</span></li>
+                <li><b>電子郵件</b><span>預設遮罩，點眼睛圖示可顯示</span></li>
                 <li><b>註冊時間</b><span>首次登入的時間</span></li>
                 <li><b>上次登入</b><span>最近一次登入的時間</span></li>
-                <li><b>電子郵件</b><span>預設遮罩，點眼睛圖示可顯示</span></li>
               </ul>
             </div>
             <div class="help-pane" id="help-display">
@@ -626,13 +634,13 @@
       <div class="auth-body">
         <label class="field-label" for="acctName">帳號</label>
         <div class="field"><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 4-6 8-6s7.2 2 8 6"/></svg><input id="acctName" type="text" maxlength="20" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="3–20 個字元" data-autofocus></div>
-        <p class="field-hint" id="acctNameHint" hidden>僅限英文、數字、半形符號（不可有空白、中文、特殊符號），帳號不可與他人重複（不分大小寫）；登入時大小寫須與建立時相同；建立後無法更改</p>
+        <p class="field-hint" id="acctNameHint" hidden>3–20 字，限英文、數字、半形符號；建立後無法更改</p>
         <label class="field-label" for="acctPw">密碼</label>
-        <div class="field"><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="acctPw" type="password" maxlength="64" autocomplete="current-password" placeholder="至少 8 個字元（僅限英文、數字、半形符號）"></div>
+        <div class="field"><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="acctPw" type="password" maxlength="64" autocomplete="current-password" placeholder="至少 8 個字元"></div>
         <div id="acctPw2Box" hidden>
           <label class="field-label" for="acctPw2">再輸入一次密碼</label>
           <div class="field"><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><input id="acctPw2" type="password" maxlength="64" autocomplete="new-password" placeholder="再輸入一次"></div>
-          <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>這個方式<b>沒有電子郵件驗證</b>，所以<b>忘記密碼或帳號時無法找回</b>，只能重新建立新帳號（舊資料無法轉移）。請記好你的帳號與密碼。</p></div>
+          <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>忘記帳號或密碼<b>無法找回</b>，請牢記。</p></div>
         </div>
         <p class="prof-err" id="acctErr" role="alert" hidden></p>
       </div>
@@ -653,12 +661,12 @@
       <div class="auth-fx" aria-hidden="true"><i class="auth-orb a"></i><i class="auth-orb b"></i><i class="auth-p" style="--x:8%;--s:4px;--d:9s;--t:-1s"></i><i class="auth-p" style="--x:20%;--s:6px;--d:12s;--t:-5s"></i><i class="auth-p" style="--x:34%;--s:3px;--d:10s;--t:-3s"></i><i class="auth-p" style="--x:48%;--s:5px;--d:13s;--t:-8s"></i><i class="auth-p" style="--x:61%;--s:4px;--d:9s;--t:-6s"></i><i class="auth-p" style="--x:74%;--s:6px;--d:11s;--t:-2s"></i><i class="auth-p" style="--x:86%;--s:3px;--d:12s;--t:-7s"></i><i class="auth-p" style="--x:94%;--s:5px;--d:10s;--t:-4s"></i></div>
       <header class="auth-top">
         <div class="auth-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="4"/><path d="M2 21c.8-4 4-6 8-6 1.5 0 2.9.3 4 .9M19 8v6M16 11h6"/></svg></div>
-        <div class="auth-top-text"><h3 id="profTitle">歡迎來到 MiniHub</h3><p>首次登入，請先建立你的遊戲資料</p></div>
+        <div class="auth-top-text"><h3 id="profTitle">歡迎來到 MiniHub</h3><p>建立你的遊戲資料</p></div>
       </header>
       <ol class="pstepper" id="profDots" aria-hidden="true"><li class="on"><i>1</i><span>使用者名稱</span></li><li><i>2</i><span>遊戲 UID</span></li><li><i>3</i><span>隱私設定</span></li></ol>
       <div class="auth-body">
         <section class="pstep on" data-step="1">
-          <div class="pstep-head"><b>為自己取個名字</b><small>2–12 個字，之後可再修改</small></div>
+          <div class="pstep-head"><b>為自己取個名字</b><small>2–12 個字</small></div>
           <label class="field-label" id="profEmailLabel">電子郵件</label>
           <div class="field ro" id="profEmail"></div>
 
@@ -668,21 +676,21 @@
         </section>
 
         <section class="pstep" data-step="2">
-          <div class="pstep-head"><b>你的專屬遊戲 UID</b><small>系統已為你產生，不喜歡可以換一組</small></div>
+          <div class="pstep-head"><b>你的專屬遊戲 UID</b><small>可換一組</small></div>
           <label class="field-label">遊戲 UID</label>
           <div class="field uid"><b id="profUid">000000000</b><button type="button" class="reroll" id="profReroll" aria-label="重新產生"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg><span>換一組</span></button></div>
           <p class="field-hint">9 位數字，由系統產生</p>
-          <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>遊戲 UID 建立後<b>無法更改</b>，且一個電子郵件只能擁有一個 UID。</p></div>
+          <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>UID 建立後<b>無法更改</b>。</p></div>
         </section>
 
         <section class="pstep" data-step="3">
-          <div class="pstep-head"><b>隱私設定</b><small>決定你在排行榜上的呈現方式</small></div>
+          <div class="pstep-head"><b>隱私設定</b><small>之後可在「設定 &gt; 隱私」變更</small></div>
           <div class="pub-row">
-            <div class="set-text"><b>允許加入排行榜</b><small>開啟後才能在遊戲中進行排名比較；之後可在「設定 &gt; 隱私」變更</small></div>
+            <div class="set-text"><b>允許加入排行榜</b><small>開啟後才能進行排名比較</small></div>
             <button class="switch" role="switch" type="button" aria-checked="true" id="profJoin" aria-label="允許加入排行榜"><i></i></button>
           </div>
           <div class="pub-row">
-            <div class="set-text"><b>允許公開使用者名稱</b><small>開啟時排行榜顯示完整名稱，關閉則部分以 * 遮蔽</small></div>
+            <div class="set-text"><b>允許公開使用者名稱</b><small>關閉則部分以 * 遮蔽</small></div>
             <button class="switch" role="switch" type="button" aria-checked="true" id="profPublic" aria-label="允許公開使用者名稱"><i></i></button>
           </div>
         </section>

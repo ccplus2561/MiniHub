@@ -330,6 +330,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 }
 .info-row { display: flex; gap: 18px; align-items: center; padding: 18px 0; transition: transform .22s; }
 .info-row:hover { transform: translateX(4px); }
+#pane-account .info-row { padding: 14px 0; }
 .info-row + .info-row { border-top: 1px solid var(--line); }
 .info-row > svg { width: 26px; height: 26px; flex: none; color: var(--accent-2); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1); }
 .info-row:hover > svg { transform: scale(1.25) rotate(-8deg); }

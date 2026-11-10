@@ -813,7 +813,7 @@
     $("span", aOk).textContent = reg ? "建立並登入" : "登入";
     $("#acctSwitch .sc-q").textContent = reg ? "已經有帳號？" : "沒有帳號？";
     $("#acctSwitch .sc-a").textContent = reg ? "改為登入" : "建立新帳號";
-    $("#acctSub").textContent = reg ? "建立專屬帳號，不需要電子郵件" : "輸入帳號與密碼，同步你的玩家資料";
+    $("#acctSub").textContent = reg ? "不需要電子郵件" : "輸入帳號與密碼";
     $("#acctModal .auth-box").dataset.mode = acctMode;
     $("#acctPw2Box").hidden = !reg; $("#acctNameHint").hidden = !reg;
     aPw.autocomplete = reg ? "new-password" : "current-password";
@@ -830,7 +830,7 @@
   [aName, aPw, aPw2].forEach(el => el.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); aOk.click(); } }));
   function acctFail(e) {
     const c = (e && e.code) || "";
-    if (c === "account-taken") return "此帳號名稱無法使用，請重新取一個新的帳號名稱";
+    if (c === "account-taken") return "此帳號名稱無法使用，請換一個";
     if (/invalid-credential|invalid-login|user-not-found|wrong-password/.test(c)) return "帳號或密碼錯誤";
     if (c === "auth/too-many-requests") return "嘗試次數過多，請稍後再試";
     if (c === "auth/operation-not-allowed") return "尚未在 Firebase 後台啟用「電子郵件/密碼」登入方式（Authentication > Sign-in method）";
@@ -846,9 +846,9 @@
     const len = Array.from(name.trim()).length;
     if (!name.trim()) return acctErr("請輸入帳號");
     if (reg) {
-      if (!ASCII_OK.test(name)) return acctErr("帳號只能使用英文、數字與半形符號（不可有空白、中文、全形或特殊符號）");
+      if (!ASCII_OK.test(name)) return acctErr("帳號限英文、數字、半形符號");
       if (len < ACCT_MIN || len > ACCT_MAX) return acctErr("帳號需為 " + ACCT_MIN + "–" + ACCT_MAX + " 個字元");
-      if (!ASCII_OK.test(pw)) return acctErr("密碼只能使用英文、數字與半形符號（不可有空白、中文、全形或特殊符號）");
+      if (!ASCII_OK.test(pw)) return acctErr("密碼限英文、數字、半形符號");
       if (pw.length < PW_MIN) return acctErr("密碼至少 " + PW_MIN + " 個字元");
       if (pw !== aPw2.value) return acctErr("兩次輸入的密碼不一致");
     } else if (!pw) return acctErr("請輸入密碼");
