@@ -97,7 +97,7 @@
     $("#accLock").hidden = !locked;
     if (locked) $("#accLock").textContent = "將於 " + fmtDate(until) + " 後才可變更";
     const PV = { password: "帳號密碼", google: "Google", github: "GitHub" };
-    const pv = $("#accProv"); pv.dataset.p = a.provider || ""; fill(pv, a.uid ? PV[a.provider] : "", G);
+    const pv = $("#accProv"); fill(pv, a.uid ? PV[a.provider] : "", G);
     $("#accPwRow").hidden = !(a.uid && a.provider === "password");
     $("#editNameBtn").hidden = !a.uid;
     $("#editNameBtn").disabled = locked;

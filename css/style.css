@@ -517,7 +517,10 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 
 /* ---------- 登入後頭像 / 帳號列按鈕 ---------- */
 .login-btn .avatar { display: none; width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, .9); background: #fff; }
+.login-btn .ico-user { display: none; }
 .login-btn.has-avatar svg { display: none; }
+.login-btn.signed:not(.has-avatar) .ico-login { display: none; }
+.login-btn.signed:not(.has-avatar) .ico-user { display: block; }
 .login-btn.has-avatar .avatar { display: block; }
 .login-btn span { max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .login-btn.signed { background: linear-gradient(180deg, #34475e, #243447); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
@@ -1573,8 +1576,3 @@ body.m .hw-perk { padding: 0 12px; }
 .pk-card b { font-size: 18px; font-weight: 800; color: var(--text); }
 @media (max-width: 420px) { .pk-grid { gap: 10px; } .pk-card b { font-size: 15.5px; } #perkModal .pk-card .pi { width: 48px; height: 48px; } #perkModal .pk-card .pi svg { width: 26px; height: 26px; } }
 
-/* 設定 > 帳號：登入管道標籤 */
-.prov[data-p]:not(:empty):not(.empty) { display: flex; width: fit-content; margin-top: 4px; align-items: center; padding: 2px 14px; border-radius: 999px; font-size: 17px; border: 1px solid rgba(255, 255, 255, .28); background: var(--a2); }
-.prov[data-p="google"] { background: rgba(234, 67, 53, .2); border-color: rgba(234, 67, 53, .6); }
-.prov[data-p="github"] { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .5); }
-.prov[data-p="password"] { background: rgba(255, 207, 92, .16); border-color: rgba(255, 207, 92, .6); color: #ffe08a; }
