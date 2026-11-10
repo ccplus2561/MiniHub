@@ -502,6 +502,7 @@
       return;
     }
     if (!$("#profileModal").hidden) return;   // 建立資料視窗不可用 Esc 關閉
+    if (!$("#pwModal").hidden) { if (e.key === "Escape") closeModal("pwModal"); return; }
     if (!$("#acctModal").hidden) { if (e.key === "Escape" && !acctBusy) closeModal("acctModal"); return; }
     if (!$("#nameModal").hidden) { if (e.key === "Escape") closeModal("nameModal"); return; }
     if (!$("#logoutModal").hidden) { if (e.key === "Escape") closeModal("logoutModal"); return; }
@@ -602,7 +603,7 @@
   }
   function showLegal(tab) {
     if (consent) settleConsent(false);   // 看條款 = 先不遊玩（下一局的情況會回首頁）
-    ["loginModal", "helpModal", "perkModal", "acctModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "helpModal", "perkModal", "acctModal", "logoutModal", "nameModal", "pwModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -956,10 +957,10 @@
     if (window.MiniHubAuth) MiniHubAuth.signOut();   // 未完成建立就取消 → 同時登出
   });
 
-  let curAccount = "";   // 帳號密碼登入者的帳號名稱（Google / GitHub 為空字串）
+  let curAccount = "", curProvider = "";   // 帳號密碼登入者的帳號名稱（Google / GitHub 為空字串）
   function setAccount(p) {
     window.MiniHubAccount = p
-      ? { name: p.name, uid: p.gameUid || p.uid, email: curAccount ? "" : p.email, account: curAccount, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null }
+      ? { name: p.name, uid: p.gameUid || p.uid, email: curAccount ? "" : p.email, account: curAccount, provider: curProvider, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null }
       : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null, prefs: null };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
@@ -983,12 +984,12 @@
   document.addEventListener("minihub:auth", e => {
     const { user, profile, error } = e.detail;
     photo = (user && user.photoURL) || "";
-    curAccount = (user && user.account) || "";
+    curAccount = (user && user.account) || ""; curProvider = (user && user.provider) || "";
     if (error) { toast("讀取資料失敗：" + (error.code || error.message)); MiniHubAuth.signOut(); return; }
     if (!user) {                       // 已登出
       const wasIn = signedIn;
       signedIn = false; setAccount(null); paintLogin();
-      ["profileModal", "acctModal", "logoutModal", "nameModal", "linkModal", "deleteModal"].forEach(closeModal);
+      ["profileModal", "acctModal", "logoutModal", "nameModal", "pwModal", "linkModal", "deleteModal"].forEach(closeModal);
       if (wasIn) toast("已登出");
       return;
     }
@@ -1035,6 +1036,33 @@
     }
     $("span", btn).textContent = "確認變更";
     nameCheckEdit();
+  });
+
+  /* ---------- 修改密碼（僅帳號密碼登入；需先輸入舊密碼） ---------- */
+  const pwO = $("#pwOld"), pwN = $("#pwNew"), pwN2 = $("#pwNew2"), pwOk = $("#pwOk"), pwErr = $("#pwErr");
+  function pwCheck() {
+    let m = "";
+    if (pwN.value) {
+      if (!/^[\x21-\x7E]+$/.test(pwN.value)) m = "密碼只能使用英文、數字與半形符號";
+      else if (pwN.value.length < 8) m = "新密碼至少 8 個字元";
+      else if (pwN.value === pwO.value) m = "新密碼不能與舊密碼相同";
+      else if (pwN2.value && pwN.value !== pwN2.value) m = "兩次輸入的新密碼不一致";
+    }
+    pwErr.textContent = m; pwErr.hidden = !m;
+    pwOk.disabled = !(pwO.value && pwN.value && pwN2.value) || !!m;
+  }
+  [pwO, pwN, pwN2].forEach(i => i.addEventListener("input", pwCheck));
+  $("#editPwBtn").addEventListener("click", () => { sfx("confirm"); [pwO, pwN, pwN2].forEach(i => i.value = ""); pwCheck(); openModal("pwModal"); setTimeout(() => pwO.focus(), 60); });
+  pwOk.addEventListener("click", async () => {
+    if (pwOk.disabled) return;
+    pwOk.disabled = true; $("span", pwOk).textContent = "變更中…";
+    try { await MiniHubAuth.changePassword(pwO.value, pwN.value); closeModal("pwModal"); toast("密碼已修改"); }
+    catch (err) {
+      const c = (err && err.code) || "";
+      pwErr.textContent = /wrong-password|invalid-credential/.test(c) ? "舊密碼錯誤" : /too-many/.test(c) ? "嘗試次數過多，請稍後再試" : /network/.test(c) ? "網路異常，請稍後再試" : "修改失敗：" + (c || err.message);
+      pwErr.hidden = false;
+    }
+    $("span", pwOk).textContent = "確認修改"; if (!pwErr.hidden) pwOk.disabled = false; else pwCheck();
   });
 
   $$(".modal").forEach(m => m.addEventListener("click", e => {

@@ -1558,3 +1558,23 @@ body.m .hw-perk { padding: 0 12px; }
 }
 @media (hover: none) { #helpModal .fx-list li:hover, #perkModal .fx-list li:hover { transform: none; } }
 @media (max-width: 700px) { #helpModal .fx-box, #perkModal .fx-box { padding: 0; } } body.m #helpModal .fx-box, body.m #perkModal .fx-box { padding: 0; }
+
+/* ---------- 登入福利：圖卡（圖示 + 標題） ---------- */
+.pk-grid { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 4px 0 8px; }
+.pk-card { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; aspect-ratio: 1 / 1.05; padding: 14px 8px; text-align: center; border-radius: 18px; overflow: hidden;
+  border: 1.5px solid rgba(255, 207, 92, .35); background: radial-gradient(120px 90px at 50% 0%, rgba(255, 207, 92, .2), transparent 75%), linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02) 60%), var(--panel);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 8px 22px rgba(0, 0, 0, .3); transition: transform .25s var(--ease), box-shadow .25s, border-color .25s; animation: fxLiIn .45s var(--ease) backwards; animation-delay: calc(var(--n, 0) * 70ms + 80ms); }
+.pk-card:nth-child(2) { --n: 1; } .pk-card:nth-child(3) { --n: 2; } .pk-card:nth-child(4) { --n: 3; } .pk-card:nth-child(5) { --n: 4; } .pk-card:nth-child(6) { --n: 5; }
+.pk-card::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 40%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .14), transparent); transform: translateX(-130%) skewX(-20deg); }
+.pk-card:hover { transform: translateY(-4px); border-color: rgba(255, 207, 92, .8); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), 0 14px 28px rgba(0, 0, 0, .42), 0 0 22px rgba(255, 207, 92, .28); }
+.pk-card:hover::after { transition: transform .7s; transform: translateX(260%) skewX(-20deg); }
+#perkModal .pk-card .pi { width: 58px; height: 58px; border-radius: 17px; } #perkModal .pk-card .pi svg { width: 30px; height: 30px; }
+.pk-card:hover .pi { transform: rotate(-8deg) scale(1.12); }
+.pk-card b { font-size: 18px; font-weight: 800; color: var(--text); }
+@media (max-width: 420px) { .pk-grid { gap: 10px; } .pk-card b { font-size: 15.5px; } #perkModal .pk-card .pi { width: 48px; height: 48px; } #perkModal .pk-card .pi svg { width: 26px; height: 26px; } }
+
+/* 設定 > 帳號：登入管道標籤 */
+.prov[data-p]:not(:empty):not(.empty) { display: flex; width: fit-content; margin-top: 4px; align-items: center; padding: 2px 14px; border-radius: 999px; font-size: 17px; border: 1px solid rgba(255, 255, 255, .28); background: var(--a2); }
+.prov[data-p="google"] { background: rgba(234, 67, 53, .2); border-color: rgba(234, 67, 53, .6); }
+.prov[data-p="github"] { background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .5); }
+.prov[data-p="password"] { background: rgba(255, 207, 92, .16); border-color: rgba(255, 207, 92, .6); color: #ffe08a; }

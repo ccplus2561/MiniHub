@@ -66,6 +66,7 @@ async function acctEmail(name) {
   }
   return local + ACCT_DOMAIN;
 }
+const provKey = u => { const p = ((u && u.providerData || [])[0] || {}).providerId; return p === "github.com" ? "github" : p === "google.com" ? "google" : "password"; };
 const isPwUser = u => !!u && (u.providerData || []).some(p => p.providerId === "password");
 let gate = null;   // 帳號密碼登入時，等「大小寫是否與註冊時一致」檢查完才讓 onAuthStateChanged 繼續
 let regName = "";   // 剛註冊時，displayName 還沒寫入前先用這個顯示帳號名稱
@@ -94,7 +95,7 @@ function boot() {
         if (window.MiniHubToast) window.MiniHubToast("此帳號沒有可用的電子郵件，無法登入，請改用其他方式");
         return;
       }
-      const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "", account: isPwUser(user) ? (user.displayName || regName || "帳號") : "" };
+      const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "", account: isPwUser(user) ? (user.displayName || regName || "帳號") : "", provider: provKey(user) };
       try {
         const profile = await loadProfile(user.uid);
         if (profile) profile.prevLoginAt = await recordLogin(user.uid, profile);
@@ -178,6 +179,16 @@ async function setJoinRank(v) {
   if (!user || !SAVE_PROFILE) return;
   bump(0, 1);
   await F.updateDoc(F.doc(F.db, "users", user.uid), { joinRank: !!v });
+}
+
+// 修改密碼（僅帳號密碼登入）：先用舊密碼重新驗證，再更新
+async function changePassword(oldPw, newPw) {
+  const user = F && F.auth.currentUser;
+  if (!user || !isPwUser(user)) throw bad("not-password-user");
+  if (!oldPw) throw bad("password-required");
+  if (typeof newPw !== "string" || newPw.length < 8 || newPw.length > 64 || !/^[\x21-\x7E]+$/.test(newPw)) throw bad("invalid-input");
+  await F.reauthenticateWithCredential(user, F.EmailAuthProvider.credential(user.email, oldPw));
+  await F.updatePassword(user, newPw);
 }
 
 // 刪除帳號：先重新驗證（刪除帳號需要「最近登入」）→ 刪 Firestore 玩家資料（users + uids）→ 刪登入帳號
@@ -389,7 +400,7 @@ window.MiniHubAuth = {
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
-  createProfile, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount,
+  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await F.getDoc(F.doc(F.db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(F.auth.currentUser.uid)

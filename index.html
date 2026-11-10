@@ -78,7 +78,7 @@
     }
     if (store) store.removeItem(KEY);
 
-    var VER = "20261110a";   // ← 每次更新網站時修改（日期 + 當天流水字母）
+    var VER = "20261110b";   // ← 每次更新網站時修改（日期 + 當天流水字母）
     var CSS = "css/style.css";
     var JS = ["js/protect.js", "js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
     var WARM_ONLY = "js/minihub-sdk.js";   // 遊戲頁會載入的共用檔：背景更新快取（不等待、不阻擋載入）
@@ -239,12 +239,21 @@
                   <div class="grow"><small>上次登入時間</small><h4 id="accLast"></h4></div>
                 </div>
                 <div class="info-row">
+                  <svg viewBox="0 0 24 24"><path d="M15 7a4 4 0 1 1-3.9 4.9L4 19v-3l2-2h2v-2h2l1.1-1.1A4 4 0 0 1 15 7z"/><path d="M16.5 9.5h.01"/></svg>
+                  <div class="grow"><small>目前登入管道</small><h4 id="accProv" class="prov"></h4></div>
+                </div>
+                <div class="info-row">
                   <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
                   <div class="grow"><small id="accEmailLabel">電子郵件</small><h4 id="accEmail"></h4></div>
                   <button class="row-btn" id="emailEye" aria-label="顯示完整電子郵件" hidden>
                     <svg class="eye-on" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
                     <svg class="eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7c1.7 0 3.2-.4 4.5-1M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>
                   </button>
+                </div>
+                <div class="info-row" id="accPwRow" hidden>
+                  <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3M12 15v2"/></svg>
+                  <div class="grow"><small>密碼</small><h4>••••••••</h4></div>
+                  <button class="row-btn" id="editPwBtn" aria-label="修改密碼"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg></button>
                 </div>
               </div>
               <div class="notice" id="guestNote"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p><b>目前是訪客模式</b>：不會連線到伺服器，也不會同步任何資料；登入後才會連線並同步你的玩家資料。</p></div>
@@ -723,6 +732,25 @@
     </div>
   </div>
 
+  <!-- 修改密碼（帳號密碼登入） -->
+  <div class="modal" id="pwModal" hidden>
+    <div class="modal-box left" role="dialog" aria-modal="true" aria-labelledby="pwTitle">
+      <h3 id="pwTitle" class="c">修改密碼</h3>
+      <label class="field-label" for="pwOld">舊密碼</label>
+      <div class="field"><input id="pwOld" type="password" maxlength="64" autocomplete="current-password"></div>
+      <label class="field-label" for="pwNew">新密碼</label>
+      <div class="field"><input id="pwNew" type="password" maxlength="64" autocomplete="new-password" placeholder="至少 8 個字元（僅限英文、數字、半形符號）"></div>
+      <label class="field-label" for="pwNew2">再輸入一次新密碼</label>
+      <div class="field"><input id="pwNew2" type="password" maxlength="64" autocomplete="new-password"></div>
+      <p class="field-hint bad" id="pwErr" hidden></p>
+      <div class="notice warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg><p>此方式<b>無法找回密碼</b>，請牢記新密碼。</p></div>
+      <div class="modal-actions">
+        <button class="btn-ghost" data-close>取消</button>
+        <button class="btn-primary sm" id="pwOk" disabled><span>確認修改</span></button>
+      </div>
+    </div>
+  </div>
+
   <!-- 修改使用者名稱 -->
   <div class="modal" id="nameModal" hidden>
     <div class="modal-box left" role="dialog" aria-modal="true" aria-labelledby="nameTitle">
@@ -800,13 +828,13 @@
         <div class="ann-top-text"><h3 id="perkTitle">登入福利</h3><p>登入後立即解鎖 6 項專屬功能</p></div>
       </header>
       <div class="fx-body">
-        <ul class="help-list fx-list perk-list">
-          <li><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></i><div><b>每日簽到</b><span>每天領點數</span></div></li>
-          <li><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg></i><div><b>進度續玩</b><span>暫停的遊戲可從中斷處繼續</span></div></li>
-          <li><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-12"/></svg></i><div><b>成績紀錄</b><span>保存個人成績與遊玩紀錄</span></div></li>
-          <li><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a3 3 0 0 0 3 3M16 6h4v1a3 3 0 0 1-3 3M12 13v4M8 20h8M10 17h4"/></svg></i><div><b>全服排行榜</b><span>和所有玩家比較名次</span></div></li>
-          <li><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.3c2.2.7 3.5 2.7 3.5 5.7"/></svg></i><div><b>多人連線</b><span>可玩多人連線遊戲</span></div></li>
-          <li><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 0-14-5.3L4 9M4 4v5h5M4 12a8 8 0 0 0 14 5.3L20 15M20 20v-5h-5"/></svg></i><div><b>跨裝置同步</b><span>設定自動保存並同步到帳號</span></div></li>
+        <ul class="pk-grid">
+          <li class="pk-card"><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></i><b>每日簽到</b></li>
+          <li class="pk-card"><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg></i><b>進度續玩</b></li>
+          <li class="pk-card"><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-12"/></svg></i><b>成績紀錄</b></li>
+          <li class="pk-card"><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a3 3 0 0 0 3 3M16 6h4v1a3 3 0 0 1-3 3M12 13v4M8 20h8M10 17h4"/></svg></i><b>全服排行榜</b></li>
+          <li class="pk-card"><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6M16 4.8a3.5 3.5 0 0 1 0 6.4M18 14.3c2.2.7 3.5 2.7 3.5 5.7"/></svg></i><b>多人連線</b></li>
+          <li class="pk-card"><i class="pi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 0-14-5.3L4 9M4 4v5h5M4 12a8 8 0 0 0 14 5.3L20 15M20 20v-5h-5"/></svg></i><b>跨裝置同步</b></li>
         </ul>
       </div>
       <footer class="fx-foot">
