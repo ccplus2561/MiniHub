@@ -747,56 +747,32 @@
   </div>
 
   <!-- 公告（資料來自 Google 試算表；進站自動彈出，點左上角 MiniHub 可再開） -->
-  <!-- 登入方式 / 帳號說明 -->
+  <!-- 登入方式說明（長按登入按鈕開啟；簡短清單，樣式同設定頁說明） -->
   <div class="modal" id="helpModal" hidden>
     <div class="modal-box left help-box" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
       <button class="modal-x" data-close aria-label="關閉"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-      <h3 id="helpTitle" class="c">帳號說明</h3>
-      <p class="help-lead" data-sec="lead">MiniHub 提供三種登入方式，擇一即可。先看看哪一種最適合你。</p>
-
-      <section class="help-sec" data-sec="acct">
-        <h4>🔑 帳號密碼登入</h4>
-        <ul>
-          <li>自己取一組帳號與密碼，<b>不需要電子郵件，也不需要驗證</b>，建立後馬上能用。</li>
-          <li>因為沒有綁定信箱，<b>忘記帳號或密碼就無法找回</b>，站方也無法協助重設。該帳號與其資料視同報廢，只能重新建立新帳號，舊的點數與成績<b>無法轉移或補發</b>。</li>
-          <li>建議把帳號密碼記在自己找得到的地方（例如密碼管理工具）。</li>
+      <h3 id="helpTitle" class="c">登入說明</h3>
+      <div class="help-pane" data-sec="acct">
+        <ul class="help-list">
+          <li><b>免電子郵件</b><span>自己取帳號密碼，建立後馬上能用</span></li>
+          <li><b>忘記就無法找回</b><span>沒有綁定信箱，只能重新建立，舊資料無法轉移</span></li>
+          <li><b>密碼安全</b><span>加密儲存，站方看不到明文；勿與重要帳號共用</span></li>
         </ul>
-        <p class="help-safe"><b>安全嗎？</b>密碼由 Firebase Authentication（Google 的帳號服務）處理，以加密雜湊方式儲存，<b>站方看不到你的明文密碼</b>。請不要使用與銀行、信箱等重要帳號相同的密碼，避免他人猜到後被盜用。</p>
-      </section>
-
-      <section class="help-sec" data-sec="google">
-        <h4>🟢 Google 登入</h4>
-        <ul>
-          <li>按下後會開啟 Google 官方的登入視窗，<b>MiniHub 不會要求你輸入 Google 密碼</b>，也看不到它。</li>
-          <li>站方只會取得登入所需的基本資料（名稱、頭像、電子郵件），不會存取你的 Gmail、雲端硬碟等內容。</li>
-          <li>若已在瀏覽器登入 Google，通常一鍵就能完成。</li>
+      </div>
+      <div class="help-pane" data-sec="google">
+        <ul class="help-list">
+          <li><b>官方視窗登入</b><span>由 Google 處理，MiniHub 看不到你的密碼</span></li>
+          <li><b>取得的資料</b><span>僅名稱、頭像、電子郵件，不碰 Gmail 或雲端硬碟</span></li>
+          <li><b>一鍵完成</b><span>瀏覽器已登入 Google 時，通常按一下即可</span></li>
         </ul>
-      </section>
-
-      <section class="help-sec" data-sec="github">
-        <h4>⚫ GitHub 登入</h4>
-        <ul>
-          <li>同樣透過 GitHub 官方視窗登入，MiniHub 不會取得你的 GitHub 密碼。</li>
-          <li><b>若 GitHub 的電子郵件與 Google 登入使用的相同，會視為同一個帳號</b>：系統會請你先用原本的方式登入一次，確認後自動把 GitHub 連結過去，之後兩種方式都能進入同一份資料。</li>
+      </div>
+      <div class="help-pane" data-sec="github">
+        <ul class="help-list">
+          <li><b>官方視窗登入</b><span>由 GitHub 處理，MiniHub 看不到你的密碼</span></li>
+          <li><b>同信箱自動合併</b><span>與 Google 登入的電子郵件相同時視為同一帳號，需先用原方式登入確認一次</span></li>
         </ul>
-      </section>
-
-      <section class="help-sec good" data-sec="good">
-        <h4>🎁 登入有什麼好處？</h4>
-        <ul>
-          <li>每日簽到領點數</li>
-          <li>記錄遊戲暫停的進度，之後可從中斷處繼續玩</li>
-          <li>保存個人成績與遊玩紀錄</li>
-          <li>加入全伺服器排行榜，和所有玩家比較名次</li>
-          <li>可玩多人連線遊戲</li>
-          <li>不再出現「未登入」的等待提示框</li>
-          <li>設定自動保存並跨裝置同步</li>
-          <li>可自訂玩家名稱，還有更多功能陸續加入</li>
-        </ul>
-      </section>
-
-      <p class="help-tip" data-sec="tip">小提醒：三種方式建立的是各自獨立的帳號（Google 與 GitHub 電子郵件相同者除外），請記得自己平常用哪一種登入。</p>
-      <button class="btn-primary full" data-close><span>我知道了</span></button>
+      </div>
+      <button class="btn-primary full" data-close data-autofocus><span>我知道了</span></button>
     </div>
   </div>
 

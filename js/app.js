@@ -725,8 +725,7 @@
   const HELP_TITLE = { acct: "帳號密碼登入說明", google: "Google 登入說明", github: "GitHub 登入說明" };
   function openHelp(key) {
     const m = $("#helpModal");
-    m.classList.add("single");
-    $$("[data-sec]", m).forEach(el => { el.hidden = el.dataset.sec !== key; });
+    $$("[data-sec]", m).forEach(el => { el.hidden = el.dataset.sec !== key; el.classList.add("active"); });
     $("#helpTitle").textContent = HELP_TITLE[key] || "帳號說明";
     openModal("helpModal");
     const box = $(".help-box", m); if (box) box.scrollTop = 0;
