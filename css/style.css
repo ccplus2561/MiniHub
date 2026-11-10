@@ -1433,10 +1433,22 @@ body.m .modal.bp .login-row { gap: 10px; }
 body.no-anim .modal.bp [data-help].pressing { transform: none; transition: none; }
 
 /* 登入說明視窗（簡短清單；清單樣式沿用設定頁 .help-list） */
-#helpModal .help-box { width: min(520px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; }
-#helpModal .help-pane { margin-bottom: 18px; }
-#helpModal .help-pane[hidden] { display: none; }
-#helpModal .help-pane > .help-list { margin-top: 4px; }
-#helpModal .help-list li { animation: uiUp .4s cubic-bezier(.2, .8, .2, 1) backwards; }
-#helpModal .help-list li:nth-child(2) { animation-delay: 60ms; } #helpModal .help-list li:nth-child(3) { animation-delay: 120ms; }
-#helpModal .btn-primary.full { width: 100%; justify-content: center; }
+#helpModal .help-box, #perkModal .help-box { width: min(520px, 100%); max-height: calc(100dvh - 32px); overflow-y: auto; }
+#helpModal .help-pane, #perkModal .help-pane { margin-bottom: 18px; }
+#helpModal .help-pane[hidden], #perkModal .help-pane[hidden] { display: none; }
+#helpModal .help-pane > .help-list, #perkModal .help-pane > .help-list { margin-top: 4px; }
+#helpModal .help-list li, #perkModal .help-list li { animation: uiUp .4s cubic-bezier(.2, .8, .2, 1) backwards; }
+#helpModal .help-list li:nth-child(2), #perkModal .help-list li:nth-child(2) { animation-delay: 60ms; } #helpModal .help-list li:nth-child(3), #perkModal .help-list li:nth-child(3) { animation-delay: 120ms; } #perkModal .help-list li:nth-child(4) { animation-delay: 180ms; } #perkModal .help-list li:nth-child(5) { animation-delay: 240ms; } #perkModal .help-list li:nth-child(6) { animation-delay: 300ms; }
+#helpModal .btn-primary.full, #perkModal .btn-primary.full { width: 100%; justify-content: center; }
+
+/* 首頁：登入福利按鈕（未登入才顯示，與「登入遊玩」並排） */
+.hw-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }
+.hw-perk { display: inline-flex; align-items: center; gap: 10px; height: 56px; padding: 0 26px; border-radius: 10px; font-size: 20px; font-weight: 800; color: #ffe08a;
+  background: rgba(255, 207, 92, .12); border: 1.5px solid rgba(255, 207, 92, .55); backdrop-filter: blur(6px); cursor: pointer;
+  transition: transform .22s var(--ease), background .22s, box-shadow .22s; }
+.hw-perk svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.hw-perk:hover, .hw-perk:focus-visible { transform: translateY(-2px); background: rgba(255, 207, 92, .22); box-shadow: 0 10px 24px rgba(255, 207, 92, .25); outline: 0; }
+.hw-perk[hidden] { display: none; }
+body.m .hw-actions { width: 100%; gap: 10px; }
+body.m .hw-actions .hw-go { flex: 1 1 0; justify-content: center; padding: 0 14px; height: 52px; font-size: 18px; }
+body.m .hw-perk { flex: 1 1 0; justify-content: center; padding: 0 12px; height: 52px; font-size: 18px; }

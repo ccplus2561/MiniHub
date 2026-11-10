@@ -508,6 +508,7 @@
     if (!$("#deleteModal").hidden) { if (e.key === "Escape" && !deleting) closeModal("deleteModal"); return; }
     if (!$("#noticeModal").hidden) { if (e.key === "Escape" || e.key === "Enter") { closeModal("noticeModal"); e.preventDefault(); } return; }
     if (!$("#helpModal").hidden) { if (e.key === "Escape") closeModal("helpModal"); return; }
+    if (!$("#perkModal").hidden) { if (e.key === "Escape") closeModal("perkModal"); return; }
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
@@ -601,7 +602,7 @@
   }
   function showLegal(tab) {
     if (consent) settleConsent(false);   // 看條款 = 先不遊玩（下一局的情況會回首頁）
-    ["loginModal", "helpModal", "acctModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
+    ["loginModal", "helpModal", "perkModal", "acctModal", "logoutModal", "nameModal", "linkModal", "noticeModal", "deleteModal"].forEach(closeModal);   // 建立資料視窗必須完成，不在此關閉
     legalTab(tab);
     showView("about");
   }
@@ -721,6 +722,8 @@
     location.replace(location.pathname);                              // 重新載入（同時清掉網址上的參數 / 記憶體中的狀態）
   });
   const PNAME = { google: "Google", github: "GitHub" };
+  $("#perkOpen").addEventListener("click", () => { sfx("confirm"); openModal("perkModal"); });
+  $("#perkLogin").addEventListener("click", () => { closeModal("perkModal"); $("#loginBtn").click(); });   // 福利視窗 → 直接開登入視窗
   /* 長按登入方式（或按 H）→ 只顯示該方式的說明 */
   const HELP_TITLE = { acct: "帳號密碼登入說明", google: "Google 登入說明", github: "GitHub 登入說明" };
   function openHelp(key) {
@@ -968,6 +971,7 @@
     btn.classList.toggle("has-avatar", !!show);
     btn.classList.toggle("signed", signedIn);
     const hg = $("#homeGoText"); if (hg) hg.textContent = signedIn ? "進入遊戲庫" : "登入遊玩";
+    const pk = $("#perkOpen"); if (pk) pk.hidden = signedIn;   // 登入福利：只有未登入才顯示
     const hb = $("#homeGo"); if (hb) { hb.classList.toggle("is-guest", !signedIn); hb.classList.toggle("is-in", signedIn); }   // 首頁主按鈕隨登入狀態切換
   }
   $("#loginAvatar").addEventListener("error", () => $("#loginBtn").classList.remove("has-avatar"));   // 載入失敗 → 退回預設圖示
