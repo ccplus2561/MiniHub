@@ -517,13 +517,12 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 
 /* ---------- 登入後頭像 / 帳號列按鈕 ---------- */
 .login-btn .avatar { display: none; width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, .9); background: #fff; }
-.login-btn .ico-user { display: none; }
+.login-btn svg[hidden] { display: none; }
 .login-btn.has-avatar svg { display: none; }
-.login-btn.signed:not(.has-avatar) .ico-login { display: none; }
-.login-btn.signed:not(.has-avatar) .ico-user { display: block; }
 .login-btn.has-avatar .avatar { display: block; }
 .login-btn span { max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.login-btn.signed { background: linear-gradient(180deg, #34475e, #243447); box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.login-btn.signed { background: linear-gradient(180deg, #ff5d5d, #d62f3a); box-shadow: 0 6px 18px rgba(255, 70, 80, .4); animation-name: logoutBreath; }
+.login-btn.signed:hover { box-shadow: 0 12px 26px rgba(255, 70, 80, .55); }
 .info-row[hidden], .row-btn[hidden] { display: none; }
 .info-row .grow { flex: 1; min-width: 0; }
 .row-btn { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--text-2);
@@ -1119,6 +1118,8 @@ body.m .ann-list { padding: 14px 14px 8px; }
   50% { box-shadow: 0 8px 26px rgba(88, 138, 27, .6), 0 0 0 9px rgba(120, 182, 40, 0); } }
 @keyframes loginBreath { 0%, 100% { box-shadow: 0 6px 18px rgba(26, 159, 255, .35), 0 0 0 0 rgba(26, 159, 255, .45); }
   50% { box-shadow: 0 8px 24px rgba(26, 159, 255, .55), 0 0 0 9px rgba(26, 159, 255, 0); } }
+@keyframes logoutBreath { 0%, 100% { box-shadow: 0 6px 18px rgba(255, 70, 80, .35), 0 0 0 0 rgba(255, 70, 80, .45); }
+  50% { box-shadow: 0 8px 24px rgba(255, 70, 80, .55), 0 0 0 9px rgba(255, 70, 80, 0); } }
 @keyframes shineSweep { 0%, 62% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 @keyframes bellRing { 0%, 55%, 100% { transform: rotate(0); } 6% { transform: rotate(16deg); } 12% { transform: rotate(-14deg); }
   18% { transform: rotate(10deg); } 24% { transform: rotate(-7deg); } 30% { transform: rotate(3deg); } }

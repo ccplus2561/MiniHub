@@ -965,6 +965,10 @@
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
   let photo = "";
+  function icoSync() {   // 人圖示只在「已登入且沒有頭像」時出現；未登入維持登入圖示
+    const b = $("#loginBtn"), u = signedIn && !b.classList.contains("has-avatar");
+    $(".ico-user", b).hidden = !u; $(".ico-login", b).hidden = u;
+  }
   function paintLogin() {
     const btn = $("#loginBtn"), img = $("#loginAvatar");
     const name = (window.MiniHubAccount && MiniHubAccount.name) || "";
@@ -974,11 +978,12 @@
     if (show && img.getAttribute("src") !== photo) img.src = photo;
     btn.classList.toggle("has-avatar", !!show);
     btn.classList.toggle("signed", signedIn);
+    icoSync();
     const hg = $("#homeGoText"); if (hg) hg.textContent = signedIn ? "進入遊戲庫" : "登入遊玩";
     const pk = $("#perkOpen"); if (pk) pk.hidden = signedIn;   // 登入福利：只有未登入才顯示
     const hb = $("#homeGo"); if (hb) { hb.classList.toggle("is-guest", !signedIn); hb.classList.toggle("is-in", signedIn); }   // 首頁主按鈕隨登入狀態切換
   }
-  $("#loginAvatar").addEventListener("error", () => $("#loginBtn").classList.remove("has-avatar"));   // 載入失敗 → 退回預設圖示
+  $("#loginAvatar").addEventListener("error", () => { $("#loginBtn").classList.remove("has-avatar"); icoSync(); });   // 載入失敗 → 退回預設圖示
 
   /* ---------- Firebase 登入狀態 ---------- */
   document.addEventListener("minihub:auth", e => {
