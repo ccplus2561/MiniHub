@@ -3,6 +3,7 @@
    規則：每日簽到 +1 M，隔天接著簽 streak + 1，中斷就從 1 重算；連續天數 × 0.5（保留小數）為額外點數。
    註冊帳號首次登入 +10 M 在 firebase.js 的 createProfile()。
    實際寫入與規則檢查在 firebase.js 的 MiniHubAuth.checkin() 與 Firestore 規則；這裡只負責畫面。
+   登入後自動簽到：帳號資料載入完成且今天還沒簽到時，自動呼叫簽到（每個帳號每次開啟網頁只自動嘗試一次；手動按鈕仍保留作為備援）。
    body[data-ci]：guest 未登入 / todo 今天還沒簽到 / done 今天已簽到 */
 (function () {
   var DAY = 864e5, TW = 8 * 3600000;
@@ -13,7 +14,7 @@
   var toast = function (m) { if (window.MiniHubToast) MiniHubToast(m); };
   var modal = $("#checkinModal");
   var st = { signedIn: false, mPoints: 0, streak: 0, total: 0, last: null };
-  var busy = false, timer = 0;
+  var busy = false, timer = 0, autoUid = null;
 
   var rewardOf = function (n) { return 1 + n * 0.5; };   // n = 簽到後的連續天數；1 + 連續天數×0.5（保留小數）
   var fmt = function (n) { return Number.isInteger(n) ? String(n) : n.toFixed(1); };
@@ -76,10 +77,13 @@
     st.signedIn = !!a.uid;
     st.mPoints = a.mPoints || 0; st.streak = a.streak || 0; st.total = a.totalCheckins || 0; st.last = a.lastCheckinAt || null;
     render();
+    // 登入後自動簽到（含剛註冊完的首次登入）；登出後 autoUid 清除，下次登入會再判斷一次
+    if (!st.signedIn) { autoUid = null; return; }
+    if (autoUid !== a.uid && document.body.dataset.ci === "todo") { autoUid = a.uid; setTimeout(function () { sign(true); }, 1200); }
   }
   document.addEventListener("minihub:account", load);
 
-  function sign() {
+  function sign(auto) {
     if (busy || document.body.dataset.ci !== "todo" || !window.MiniHubAuth) return;
     busy = true; $$("[data-ci-sign]").forEach(function (b) { b.disabled = true; });
     MiniHubAuth.checkin().then(function (r) {
@@ -92,7 +96,7 @@
       if (c === "already-checked-in" || c === "permission-denied") {   // 其他裝置已簽到，或本機時間與伺服器差太多 → 重新讀取最新資料
         return MiniHubAuth.loadProfile().then(function (p) {
           if (p) { st.mPoints = p.mPoints; st.streak = p.streak; st.total = p.totalCheckins; st.last = p.lastCheckinAt; }
-          render(); toast(view().mode === "done" ? "今天已經簽到過了" : "簽到失敗，請確認裝置時間正確後再試");
+          render(); if (auto && view().mode === "done") return; toast(view().mode === "done" ? "今天已經簽到過了" : "簽到失敗，請確認裝置時間正確後再試");
         }, function () { toast("簽到失敗，請稍後再試"); });
       }
       toast(c === "unavailable" || /network/.test(c) ? "網路連線失敗，請稍後再試" : "簽到失敗：" + (c || e.message));
