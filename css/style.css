@@ -1854,3 +1854,32 @@ body.m .nav-item:active { transform: scale(.92); background: none; }
 body.m .nav-item:active svg { transform: scale(.9); }
 body.m .nav-item:hover { background: none; transform: none; box-shadow: none; }
 body.m .tabs, body.m .nav-item { will-change: auto; contain: layout style; }
+
+/* ---- 手機版輕量動畫（只用 transform / opacity，一次性、時間短；「動畫效果」關閉時自動停用） ---- */
+@keyframes mUp { from { opacity: 0; transform: translateY(10px); } }
+@keyframes mPop { 0% { transform: scale(.7); } 60% { transform: scale(1.16) translateY(-2px); } 100% { transform: translateY(-1px); } }
+@keyframes mBar { from { transform: scaleX(0); } }
+@keyframes mIn { from { opacity: 0; transform: translateX(14px); } }
+/* 頁面切換：淡入 + 輕微上浮 */
+body.m .view.active { animation: mUp .24s cubic-bezier(.2, .8, .2, 1); }
+body.m .pane.active { animation: mIn .22s cubic-bezier(.2, .8, .2, 1); }
+/* 設定頁內容：前幾個區塊依序上浮（最多 4 個，避免一次動太多） */
+body.m .pane.active > .set-label, body.m .pane.active > .info-card, body.m .pane.active > .set-group, body.m .pane.active > .notice { animation: mUp .28s cubic-bezier(.2, .8, .2, 1) backwards; }
+body.m .pane.active > :nth-child(2) { animation-delay: 40ms; }
+body.m .pane.active > :nth-child(3) { animation-delay: 80ms; }
+body.m .pane.active > :nth-child(n+4) { animation-delay: 110ms; }
+/* 底部導覽：圖示彈跳、頂端色條滑出、標籤顏色漸變 */
+body.m .nav-item.active svg { animation: mPop .34s cubic-bezier(.3, 1.4, .5, 1) forwards; }
+body.m .nav-item.active::after { animation: mBar .22s cubic-bezier(.2, .8, .2, 1); }
+body.m .nav-item span { transition: color .2s; }
+/* 設定分類膠囊 / 開關：顏色與位置平滑過渡 */
+body.m .set-item, body.m .chip { transition: background .2s, border-color .2s, transform .15s; }
+body.m .switch, body.m .switch i { transition: background .2s, transform .22s cubic-bezier(.3, 1.3, .5, 1), border-color .2s; }
+body.m .seg button { transition: background .2s, color .2s; }
+/* 按鈕按下回饋 */
+body.m .btn-primary:active, body.m .btn-ghost:active, body.m .row-btn:active, body.m .login-btn:active { transform: scale(.95); }
+body.m .btn-primary, body.m .btn-ghost, body.m .row-btn, body.m .login-btn { transition: transform .15s, background .2s; }
+/* 遊戲卡片：輕微按壓回饋 */
+body.m .card:active { transform: scale(.97); transition: transform .12s; }
+@media (prefers-reduced-motion: reduce) { body.m * { animation: none !important; } }
+body.no-anim.m .pane, body.no-anim.m .pane > *, body.no-anim.m .nav-item::after { animation: none !important; }
