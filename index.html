@@ -78,9 +78,9 @@
     }
     if (store) store.removeItem(KEY);
 
-    var VER = "20261110b";   // ← 每次更新網站時修改（日期 + 當天流水字母）
+    var VER = "20261111a";   // ← 每次更新網站時修改（日期 + 當天流水字母）
     var CSS = "css/style.css";
-    var JS = ["js/protect.js", "js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js"];
+    var JS = ["js/protect.js", "js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js", "js/checkin-preview.js"];
     var WARM_ONLY = "js/minihub-sdk.js";   // 遊戲頁會載入的共用檔：背景更新快取（不等待、不阻擋載入）
     var MOD = "js/firebase.js";
     var v = function (u) { return u + "?v=" + VER; };
@@ -100,7 +100,7 @@
   })();
   </script>
 </head>
-<body class="booting">
+<body class="booting" data-ci="guest">
   <!-- 開啟網站時的載入畫面：抓完公告 / 遊戲清單後才進入 -->
   <div class="splash" id="splash" role="status" aria-live="polite">
     <div class="splash-bg" aria-hidden="true"><b class="orb o1"></b><b class="orb o2"></b><b class="orb o3"></b><b class="grid"></b><i class="p r" style="--x:44%;--s:5px;--d:15s;--t:-1s"></i><i class="p" style="--x:12%;--s:10px;--d:10s;--t:-5s"></i><i class="p" style="--x:77%;--s:4px;--d:12s;--t:0s"></i><i class="p r" style="--x:14%;--s:8px;--d:15s;--t:-2s"></i><i class="p" style="--x:33%;--s:4px;--d:15s;--t:-1s"></i><i class="p" style="--x:75%;--s:4px;--d:12s;--t:-10s"></i><i class="p r" style="--x:83%;--s:10px;--d:9s;--t:-9s"></i><i class="p" style="--x:77%;--s:8px;--d:9s;--t:-3s"></i><i class="p" style="--x:8%;--s:10px;--d:11s;--t:-4s"></i><i class="p r" style="--x:56%;--s:5px;--d:10s;--t:-9s"></i><i class="p" style="--x:42%;--s:10px;--d:11s;--t:-1s"></i><i class="p" style="--x:77%;--s:10px;--d:12s;--t:-5s"></i><i class="p r" style="--x:15%;--s:10px;--d:10s;--t:-9s"></i><i class="p" style="--x:10%;--s:10px;--d:12s;--t:-7s"></i><i class="p" style="--x:90%;--s:10px;--d:15s;--t:-10s"></i><i class="p r" style="--x:62%;--s:10px;--d:16s;--t:-11s"></i></div>
@@ -126,6 +126,7 @@
         <button class="nav-item active" data-view="home">
         <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>
         <span>首頁</span>
+        <i class="nav-dot" data-ci-only="todo" aria-hidden="true"></i>
       </button>
         <button class="nav-item" data-view="library">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
@@ -149,6 +150,14 @@
     </aside>
 
     <div class="content">
+
+    <!-- M 點膠囊：電腦版在首頁右上角；手機版在頂部列右側（登入鈕左邊） -->
+    <button class="mp-pill" id="mpPill" type="button" data-ci-open aria-label="M 點與每日簽到">
+      <i class="mp-coin" aria-hidden="true"></i>
+      <b class="mp-unit">M</b>
+      <span class="mp-num" data-ci-only="todo done">1,250</span>
+      <span class="mp-num mp-na" data-ci-only="guest">--</span>
+    </button>
 
     <!-- 主要內容 -->
     <main class="main">
@@ -175,6 +184,22 @@
             <span class="hw-perk-t">登入福利</span>
             <i class="hw-perk-sp s1"></i><i class="hw-perk-sp s2"></i><i class="hw-perk-sp s3"></i>
           </button>
+          </div>
+          <!-- 每日簽到橫幅：guest 登入後即可簽到 / todo 今天可領 / done 已簽到收成小卡 -->
+          <div class="ci-banner" id="ciBanner">
+            <div class="ci-card is-guest" data-ci-only="guest">
+              <span class="ci-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></span>
+              <div class="ci-txt"><small>每日簽到</small><b>每天可領 +10 <span class="mp-unit">M</span></b></div>
+              <button class="btn-primary gold" type="button" data-ci-login><span>登入後即可簽到</span></button>
+            </div>
+            <div class="ci-card" data-ci-only="todo">
+              <span class="ci-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></span>
+              <div class="ci-txt"><small>每日簽到</small><b>今天可領 +10 <span class="mp-unit">M</span></b></div>
+              <button class="btn-primary gold" type="button" data-ci-sign><span>簽到</span></button>
+            </div>
+            <button class="ci-mini" type="button" data-ci-only="done" data-ci-open>
+              <i class="ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span>已簽到，明天再來</span><em>連續 3 天</em>
+            </button>
           </div>
         </div>
       </section>
@@ -231,6 +256,10 @@
                 <div class="info-row">
                   <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M6 16c.6-1.6 1.8-2.4 3-2.4s2.4.8 3 2.4M15 10h3M15 14h3"/></svg>
                   <div class="grow"><small>遊戲 UID</small><h4 id="accUid"></h4></div>
+                </div>
+                <div class="info-row">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 15.5v-7l3.5 4 3.5-4v7"/></svg>
+                  <div class="grow"><small>M 點</small><h4 data-ci-only="todo done">1,250</h4><h4 class="empty" data-ci-only="guest">--</h4></div>
                 </div>
               </div>
               <div class="set-label">登入資訊</div>
@@ -842,6 +871,44 @@
   </div>
 
   <!-- 登入福利（首頁未登入時的按鈕開啟；簡短清單，樣式同設定頁說明） -->
+  <!-- 每日簽到視窗 -->
+  <div class="modal" id="checkinModal" hidden>
+    <div class="modal-box ann-box fx-box perk-box ci-box" role="dialog" aria-modal="true" aria-labelledby="ciTitle">
+      <button class="modal-x" data-close aria-label="關閉"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <header class="ann-top">
+        <div class="ann-ico fx-ico gold"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></div>
+        <div class="ann-top-text"><h3 id="ciTitle">每日簽到</h3>
+          <p data-ci-only="todo">今天還沒簽到</p><p data-ci-only="done">今日已簽到</p><p data-ci-only="guest">登入後即可簽到</p></div>
+      </header>
+      <div class="fx-body ci-body">
+        <div class="ci-sum">
+          <div><small>我的 M 點</small><b><i class="mp-coin" aria-hidden="true"></i><span class="u">M</span><span data-ci-only="todo done">1,250</span><span data-ci-only="guest">--</span></b></div>
+          <div><small>連續簽到</small><b><span data-ci-only="todo">2 天</span><span data-ci-only="done">3 天</span><span data-ci-only="guest">--</span></b></div>
+        </div>
+        <ol class="ci-week" aria-label="7 天簽到日曆">
+            <li class="ci-day is-done"><span class="ci-d">第 1 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day is-done"><span class="ci-d">第 2 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day is-today"><span class="ci-tag" data-ci-only="todo">今天</span><span class="ci-d">第 3 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-d">第 4 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-d">第 5 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-d">第 6 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day big"><span class="ci-d">第 7 天</span><svg class="ci-gift" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13"/><path d="M12 7c-1-3-5-4-5-1.5C7 7 9 7 12 7zM12 7c1-3 5-4 5-1.5C17 7 15 7 12 7z"/></svg><b>+30</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+        </ol>
+        <div class="ci-reward">
+          <i class="mp-coin" aria-hidden="true"></i>
+          <div><small data-ci-only="todo guest">今日獎勵</small><small data-ci-only="done">今日已領取</small><b>+10 <span class="mp-unit">M</span></b></div>
+          <span class="ci-got" data-ci-only="done"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已入帳</span>
+        </div>
+      </div>
+      <footer class="fx-foot">
+        <span class="ann-hint"><kbd>Esc</kbd> 關閉</span>
+        <button class="btn-primary sm gold" type="button" data-ci-only="todo" data-ci-sign data-autofocus><span>簽到</span></button>
+        <button class="btn-primary sm gold" type="button" data-ci-only="done" disabled><span>今日已簽到</span></button>
+        <button class="btn-primary sm gold" type="button" data-ci-only="guest" data-ci-login><span>登入後即可簽到</span></button>
+      </footer>
+    </div>
+  </div>
+
   <div class="modal" id="perkModal" hidden>
     <div class="modal-box ann-box fx-box perk-box" role="dialog" aria-modal="true" aria-labelledby="perkTitle">
       <button class="modal-x" data-close aria-label="關閉"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>

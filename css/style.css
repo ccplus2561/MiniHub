@@ -1702,3 +1702,130 @@ body.m .prof-box .auth-body { min-height: 0; } body.m .prof-box .auth-foot .moda
 body.no-anim .auth-box::after, body.no-anim .auth-orb, body.no-anim .auth-p, body.no-anim .auth-ico, body.no-anim .auth-ico svg,
 body.no-anim .switch-cta, body.no-anim .switch-cta::after, body.no-anim .switch-cta svg, body.no-anim .pstepper li i { animation: none !important; }
 body.no-anim .auth-p { display: none; }
+
+/* ====================================================================
+   每日簽到 / M 點（只有樣式；狀態由 body[data-ci] 控制：guest 訪客 / todo 未簽到 / done 已簽到）
+   ==================================================================== */
+body[data-ci="guest"] [data-ci-only]:not([data-ci-only~="guest"]),
+body[data-ci="todo"] [data-ci-only]:not([data-ci-only~="todo"]),
+body[data-ci="done"] [data-ci-only]:not([data-ci-only~="done"]) { display: none !important; }
+
+/* 金幣圖示（用 font-size 控制大小） */
+.mp-coin { position: relative; flex: none; display: inline-block; width: 1em; height: 1em; font-size: 22px; border-radius: 50%; vertical-align: -.2em;
+  background: radial-gradient(circle at 32% 26%, #fff6cf 0, #ffd770 34%, #f5a623 78%, #d98a0c 100%);
+  box-shadow: inset 0 0 0 .07em rgba(255, 244, 200, .8), inset 0 -.09em .12em rgba(150, 80, 0, .45), 0 .06em .28em rgba(245, 166, 35, .5); }
+.mp-coin::after { content: ""; position: absolute; inset: .2em; border-radius: 50%; border: .07em solid rgba(140, 80, 0, .5); }
+.mp-coin::before { content: ""; position: absolute; z-index: 1; left: .2em; top: .13em; width: .3em; height: .13em; border-radius: 50%; background: rgba(255, 255, 255, .75); transform: rotate(-35deg); }
+.mp-unit { color: #ffcf5c; font-weight: 800; }
+
+/* M 點膠囊 */
+.mp-pill { position: fixed; z-index: 21; top: 22px; right: clamp(24px, 4vw, 56px); display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px 0 8px; border-radius: 999px;
+  font-size: 19px; font-weight: 800; color: #ffe9a8; border: 1.5px solid rgba(255, 207, 92, .55);
+  background: linear-gradient(180deg, rgba(255, 207, 92, .22), rgba(255, 207, 92, .08)), rgba(11, 17, 24, .72); backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 8px 22px rgba(0, 0, 0, .35);
+  transition: transform .22s var(--ease), box-shadow .22s, background .22s, border-color .22s; }
+.mp-pill .mp-coin { font-size: 28px; }
+.mp-pill .mp-unit { font-size: .8em; margin-right: -3px; }
+.mp-pill .mp-num { color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.mp-pill:hover, .mp-pill:focus-visible { transform: translateY(-2px); border-color: rgba(255, 207, 92, .9); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 12px 26px rgba(245, 166, 35, .35); }
+.mp-pill:active { transform: scale(.95); }
+body[data-ci="guest"] .mp-pill { color: #cfd8e2; border-color: rgba(255, 255, 255, .3); background: rgba(11, 17, 24, .72); }
+body[data-ci="guest"] .mp-pill .mp-coin { filter: grayscale(.85) brightness(.85); }
+body[data-ci="guest"] .mp-pill .mp-unit { color: #cfd8e2; }
+body:not(.m):not([data-view="home"]) .mp-pill { display: none; }   /* 電腦版只放首頁；手機版在頂部列，每頁都有 */
+body.m .mp-pill { top: 9px; right: 112px; height: 36px; padding: 0 12px 0 6px; gap: 6px; font-size: 16px; }
+body.m .mp-pill .mp-coin { font-size: 24px; }
+
+/* 左側導覽「首頁」小紅點 */
+.nav-dot { position: absolute; z-index: 6; top: 11px; left: calc(50% + 10px); width: 14px; height: 14px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 35% 30%, #ff9a9a, #e5303d 72%); border: 2px solid #0e1620; animation: ciDot 2s ease-out infinite; }
+body.m .nav-dot { top: 5px; left: calc(50% + 7px); width: 12px; height: 12px; }
+@keyframes ciDot { 0% { box-shadow: 0 0 0 0 rgba(255, 70, 80, .6); } 70%, 100% { box-shadow: 0 0 0 9px rgba(255, 70, 80, 0); } }
+
+/* 金色按鈕（橫幅、視窗共用） */
+.btn-primary.gold { background: linear-gradient(135deg, #ffe08a, #f5a623); color: #3a2600; box-shadow: 0 6px 20px rgba(245, 166, 35, .35); animation: perkGlow 2.6s ease-in-out infinite; }
+.btn-primary.gold:hover { box-shadow: 0 14px 30px rgba(245, 166, 35, .5); }
+.btn-primary.gold:disabled { animation: none; filter: none; color: var(--muted); background: rgba(255, 255, 255, .1); border-color: var(--line-2); box-shadow: none; }
+
+/* 首頁橫幅 */
+.ci-banner { display: flex; width: min(460px, 100%); margin-top: 6px; }
+.ci-card { position: relative; flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px; padding: 12px 14px 12px 12px; border-radius: 18px; overflow: hidden;
+  border: 1.5px solid rgba(255, 207, 92, .5);
+  background: radial-gradient(260px 120px at 0% 0%, rgba(255, 207, 92, .26), transparent 70%), linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02)), rgba(11, 17, 24, .76);
+  backdrop-filter: blur(8px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 10px 26px rgba(0, 0, 0, .4); }
+.ci-card::after { content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 35%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .13), transparent); transform: translateX(-130%) skewX(-20deg); animation: perkSweep 4.8s ease-in-out infinite; }
+.ci-ico { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border-radius: 15px; color: #3a2600;
+  background: linear-gradient(150deg, #ffe9a8, #f5a623); border: 1.5px solid rgba(255, 255, 255, .55); box-shadow: 0 6px 16px rgba(245, 166, 35, .4); }
+.ci-ico svg { width: 28px; height: 28px; stroke-width: 2; }
+.ci-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ci-txt small { font-size: 14px; font-weight: 700; color: #ffcf5c; letter-spacing: .08em; }
+.ci-txt b { font-size: 21px; font-weight: 800; color: #fff; white-space: nowrap; }
+.ci-card .btn-primary { flex: none; height: 46px; padding: 0 22px; font-size: 18px; white-space: nowrap; }
+/* 已簽到：收成小卡 */
+.ci-mini { display: inline-flex; align-items: center; gap: 10px; padding: 7px 16px 7px 8px; border-radius: 999px; font-size: 16px; font-weight: 700; color: var(--text-2);
+  border: 1.5px solid rgba(255, 255, 255, .22); background: rgba(11, 17, 24, .62); backdrop-filter: blur(8px); transition: transform .22s var(--ease), border-color .22s, background .22s; }
+.ci-mini .ok { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: linear-gradient(180deg, #78b628, #4f8a1c); }
+.ci-mini .ok svg { width: 15px; height: 15px; stroke-width: 3.2; }
+.ci-mini em { font-style: normal; font-size: 14px; color: #ffcf5c; padding-left: 10px; border-left: 1px solid rgba(255, 255, 255, .22); }
+.ci-mini:hover { transform: translateY(-2px); border-color: rgba(255, 207, 92, .6); background: rgba(11, 17, 24, .8); }
+body.m .ci-banner { width: 100%; }
+body.m .ci-card { gap: 10px; padding: 10px 12px 10px 10px; }
+body.m .ci-ico { width: 44px; height: 44px; border-radius: 13px; }
+body.m .ci-ico svg { width: 24px; height: 24px; }
+body.m .ci-txt b { font-size: 18px; }
+body.m .ci-card .btn-primary { height: 42px; padding: 0 16px; font-size: 17px; }
+body.m .ci-card.is-guest { flex-wrap: wrap; }
+body.m .ci-card.is-guest .ci-txt { flex: 1 1 0; }
+body.m .ci-card.is-guest .btn-primary { flex: 1 1 100%; justify-content: center; }
+body.no-anim .ci-card::after, body.no-anim .nav-dot, body.no-anim .btn-primary.gold { animation: none; }
+
+/* 簽到視窗（沿用「登入福利」的金色外框） */
+#checkinModal .fx-box { width: min(540px, 100%); max-height: min(780px, calc(100dvh - 32px)); }
+.ci-body { display: flex; flex-direction: column; gap: 16px; padding-top: 18px; }
+.ci-sum { display: flex; gap: 12px; }
+.ci-sum > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 14px; border: 1.5px solid rgba(214, 230, 245, .18); background: rgba(255, 255, 255, .04); }
+.ci-sum small { font-size: 14px; font-weight: 600; color: var(--muted); }
+.ci-sum b { display: flex; align-items: center; gap: 7px; font-size: 22px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+.ci-sum .mp-coin { font-size: 24px; }
+.ci-sum .u { color: #ffcf5c; font-size: .8em; margin-right: -3px; }
+.ci-week { list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding-top: 6px; }
+.ci-day { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 98px; padding: 10px 2px 9px; text-align: center; border-radius: 14px;
+  border: 1.5px solid rgba(214, 230, 245, .16); background: linear-gradient(160deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .015)), var(--panel); }
+.ci-day .ci-d { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.ci-day b { font-size: 16px; font-weight: 800; color: #fff; }
+.ci-day .mp-coin { font-size: 26px; }
+.ci-day .ci-gift { width: 30px; height: 30px; color: #ffcf5c; stroke-width: 1.8; }
+.ci-day.big { border-color: rgba(255, 207, 92, .5); background: radial-gradient(100px 80px at 50% 0%, rgba(255, 207, 92, .28), transparent 75%), linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02)), var(--panel); }
+.ci-day.big .ci-d { color: #ffcf5c; }
+.ci-ck { position: absolute; top: -7px; right: -6px; width: 22px; height: 22px; display: none; place-items: center; border-radius: 50%; color: #fff; border: 2px solid #162231; background: linear-gradient(180deg, #78b628, #4f8a1c); }
+.ci-ck svg { width: 12px; height: 12px; stroke-width: 3.4; }
+.ci-tag { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; color: #3a2600; white-space: nowrap; background: linear-gradient(135deg, #ffe08a, #f5a623); }
+/* 已簽到的日子（訪客不顯示進度） */
+body:not([data-ci="guest"]) .ci-day.is-done, body[data-ci="done"] .ci-day.is-today { border-color: rgba(120, 182, 40, .55); background: linear-gradient(160deg, rgba(120, 182, 40, .18), rgba(120, 182, 40, .04)), var(--panel); }
+body:not([data-ci="guest"]) .ci-day.is-done .mp-coin, body[data-ci="done"] .ci-day.is-today .mp-coin { opacity: .55; filter: saturate(.7); }
+body:not([data-ci="guest"]) .ci-day.is-done .ci-ck, body[data-ci="done"] .ci-day.is-today .ci-ck { display: grid; }
+/* 今天（未簽到）：金色發光 */
+body[data-ci="todo"] .ci-day.is-today { border-color: #ffcf5c; background: radial-gradient(90px 70px at 50% 0%, rgba(255, 207, 92, .36), transparent 75%), linear-gradient(160deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .02)), var(--panel);
+  box-shadow: 0 0 0 3px rgba(255, 207, 92, .18), 0 8px 22px rgba(245, 166, 35, .3); animation: ciToday 2s ease-in-out infinite; }
+@keyframes ciToday { 50% { box-shadow: 0 0 0 5px rgba(255, 207, 92, .08), 0 10px 26px rgba(245, 166, 35, .45); } }
+body.no-anim .ci-day { animation: none !important; }
+/* 今日獎勵 */
+.ci-reward { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 16px; border: 1.5px solid rgba(255, 207, 92, .45);
+  background: radial-gradient(220px 90px at 0% 50%, rgba(255, 207, 92, .22), transparent 70%), rgba(255, 255, 255, .03); }
+.ci-reward .mp-coin { font-size: 44px; }
+.ci-reward small { display: block; font-size: 14px; font-weight: 700; color: #ffcf5c; letter-spacing: .08em; }
+.ci-reward b { display: block; font-size: 30px; font-weight: 800; color: #fff; line-height: 1.1; }
+.ci-got { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 14px; font-weight: 800; color: #d8f5b0; border: 1px solid rgba(120, 182, 40, .55); background: rgba(120, 182, 40, .2); }
+.ci-got svg { width: 16px; height: 16px; stroke-width: 3; }
+body[data-ci="guest"] .ci-reward { opacity: .75; }
+/* 窄螢幕 / 手機：4 欄，第 7 天佔兩格 */
+@media (max-width: 560px) {
+  .ci-week { grid-template-columns: repeat(4, 1fr); }
+  .ci-day.big { grid-column: span 2; flex-direction: row; gap: 12px; }
+  #checkinModal .fx-foot { justify-content: stretch; } #checkinModal .fx-foot .btn-primary { width: 100%; justify-content: center; }
+}
+body.m .ci-week { grid-template-columns: repeat(4, 1fr); }
+body.m .ci-day.big { grid-column: span 2; flex-direction: row; gap: 12px; }
+body.m #checkinModal .fx-foot { justify-content: stretch; } body.m #checkinModal .fx-foot .btn-primary { width: 100%; justify-content: center; }
+body.m .ci-sum b { font-size: 19px; } body.m .ci-reward b { font-size: 26px; }
