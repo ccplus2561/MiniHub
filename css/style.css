@@ -1997,3 +1997,9 @@ body.m .brand b { font-size: 22px; }
   .hw-title { font-size: 48px; }
 }
 @media (max-width: 360px) { body.m .hw-title { font-size: 48px; } body.m .hw-logo { width: 76px; height: 76px; } }
+
+/* ---------- 開始遊玩按鈕：未登入改用播放圖示；遊戲庫預設背景 Logo ---------- */
+.hw-go.is-guest .go-play { display: block; }
+.hw-go.is-guest .go-login { display: none; }
+.hw-go.is-guest:hover .go-play { transform: translateX(3px) scale(1.12); }
+.bd .bd-logo { width: min(52vh, 420px); height: min(52vh, 420px); color: var(--accent-2); }

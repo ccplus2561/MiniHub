@@ -51,10 +51,20 @@
     bds.forEach((b, i) => b.classList.toggle("on", i === bdIdx));
   }
 
+  const LOGO_BD = '<svg class="bd-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12a4 4 0 0 1 3.9 4.9l-.9 4a2.4 2.4 0 0 1-4 1.2L15 16.5H9L7 18.1a2.4 2.4 0 0 1-4-1.2l-.9-4A4 4 0 0 1 6 8z"/><path d="M8 11v3M6.5 12.5h3M15.5 11.5h.01M17.5 13.5h.01"/></svg>';
+  function setLogoBackdrop() {   // 未選遊戲：背景為 MiniHub Logo
+    const bds = $$("#backdrop .bd");
+    bdIdx ^= 1;
+    const el = bds[bdIdx];
+    el.style.background = "radial-gradient(1000px 700px at 75% 25%, rgba(26,159,255,.28), transparent 70%), radial-gradient(900px 700px at 0% 100%, rgba(26,159,255,.16), transparent 70%)";
+    el.innerHTML = LOGO_BD;
+    bds.forEach((b, i) => b.classList.toggle("on", i === bdIdx));
+  }
+
   function select(i, quiet) {
     const hero = $("#hero");
     if (!shown.length || i < 0) {
-      selected = -1; hero.hidden = true;
+      selected = -1; hero.hidden = true; setLogoBackdrop();
       $$("#libraryRow .card").forEach(c => c.classList.remove("selected"));
       return;
     }
@@ -1031,7 +1041,7 @@
     btn.classList.toggle("has-avatar", !!show);
     btn.classList.toggle("signed", signedIn);
     icoSync();
-    const hg = $("#homeGoText"); if (hg) hg.textContent = signedIn ? "進入遊戲庫" : "登入遊玩";
+    const hg = $("#homeGoText"); if (hg) hg.textContent = signedIn ? "進入遊戲庫" : "開始遊玩";
     const pk = $("#perkOpen"); if (pk) pk.hidden = signedIn;   // 登入福利：只有未登入才顯示
     const hb = $("#homeGo"); if (hb) { hb.classList.toggle("is-guest", !signedIn); hb.classList.toggle("is-in", signedIn); }   // 首頁主按鈕隨登入狀態切換
   }
