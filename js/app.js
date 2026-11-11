@@ -204,18 +204,18 @@
     if (consent) return false;                                  // 已在詢問中
     const wasFs = !!document.fullscreenElement;
     if (wasFs) document.exitFullscreen().catch(() => {});       // 全螢幕時視窗會被蓋住，先退出
-    consent = { yes, no, wasFs }; cRun(0, 5);
+    consent = { yes, no, wasFs }; cRun(0, 6);
     try { document.activeElement && document.activeElement.blur(); } catch (e) {}   // 把鍵盤焦點從遊戲拿回來
     sfx("open"); openModal("playConsentModal");
     return true;
   }
   function settleConsent(ok) {
     if (!consent) return;
-    const c = consent; consent = null; clearInterval(cTick); closeModal("playConsentModal");
+    const c = consent; consent = null; clearInterval(cTick); cRing(null); closeModal("playConsentModal");
     if (ok && c.wasFs && !player.hidden && player.requestFullscreen) player.requestFullscreen().catch(() => {});
     (ok ? c.yes : c.no)();
   }
-  // 同意鈕：開啟後等 5 秒才能按 → 按一次變「再次確認」（5 秒內不按就恢復）→ 再按才真正同意
+  // 同意鈕：開啟後等 6 秒才能按 → 按一次變「再次確認」（5 秒內不按就恢復）→ 再按才真正同意
   const cBtn = $("#consentOk"), cLbl = $("span", cBtn);
   let cStage = 0, cTick = null;      // 0 = 等待、1 = 可按、2 = 再次確認
   function cPaint(left) {
@@ -223,9 +223,17 @@
     cBtn.classList.toggle("reconfirm", cStage === 2);
     cLbl.textContent = cStage === 0 ? "同意並遊玩（" + left + "）" : cStage === 1 ? "同意並遊玩" : "再次確認（" + left + "）";
   }
+  const cBox = $("#playConsentModal .modal-box");
+  function cRing(mode, secs) {   // 外框進度環：run = 等待中填滿、re = 再次確認倒數清空、ready = 可按（全滿＋脈衝）
+    cBox.classList.remove("run", "re", "ready");
+    if (!mode) return;
+    if (secs) { cBox.style.setProperty("--d", secs + "s"); void cBox.offsetWidth; }
+    cBox.classList.add(mode === "re" ? "re" : mode === "run" ? "run" : "ready");
+    if (mode === "re") cBox.classList.add("run");
+  }
   function cRun(stage, secs) {
-    clearInterval(cTick); cStage = stage; let left = secs; cPaint(left);
-    cTick = setInterval(() => { left--; if (left <= 0) { clearInterval(cTick); cStage = 1; cPaint(0); } else cPaint(left); }, 1000);
+    clearInterval(cTick); cStage = stage; let left = secs; cPaint(left); cRing(stage === 2 ? "re" : "run", secs);
+    cTick = setInterval(() => { left--; if (left <= 0) { clearInterval(cTick); cStage = 1; cPaint(0); cRing("ready"); } else cPaint(left); }, 1000);
   }
   cBtn.addEventListener("click", () => {
     if (cStage === 0) return;
