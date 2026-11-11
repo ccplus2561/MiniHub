@@ -275,8 +275,8 @@
                   <div class="grow"><small>上次登入時間</small><h4 id="accLast"></h4></div>
                 </div>
               </div>
-              <div class="notice" id="guestNote"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p><b>目前是訪客模式</b>：不會連線到伺服器，也不會同步任何資料；登入後才會連線並同步你的玩家資料。</p></div>
-              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>登入即視同你已閱讀並同意 MiniHub <a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>及相關<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p></div>
+              <div class="notice" id="guestNote"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p><b>訪客模式</b>：資料不會同步，登入後才會儲存到帳號。</p></div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>登入即代表同意<a href="#" class="legal-link" data-legal="terms">服務條款</a>、<a href="#" class="legal-link" data-legal="privacy">隱私權政策</a>與<a href="#" class="legal-link" data-legal="rules">使用規定</a>。</p></div>
             </div>
 
             <!-- 顯示 -->
@@ -284,21 +284,21 @@
               <div class="set-label">顯示模式</div>
               <button class="radio-card wide selected" data-group="display" data-value="auto">
                 <i class="radio"></i>
-                <div><b>自動 <span class="tag">預設</span></b><p>依裝置與螢幕大小自動選擇版面</p></div>
+                <div><b>自動 <span class="tag">預設</span></b><p>依螢幕大小自動切換</p></div>
               </button>
               <button class="radio-card wide" data-group="display" data-value="desktop">
                 <i class="radio"></i>
-                <div><b>電腦版</b><p>適合電腦與平板的橫向版面</p></div>
+                <div><b>電腦版</b><p>橫向版面</p></div>
               </button>
               <button class="radio-card wide" data-group="display" data-value="mobile">
                 <i class="radio"></i>
-                <div><b>手機版</b><p>適合手機直向操作：底部導覽、單欄版面；手機橫放時會提示轉回直式</p></div>
+                <div><b>手機版</b><p>底部導覽、單欄版面</p></div>
               </button>
               <div class="set-label">介面</div>
               <div class="set-group">
-                <div class="set-row"><div class="set-text"><b>圖卡大小</b><small>調整遊戲庫的卡片尺寸（含圖示與文字）</small></div><div class="seg" data-set="cardSize"><button data-value="s">小</button><button data-value="m">中</button><button data-value="l">大</button></div></div>
-                <div class="set-row"><div class="set-text"><b>動畫效果</b><small>卡片轉場與滑鼠停留動畫</small></div><button class="switch" role="switch" aria-checked="false" data-set="anim" aria-label="開關"><i></i></button></div>
-                <div class="set-row"><div class="set-text"><b>遊戲全螢幕</b><small>開始遊戲時自動全螢幕</small></div><button class="switch" role="switch" aria-checked="false" data-set="fsStart" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>圖卡大小</b><small>遊戲庫卡片大小</small></div><div class="seg" data-set="cardSize"><button data-value="s">小</button><button data-value="m">中</button><button data-value="l">大</button></div></div>
+                <div class="set-row"><div class="set-text"><b>動畫效果</b><small>切換與點擊動畫</small></div><button class="switch" role="switch" aria-checked="false" data-set="anim" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>遊戲全螢幕</b><small>開始遊戲自動全螢幕</small></div><button class="switch" role="switch" aria-checked="false" data-set="fsStart" aria-label="開關"><i></i></button></div>
               </div>
             </div>
 
@@ -315,10 +315,10 @@
             <!-- 操作 -->
             <div class="pane" id="pane-controls">
               <div class="set-label">輸入</div>
-              <div class="notice m-only"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>手機版：鍵盤快捷鍵固定關閉、觸控滑動固定開啟。這不會改動你在電腦版保存的設定。</p></div>
+              <div class="notice m-only"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>手機版固定使用觸控，不影響電腦版設定。</p></div>
               <div class="set-group">
-                <div class="set-row"><div class="set-text"><b>允許鍵盤快捷鍵</b><small>開啟後可用鍵盤操作大廳</small></div><button class="switch" role="switch" aria-checked="false" data-set="kbd" aria-label="開關"><i></i></button></div>
-                <div class="set-row"><div class="set-text"><b>允許觸控滑動</b><small>關閉後，滑鼠與觸控點擊皆無效</small></div><button class="switch" role="switch" aria-checked="false" data-set="touch" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許鍵盤快捷鍵</b><small>用鍵盤操作</small></div><button class="switch" role="switch" aria-checked="false" data-set="kbd" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許觸控滑動</b><small>關閉後無法點擊操作</small></div><button class="switch" role="switch" aria-checked="false" data-set="touch" aria-label="開關"><i></i></button></div>
               </div>
             </div>
 
@@ -333,23 +333,23 @@
               <button class="btn-primary sm" id="stCheck" style="margin-top:16px"><span>重新檢查</span></button>
               <div class="set-label">本次使用量</div>
               <div class="set-group">
-                <div class="set-row"><div class="set-text"><b>讀取次數</b><small>這個網頁開啟期間、這台裝置</small></div><span class="stat plain" id="stReads">0</span></div>
-                <div class="set-row"><div class="set-text"><b>寫入次數</b><small>這個網頁開啟期間、這台裝置</small></div><span class="stat plain" id="stWrites">0</span></div>
+                <div class="set-row"><div class="set-text"><b>讀取次數</b><small>本次開啟期間</small></div><span class="stat plain" id="stReads">0</span></div>
+                <div class="set-row"><div class="set-text"><b>寫入次數</b><small>本次開啟期間</small></div><span class="stat plain" id="stWrites">0</span></div>
               </div>
             </div>
 
             <!-- 隱私 -->
             <div class="pane" id="pane-privacy">
               <div class="set-group">
-                <div class="set-row"><div class="set-text"><b>允許加入排行榜</b><small>開啟後才能在遊戲中進行排名比較</small></div><button class="switch" role="switch" aria-checked="false" data-set="joinRank" aria-label="開關"><i></i></button></div>
-                <div class="set-row"><div class="set-text"><b>允許公開使用者名稱</b><small>開啟顯示完整名稱，關閉則部分以 * 遮蔽</small></div><button class="switch" role="switch" aria-checked="false" data-set="publicName" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許加入排行榜</b><small>開啟後才會出現在排行榜</small></div><button class="switch" role="switch" aria-checked="false" data-set="joinRank" aria-label="開關"><i></i></button></div>
+                <div class="set-row"><div class="set-text"><b>允許公開使用者名稱</b><small>關閉則以 * 遮蔽部分文字</small></div><button class="switch" role="switch" aria-checked="false" data-set="publicName" aria-label="開關"><i></i></button></div>
                 <div class="set-row"><div class="set-text"><b>排行榜上的顯示名稱</b><small>依目前設定預覽</small></div><span class="stat plain" id="rankPreview">—</span></div>
               </div>
-              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>需登入並開啟「允許加入排行榜」，才能在遊戲中進行排名比較；關閉時不會出現在任何排行榜。M 點餘額不公開，不會顯示在排行榜上。</p></div>
+              <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><p>需登入並開啟才能參與排名。M 點餘額不公開。</p></div>
               <div id="delAccBox" hidden>
                 <div class="set-label">危險區域</div>
                 <div class="set-group">
-                  <div class="set-row"><div class="set-text"><b>刪除帳號</b><small>刪除後所有資料（含 M 點與簽到紀錄）將清空，需重新註冊</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>刪除帳號</span></button></div>
+                  <div class="set-row"><div class="set-text"><b>刪除帳號</b><small>會清除所有資料（含 M 點、簽到），無法復原</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>刪除帳號</span></button></div>
                 </div>
               </div>
             </div>

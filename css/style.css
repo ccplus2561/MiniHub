@@ -1802,3 +1802,55 @@ body.m .ci-week { grid-template-columns: repeat(4, 1fr); }
 body.m .ci-day.big { grid-column: span 2; flex-direction: row; gap: 12px; }
 body.m #checkinModal .fx-foot { justify-content: stretch; } body.m #checkinModal .fx-foot .btn-primary { width: 100%; justify-content: center; }
 body.m .ci-sum b { font-size: 19px; } body.m .ci-reward b { font-size: 26px; }
+
+/* ====================================================================
+   手機版優化（App 風格底部導覽、設定分類膠囊、切換流暢度）
+   放在檔案最後，覆蓋前面較花俏的電腦版樣式
+   ==================================================================== */
+/* 1) 設定頁分類：只是一排膠囊；拿掉電腦版的 › 箭頭、側邊色條、外框發光與進場位移 */
+body.m .set-item { position: relative; overflow: visible; border: 1.5px solid var(--line-2); background: rgba(23, 32, 45, .82);
+  box-shadow: none; transform: none; animation: none; transition: background .18s, border-color .18s, color .18s; }
+body.m .set-item::before, body.m .set-item::after { display: none !important; content: none; }
+body.m .set-item.active { background: var(--accent); border-color: var(--accent-2); box-shadow: none; transform: none; }
+body.m .set-item.active b { color: #fff; }
+body.m .set-item:active { transform: scale(.96); }
+body.m .set-list { scroll-snap-type: x proximity; scroll-padding-inline: 16px; }
+body.m .set-item { scroll-snap-align: start; }
+body.m .chip { animation: none; box-shadow: none; }
+body.m .chip.active { box-shadow: none; }
+body.m .chip::before { display: none; }
+
+/* 2) 切換不卡頓：手機版只保留極短的淡入，關掉逐項動畫與無限循環動畫 */
+body.m .view.active { animation: mFade .16s ease-out; }
+body.m .view.active > .page-title, body.m .view.active > .chips, body.m .pane.active, body.m .pane.active > *,
+body.m .legal-doc:not([hidden]), body.m .legal-tabs, body.m .hw-intro > * { animation: none; }
+body.m .pane.active { animation: mFade .16s ease-out; }
+body.m .nav-item.active svg, body.m .notice::before, body.m .help-title::after { animation: none; }
+body.m .notice::before { animation: none; }
+body.m .set-row:hover, body.m .info-row:hover { transform: none; }
+body.m .info-row:hover > svg { transform: none; }
+@keyframes mFade { from { opacity: 0; } }
+
+/* 3) 底部導覽：手機 App 風格（圖示 + 標籤，選取時圖示背後出現膠囊） */
+body.m .tabs { height: calc(64px + env(safe-area-inset-bottom)); padding: 6px 4px env(safe-area-inset-bottom); gap: 0;
+  background: rgba(14, 20, 28, .98); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgba(0, 0, 0, .28);
+  -webkit-backdrop-filter: none; backdrop-filter: none; border-image: none; }
+body.m .content { padding-bottom: calc(64px + env(safe-area-inset-bottom)); }
+body.m .player.with-rail { bottom: calc(64px + env(safe-area-inset-bottom)); }
+body.m .nav-item { position: relative; flex: 1 1 0; min-width: 0; margin: 0; padding: 0; gap: 2px; border: 0; border-radius: 0; background: none; box-shadow: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: visible;
+  color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0; -webkit-tap-highlight-color: transparent;
+  transition: color .18s; }
+body.m .nav-item::before { display: none; }
+body.m .nav-item::after { display: none; }
+body.m .nav-item span { position: relative; letter-spacing: 0; transition: none; }
+body.m .nav-item svg { position: relative; z-index: 1; width: 24px; height: 24px; color: currentColor; stroke: currentColor; fill: none; transform: none; transition: transform .18s; }
+body.m .nav-item.active { color: #fff; background: none; box-shadow: none; transform: none; }
+body.m .nav-item.active svg { transform: translateY(-1px); color: var(--accent-2); }
+body.m .nav-item.active span { color: #fff; font-weight: 700; }
+body.m .nav-item.active::after { display: block; content: ""; position: absolute; top: 0; left: 50%; width: 28px; height: 3px; margin-left: -14px; border-radius: 0 0 3px 3px;
+  background: var(--accent-2); transform: none; animation: none; }
+body.m .nav-item:active { transform: scale(.92); background: none; }
+body.m .nav-item:active svg { transform: scale(.9); }
+body.m .nav-item:hover { background: none; transform: none; box-shadow: none; }
+body.m .tabs, body.m .nav-item { will-change: auto; contain: layout style; }
