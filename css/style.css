@@ -2003,3 +2003,4 @@ body.m .brand b { font-size: 22px; }
 .hw-go.is-guest .go-login { display: none; }
 .hw-go.is-guest:hover .go-play { transform: translateX(3px) scale(1.12); }
 .bd .bd-logo { width: min(52vh, 420px); height: min(52vh, 420px); color: var(--accent-2); }
+body.pill-k:not(.m) .mp-pill { border-color: #fff; }

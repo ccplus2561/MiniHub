@@ -105,7 +105,7 @@
 
   document.addEventListener("click", function (e) {
     var t = e.target;
-    if (t.closest("[data-ci-open]")) { sfx("open"); modal.hidden = false; fitSoon(); var f = $("[data-ci-sign]:not([hidden])", modal); if (f && document.body.dataset.ci === "todo") setTimeout(function () { f.focus(); }, 60); return; }
+    if (t.closest("[data-ci-open]")) { sfx("open"); modal.hidden = false; fitSoon(); var f = document.body.dataset.ci === "guest" ? $("[data-ci-login]", modal) : $("[data-ci-sign]:not([hidden])", modal); if (f && /^(todo|guest)$/.test(document.body.dataset.ci)) setTimeout(function () { f.focus(); }, 60); return; }
     if (t.closest("[data-ci-sign]")) { sign(); return; }
     if (t.closest("[data-ci-login]")) { modal.hidden = true; var b = $("#loginBtn"); if (b) b.click(); }
   });

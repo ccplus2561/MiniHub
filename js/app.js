@@ -458,7 +458,7 @@
   const touchOn = () => !window.MiniHubPrefs || MiniHubPrefs().touch;
   let zone = "nav", kEl = null;
 
-  function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; document.body.classList.remove("login-k", "brand-k"); }
+  function clearK() { if (kEl) kEl.classList.remove("kfocus"); kEl = null; document.body.classList.remove("login-k", "brand-k", "pill-k"); }
   function setK(el, quiet) {
     clearK(); kEl = el; el.classList.add("kfocus");
     if (!quiet) sfx("move");
@@ -472,7 +472,8 @@
   function midItems() {
     const v = document.body.dataset.view, P = ".pane.active ";
     let list = [];
-    if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
+    if (v === "home") list = $$("#homeGo, #perkOpen");
+    else if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
     else if (v === "about") list = $$("#view-about .legal-tab");
     else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
     return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
@@ -511,7 +512,7 @@
   function setZone(z, byKey) {
     zone = z; document.body.dataset.zone = z; clearK();
     if (byKey) sfx(z === "mid" ? "confirm" : "back");
-    if (z === "mid" && byKey && document.body.dataset.view !== "home") {
+    if (z === "mid" && byKey) {
       const items = midItems();
       const first = document.body.dataset.view === "settings" ? $(".set-item.active") : items[0];
       if (first) setK(first, true);
@@ -525,7 +526,10 @@
     const home = false;
     const onLogin = document.body.classList.contains("login-k");
     const onBrand = document.body.classList.contains("brand-k");
-    const list = zone === "nav" && onBrand
+    const onPill = document.body.classList.contains("pill-k");
+    const list = zone === "nav" && onPill
+      ? [[K("↑", "↓"), "切換"], [K("Enter"), "M 點 / 簽到"]]
+      : zone === "nav" && onBrand
       ? [[K("↑", "↓"), "切換"], [K("Enter"), "公告"]]
       : zone === "nav" && onLogin
       ? [[K("↑", "↓"), "切換"], [K("Enter"), signedIn ? "登出" : "登入"]]
@@ -568,7 +572,14 @@
     if (!$("#noticeModal").hidden) { if (e.key === "Escape" || e.key === "Enter") { closeModal("noticeModal"); e.preventDefault(); } return; }
     if (!$("#helpModal").hidden) { if (e.key === "Escape") closeModal("helpModal"); return; }
     if (!$("#perkModal").hidden) { if (e.key === "Escape") closeModal("perkModal"); return; }
-    if (!$("#checkinModal").hidden) { if (e.key === "Escape") closeModal("checkinModal"); return; }
+    if (!$("#checkinModal").hidden) {
+      if (e.key === "Escape") closeModal("checkinModal");
+      else if (e.key === "Enter" && !(document.activeElement && document.activeElement.closest("button"))) {   // 沒有按鈕取得焦點時，Enter = 簽到 / 登入簽到
+        const b = $$("#checkinModal [data-ci-sign], #checkinModal [data-ci-login]").find(x => !x.disabled && x.offsetParent !== null);
+        if (b) { e.preventDefault(); sfx("confirm"); b.click(); }
+      }
+      return;
+    }
     if (!$("#linkModal").hidden) { if (e.key === "Escape") closeModal("linkModal"); return; }
     if (!$("#loginModal").hidden) {
       if (e.key === "Escape") closeModal("loginModal");
@@ -589,22 +600,23 @@
     document.body.classList.add("kb");
 
     if (zone === "nav") {                       // 最左側：上下換分頁（最後一個分頁再往下 / 第一個再往上 = 登入、登出按鈕），Enter / D / → 進入中間
-      const tabs = $$(".nav-item"), login = $("#loginBtn"), brand = $("#brandBtn");
+      const tabs = $$(".nav-item"), login = $("#loginBtn"), brand = $("#brandBtn"), pill = $("#mpPill");
       const cur = tabs.findIndex(n => n.classList.contains("active"));
-      // 左側導覽順序：MiniHub（公告）→ 各分頁 → 登入 / 登出，上下循環
-      const focusSpecial = el => { sfx("move"); clearK(); kEl = el; el.classList.add("kfocus"); document.body.classList.add(el === login ? "login-k" : "brand-k"); paintHints(); };
-      if (kEl === login || kEl === brand) {     // 目前停在 MiniHub 或登入 / 登出按鈕
-        const isBrand = kEl === brand;
+      // 左側導覽順序：MiniHub（公告）→ 各分頁 → M 點（簽到）→ 登入 / 登出，上下循環
+      const focusSpecial = el => { sfx("move"); clearK(); kEl = el; el.classList.add("kfocus"); document.body.classList.add(el === login ? "login-k" : el === pill ? "pill-k" : "brand-k"); paintHints(); };
+      const toTab = t => { sfx("move"); clearK(); showView(t.dataset.view); paintHints(); };
+      if (kEl === login || kEl === brand || kEl === pill) {     // 目前停在 MiniHub / M 點 / 登入 / 登出按鈕
         if (dir === "up" || dir === "down") {
-          if (isBrand) { if (dir === "up") focusSpecial(login); else { sfx("move"); clearK(); showView(tabs[0].dataset.view); paintHints(); } }
-          else if (dir === "up") { sfx("move"); clearK(); showView(tabs[tabs.length - 1].dataset.view); paintHints(); }
-          else focusSpecial(brand);
+          const up = dir === "up";
+          if (kEl === brand) { if (up) focusSpecial(login); else toTab(tabs[0]); }
+          else if (kEl === pill) { if (up) toTab(tabs[tabs.length - 1]); else focusSpecial(login); }
+          else { if (up) focusSpecial(pill); else focusSpecial(brand); }
         }
-        else if (enter) { sfx("confirm"); kEl.click(); }   // MiniHub = 跳出公告視窗
+        else if (enter) { sfx("confirm"); kEl.click(); }   // MiniHub = 公告；M 點 = 每日簽到；登入 / 登出
         else if (esc) { clearK(); paintHints(); }
         return;
       }
-      if (dir === "down" && cur === tabs.length - 1) focusSpecial(login);
+      if (dir === "down" && cur === tabs.length - 1) focusSpecial(pill);
       else if (dir === "up" && cur === 0) focusSpecial(brand);
       else if (dir === "up") stepTab(-1);
       else if (dir === "down") stepTab(1);
@@ -612,7 +624,7 @@
       return;
     }
     if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
-    if (document.body.dataset.view === "home") { if (dir === "left") setZone("nav", true); else if (enter) $("#homeGo").click(); return; }   // 首頁：Enter 登入 / 進入遊戲庫
+    if (document.body.dataset.view === "home" && (!kEl || !kEl.isConnected)) { if (enter) $("#homeGo").click(); else if (dir === "left") setZone("nav", true); else move(dir); return; }   // 首頁：尚未選取時 Enter = 開始遊玩
     if (dir) {
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);
