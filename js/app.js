@@ -294,6 +294,7 @@
     // 設定 > 顯示 > 遊戲全螢幕：開啟 = 整個畫面都是遊戲；關閉 = 保留左側導覽列（手機版保留上下列）
     const fsOn = !!(window.MiniHubPrefs && MiniHubPrefs().fsStart);
     player.classList.toggle("with-rail", !fsOn);
+    setBar(false);
     player.hidden = false;
     closing = false;
     player.animate(
@@ -303,6 +304,19 @@
     if (fsOn && player.requestFullscreen) player.requestFullscreen().catch(() => {});
     frame.focus();
   }
+
+  /* 手機版全螢幕：頂端列預設收合，點上緣把手懸浮出現，3 秒沒操作自動收回 */
+  const barHandle = $("#barHandle");
+  let barTimer = 0;
+  function setBar(on) {
+    clearTimeout(barTimer);
+    player.classList.toggle("bar-show", on);
+    barHandle.setAttribute("aria-expanded", on);
+    if (on) barTimer = setTimeout(() => setBar(false), 3000);
+  }
+  barHandle.addEventListener("click", () => setBar(true));
+  player.querySelector(".player-bar").addEventListener("click", () => { if (player.classList.contains("bar-show")) setBar(true); });   // 有操作就重新計時
+  document.addEventListener("fullscreenchange", () => setBar(false));
 
   function closeGame(cb) {
     if (!current || closing) return;

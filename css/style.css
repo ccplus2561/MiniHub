@@ -1883,3 +1883,27 @@ body.m .btn-primary, body.m .btn-ghost, body.m .row-btn, body.m .login-btn { tra
 body.m .card:active { transform: scale(.97); transition: transform .12s; }
 @media (prefers-reduced-motion: reduce) { body.m * { animation: none !important; } }
 body.no-anim.m .pane, body.no-anim.m .pane > *, body.no-anim.m .nav-item::after { animation: none !important; }
+
+/* ---------- 手機版：全螢幕遊戲時頂端列自動收合，點上緣小把手再懸浮出現 ---------- */
+.bar-handle { display: none; }
+body.m .player:not(.with-rail) .player-bar,
+body.m .player:fullscreen .player-bar {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 3;
+  padding-top: calc(8px + env(safe-area-inset-top));
+  transform: translateY(-100%); visibility: hidden;
+  transition: transform .25s cubic-bezier(.2, .8, .2, 1), visibility 0s .25s;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .5);
+}
+body.m .player.bar-show:not(.with-rail) .player-bar,
+body.m .player.bar-show:fullscreen .player-bar {
+  transform: none; visibility: visible; transition: transform .25s cubic-bezier(.2, .8, .2, 1), visibility 0s;
+}
+body.m .player:not(.with-rail) .bar-handle,
+body.m .player:fullscreen .bar-handle {
+  display: grid; place-items: center; position: absolute; z-index: 4; top: env(safe-area-inset-top); left: 50%;
+  width: 64px; height: 22px; margin-left: -32px; padding: 0; cursor: pointer;
+  color: #cfe6fa; background: rgba(20, 30, 44, .55); border: 1px solid rgba(255, 255, 255, .18); border-top: 0; border-radius: 0 0 14px 14px;
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+}
+body.m .player.bar-show .bar-handle { opacity: 0; pointer-events: none; }
+.bar-handle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
