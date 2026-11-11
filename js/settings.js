@@ -211,7 +211,7 @@
     clearTimeout(saveT);
     if (!dirty) return Promise.resolve();
     dirty = false;
-    return MiniHubAuth.savePrefs(syncedPrefs()).catch(() => say("設定同步失敗"));
+    return Promise.resolve().then(() => MiniHubAuth.savePrefs(syncedPrefs())).catch(() => { if (window.MiniHubAccount.uid) dirty = true; say("設定同步失敗"); });   // 失敗保留待同步標記，下次變更 / 離開頁面時會再送出
   };
   window.MiniHubFlushPrefs = flush;
   const queueSave = k => {
@@ -230,7 +230,7 @@
     if (sw) { const k = sw.dataset.set; prefs[k] = !prefs[k]; save(); paint(); queueSave(k); sfx(prefs[k] ? "on" : "off"); say(LABELS[k] + "：" + (prefs[k] ? "開啟" : "關閉"));
       if ((k === "publicName" || k === "joinRank") && window.MiniHubAccount.uid && window.MiniHubAuth) {   // 已登入：同步到帳號
         const v = prefs[k];
-        MiniHubAuth[k === "publicName" ? "setPublicName" : "setJoinRank"](v).catch(() => { prefs[k] = !v; paint(); say("同步失敗，已還原"); });
+        MiniHubAuth[k === "publicName" ? "setPublicName" : "setJoinRank"](v).catch(() => { if (prefs[k] === v) { prefs[k] = !v; paint(); } say("同步失敗，已還原"); });
       }
       return; }
     const sb = e.target.closest(".seg button");
@@ -240,16 +240,18 @@
   window.MiniHubTemp = { music: true, sfx: true };
   window.MiniHubGamePrefs = () => { const p = window.MiniHubPrefs(); return { ...p, music: p.music && MiniHubTemp.music && !(window.MiniHubNoMusic && MiniHubNoMusic()), sfx: p.sfx && MiniHubTemp.sfx }; };
   window.MiniHubPrefs = () => ({ ...prefs, kbd: eff("kbd"), touch: eff("touch"), cardSize: prefs[sizeKey()] });   // 供大廳 / 音效使用的「實際生效」設定
+  let prefUid = "";
   // 登入後套用帳號裡的「公開使用者名稱」；登出（訪客）回到預設
   document.addEventListener("minihub:account", () => {
     const a = window.MiniHubAccount;
     $("#delAccBox").hidden = !a.uid;   // 只有登入後才顯示「刪除帳號」
+    const newLogin = a.uid !== prefUid; prefUid = a.uid;   // 改名 / 簽到等帳號更新不可再用舊的伺服器資料蓋掉剛改的設定
     if (!a.uid) {   // 登出 / 訪客：回到預設，不留下上一位玩家的設定
       prefs.publicName = DEFAULTS.publicName; prefs.joinRank = DEFAULTS.joinRank;
       SYNC.forEach(k => prefs[k] = DEFAULTS[k]);
       dirty = false; clearTimeout(saveT);
     }
-    else {
+    else if (newLogin) {
       if (a.prefs) SYNC.forEach(k => { const v = a.prefs[k]; if (typeof v === typeof DEFAULTS[k] && (k !== "lang" || LANGS.includes(v)) && (!/^cardSize/.test(k) || SIZE_KEYS.includes(v))) prefs[k] = v; });
       if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;
       if (typeof a.joinRank === "boolean") prefs.joinRank = a.joinRank;
