@@ -1980,3 +1980,20 @@ body.no-anim.m .app::before, body.no-anim.m .tabs, body.no-anim.m .brand svg { a
 #consentOk { transition: background .25s, box-shadow .25s, opacity .25s, transform .15s; }
 @media (prefers-reduced-motion: reduce) { #playConsentModal .modal-box.ready, #playConsentModal .modal-box.ready #consentOk { animation: none; } }
 body.no-anim #playConsentModal .modal-box.ready, body.no-anim #playConsentModal .modal-box.ready #consentOk { animation: none; }
+
+/* ---------- 首頁 Logo 放大（電腦 / 手機） ---------- */
+.hw-logo { width: clamp(76px, 11vw, 140px); height: clamp(76px, 11vw, 140px); }
+.hw-title { font-size: clamp(52px, 9vw, 108px); }
+.hw-sub { font-size: clamp(16px, 1.8vw, 22px); }
+.brand svg { width: 52px; height: 52px; }
+.brand b { font-size: 19px; }
+body.m .hw-logo { width: 92px; height: 92px; }
+body.m .hw-title { font-size: 58px; }
+body.m .brand svg { width: 36px; height: 36px; }
+body.m .brand b { font-size: 22px; }
+@media (max-height: 600px) and (min-width: 561px) {
+  .brand svg { width: 38px; height: 38px; }
+  .hw-logo { width: 64px; height: 64px; }
+  .hw-title { font-size: 48px; }
+}
+@media (max-width: 360px) { body.m .hw-title { font-size: 48px; } body.m .hw-logo { width: 76px; height: 76px; } }
