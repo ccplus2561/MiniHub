@@ -1,6 +1,6 @@
 /* 每日簽到：以台灣時間（UTC+8）的日曆日為準，每天 00:00 換日。
    資料（存在 users/{uid}）：mPoints 目前 M 點 / streak 連續簽到天數 / totalCheckins 累計簽到次數 / lastCheckinAt 最後簽到時間（伺服器時間）
-   規則：每日簽到 +1 M，隔天接著簽 streak + 1，中斷就從 1 重算；連續天數 × 0.5（無條件捨去）為額外點數。
+   規則：每日簽到 +1 M，隔天接著簽 streak + 1，中斷就從 1 重算；連續天數 × 0.5（保留小數）為額外點數。
    註冊帳號首次登入 +10 M 在 firebase.js 的 createProfile()。
    實際寫入與規則檢查在 firebase.js 的 MiniHubAuth.checkin() 與 Firestore 規則；這裡只負責畫面。
    body[data-ci]：guest 未登入 / todo 今天還沒簽到 / done 今天已簽到 */
@@ -15,7 +15,8 @@
   var st = { signedIn: false, mPoints: 0, streak: 0, total: 0, last: null };
   var busy = false, timer = 0;
 
-  var rewardOf = function (n) { return 1 + Math.floor(n * 0.5); };   // n = 簽到後的連續天數；1 + 連續天數×0.5（捨去）
+  var rewardOf = function (n) { return 1 + n * 0.5; };   // n = 簽到後的連續天數；1 + 連續天數×0.5（保留小數）
+  var fmt = function (n) { return Number.isInteger(n) ? String(n) : n.toFixed(1); };
 
   function view() {
     var now = twDay(Date.now());
@@ -32,10 +33,10 @@
     var v = view();
     document.body.dataset.ci = v.mode;
     var fill = function (sel, val) { $$(sel).forEach(function (e) { e.textContent = val; }); };
-    fill("[data-ci-pts]", st.mPoints.toLocaleString("en-US"));
+    fill("[data-ci-pts]", st.mPoints.toLocaleString("en-US", { maximumFractionDigits: 1 }));
     fill("[data-ci-streak]", v.streak);
     fill("[data-ci-total]", st.total);
-    fill("[data-ci-reward]", v.reward);
+    fill("[data-ci-reward]", fmt(v.reward));
     var cur = v.mode === "done" ? v.streak : v.streak + 1;     // 今天（或剛簽到）是連續第幾天
     var base = v.idx >= 0 ? cur - v.idx : 1;                   // 這一輪 7 天的第 1 天
     $$("#ciWeek .ci-day").forEach(function (li, i) {
@@ -43,7 +44,7 @@
       li.classList.toggle("is-today", v.idx >= 0 && i === v.idx);
       var d = $(".ci-d", li), b = $("b", li);
       if (d) d.textContent = "第 " + (base + i) + " 天";
-      if (b) b.textContent = "+" + rewardOf(base + i);
+      if (b) b.textContent = "+" + fmt(rewardOf(base + i));
     });
     schedule(); fitSoon();
   }
@@ -85,7 +86,7 @@
       st.mPoints = r.mPoints; st.streak = r.streak; st.total = r.totalCheckins; st.last = r.lastCheckinAt;
       var a = window.MiniHubAccount; if (a) { a.mPoints = r.mPoints; a.streak = r.streak; a.totalCheckins = r.totalCheckins; a.lastCheckinAt = r.lastCheckinAt; }
       render(); sfx("confirm");
-      toast("簽到成功！+" + r.reward + " M 點" + (r.streak > 1 ? "（連續第 " + r.streak + " 天）" : ""));
+      toast("簽到成功！+" + fmt(r.reward) + " M 點" + (r.streak > 1 ? "（連續第 " + r.streak + " 天）" : ""));
     }).catch(function (e) {
       var c = (e && e.code) || "";
       if (c === "already-checked-in" || c === "permission-denied") {   // 其他裝置已簽到，或本機時間與伺服器差太多 → 重新讀取最新資料

@@ -185,8 +185,8 @@ async function setJoinRank(v) {
 }
 
 // 每日簽到：以台灣時間（UTC+8）的日曆日為準，每天 00:00 換日。
-// 規則：每日簽到 +1 M；隔天接著簽 = streak + 1，中斷過 = 重設為 1；連續天數有額外點數 = 連續天數 × 0.5（無條件捨去）。
-//   獎勵 = 1 + floor(streak × 0.5)，例：第 1 天 +1、第 2 天 +2、第 3 天 +2、第 4 天 +3、第 10 天 +6。
+// 規則：每日簽到 +1 M；隔天接著簽 = streak + 1，中斷過 = 重設為 1；連續天數有額外點數 = 連續天數 × 0.5（保留小數）。
+//   獎勵 = 1 + streak × 0.5，例：第 1 天 +1.5、第 2 天 +2、第 3 天 +2.5、第 4 天 +3、第 10 天 +6。
 // 用交易讀最新資料再寫入（多裝置不會算錯）；日期 / 數值是否正確由 Firestore 規則（以伺服器時間）強制檢查。
 const TW_DAY = t => Math.floor((t + 8 * 3600000) / 864e5);
 async function checkin() {
@@ -201,7 +201,7 @@ async function checkin() {
     const d = s.data(), last = ms(d.lastCheckinAt), today = TW_DAY(Date.now());
     if (last !== null && TW_DAY(last) >= today) throw bad("already-checked-in");
     const streak = last !== null && TW_DAY(last) === today - 1 ? (Number(d.streak) || 0) + 1 : 1;
-    const reward = 1 + Math.floor(streak * 0.5);
+    const reward = 1 + streak * 0.5;
     const r = { mPoints: (Number(d.mPoints) || 0) + reward, streak, totalCheckins: (Number(d.totalCheckins) || 0) + 1 };
     tx.update(ref, { ...r, lastCheckinAt: F.serverTimestamp() });
     return { ...r, reward, lastCheckinAt: Date.now() };
