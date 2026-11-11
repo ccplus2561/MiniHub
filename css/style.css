@@ -1910,3 +1910,55 @@ body.m .player:fullscreen .bar-handle {
 body.m .player .bar-handle.drag { transform: scale(1.15); box-shadow: 0 6px 20px rgba(0, 0, 0, .7), 0 0 22px var(--accent, #1a9fff); transition: transform .15s; }
 body.m .player.bar-show .bar-handle { opacity: 0; pointer-events: none; }
 .bar-handle svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ====================================================================
+   手機版：頂部列 / 底部導覽精修（只用 transform / opacity，無常駐動畫、無模糊濾鏡）
+   ==================================================================== */
+@keyframes mDrop { from { transform: translateY(-100%); } }
+@keyframes mRise { from { transform: translateY(100%); } }
+@keyframes mGlow { from { opacity: 0; transform: scale(.6); } }
+/* 頂部列：深色漸層底 + 底緣中央亮線 + 柔和投影 */
+body.m .app::before {
+  background:
+    linear-gradient(90deg, transparent, var(--accent-2) 50%, transparent) center bottom / 78% 1.5px no-repeat,
+    linear-gradient(180deg, #121c29, #0c131c);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .38);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+  animation: mDrop .4s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+/* 品牌：圖示放進藍色漸層圓角徽章，文字用漸層字 */
+body.m .brand { transition: transform .15s; -webkit-tap-highlight-color: transparent; }
+body.m .brand:hover { background: none; transform: none; }
+body.m .brand:active { transform: scale(.94); }
+body.m .brand svg { box-sizing: content-box; width: 22px; height: 22px; padding: 5px; border-radius: 11px; color: #fff;
+  background: linear-gradient(145deg, #3aa8ff, #1769c2); box-shadow: 0 3px 10px rgba(26, 159, 255, .45), inset 0 1px 0 rgba(255, 255, 255, .35);
+  animation: mGlow .5s .15s cubic-bezier(.3, 1.4, .5, 1) backwards; }
+body.m .brand b { letter-spacing: .03em; background: linear-gradient(90deg, #fff 30%, var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; }
+/* 頂部右側：登入鈕質感 */
+body.m .login-btn { box-shadow: 0 4px 12px rgba(26, 159, 255, .4), inset 0 1px 0 rgba(255, 255, 255, .3); border: 1px solid rgba(255, 255, 255, .22); }
+
+/* 底部導覽：上緣圓角 + 中央亮線；選取項目在圖示後方出現膠囊 */
+body.m .tabs {
+  border-radius: 20px 20px 0 0; border-top: 1px solid rgba(255, 255, 255, .08);
+  background:
+    linear-gradient(90deg, transparent, var(--accent-2) 50%, transparent) center top / 70% 1.5px no-repeat,
+    linear-gradient(180deg, #162131, #0c131c);
+  box-shadow: 0 -8px 22px rgba(0, 0, 0, .4);
+  animation: mRise .4s cubic-bezier(.2, .8, .2, 1) backwards;
+}
+body.m .nav-item svg { box-sizing: content-box; width: 24px; height: 24px; padding: 3px 16px; border-radius: 999px; background: transparent; transition: background .2s, transform .18s; }
+body.m .nav-item.active svg { background: var(--a2); box-shadow: inset 0 0 0 1px var(--a3); }
+body.m .nav-item.active::after { display: none; }
+body.m .nav-item.active span { color: var(--accent-2); }
+body.m .nav-item span { font-size: 12px; margin-top: -1px; }
+
+/* 遊戲內頂端列（自動收合那條）同風格 */
+body.m .player .player-bar {
+  background:
+    linear-gradient(90deg, transparent, var(--accent-2) 50%, transparent) center bottom / 78% 1.5px no-repeat,
+    linear-gradient(180deg, #121c29, #0c131c);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+@media (prefers-reduced-motion: reduce) { body.m .app::before, body.m .tabs, body.m .brand svg { animation: none !important; } }
+body.no-anim.m .app::before, body.no-anim.m .tabs, body.no-anim.m .brand svg { animation: none !important; }
