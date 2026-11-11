@@ -1039,8 +1039,8 @@
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
   let photo = "";
-  function icoSync() {   // 帳密登入沿用登入圖示（紅底＋登出）；Google / GitHub 顯示頭像，頭像載入失敗才退回人圖示
-    const b = $("#loginBtn"), u = signedIn && !b.classList.contains("has-avatar") && curProvider !== "password";
+  function icoSync() {   // 人圖示只在「已登入且沒有頭像」時出現（帳密登入）；Google / GitHub 顯示頭像；未登入維持登入圖示
+    const b = $("#loginBtn"), u = signedIn && !b.classList.contains("has-avatar");
     $(".ico-user", b).hidden = !u; $(".ico-login", b).hidden = u;
   }
   function paintLogin() {

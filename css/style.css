@@ -519,6 +519,7 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 /* ---------- 登入後頭像 / 帳號列按鈕 ---------- */
 .login-btn .avatar { display: none; width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255, 255, 255, .9); background: #fff; }
 .login-btn svg[hidden] { display: none; }
+.login-btn .ico-user { fill: currentColor; stroke: none; }
 .login-btn.has-avatar svg { display: none; }
 .login-btn.has-avatar .avatar { display: block; }
 .login-btn span { max-width: 84px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
