@@ -89,7 +89,7 @@
     setTagsOpen(false);   // 手機版切換遊戲時預設收合
     hero.hidden = false;
     hero.classList.remove("pop"); void hero.offsetWidth; hero.classList.add("pop");   // 每次選擇都從底部跳出
-    cards[selected].scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+    cards[selected].scrollIntoView({ block: "nearest", inline: "center", behavior: animOn() ? "smooth" : "auto" });
   }
 
   /* ---------- 遊戲標籤（✔ / ✘） ---------- */
@@ -315,7 +315,7 @@
     setBar(false);
     player.hidden = false;
     closing = false;
-    player.animate(
+    if (animOn()) player.animate(
       [{ clipPath: clipFrom(srcEl), opacity: .3 }, { clipPath: "inset(0 round 0)", opacity: 1 }],
       { duration: 460, easing: EASE });
     history.replaceState(history.state, "", "#play=" + g.id);
@@ -362,12 +362,14 @@
   player.querySelector(".player-bar").addEventListener("click", () => { if (player.classList.contains("bar-show")) setBar(true); });   // 有操作就重新計時
   document.addEventListener("fullscreenchange", () => setBar(false));
 
+  function animOn() { return !document.body.classList.contains("no-anim"); }   // 設定 > 動畫效果（Web Animations / 平滑捲動不受 CSS 規則控制，需自行判斷）
   function closeGame(cb) {
     if (!current || closing) return;
     closing = true; sfx("close");
     if (document.fullscreenElement) document.exitFullscreen();
     history.replaceState(history.state, "", location.pathname + location.search);
     const done = () => { player.hidden = true; setFrame("about:blank"); current = null; closing = false; if (typeof cb === "function") cb(); };
+    if (!animOn()) { done(); return; }   // 關閉動畫：直接關閉，不播放收合動畫
     const a = player.animate(
       [{ clipPath: "inset(0 round 0)", opacity: 1 }, { clipPath: clipFrom(srcEl), opacity: .3 }],
       { duration: 340, easing: EASE });
@@ -629,7 +631,7 @@
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);
         else if (document.body.dataset.view === "about" && (dir === "up" || dir === "down")) {   // 條款內容：↑↓ 捲動
-          const d = $(".legal-doc:not([hidden])"); if (d) d.scrollBy({ top: dir === "up" ? -140 : 140, behavior: "smooth" });
+          const d = $(".legal-doc:not([hidden])"); if (d) d.scrollBy({ top: dir === "up" ? -140 : 140, behavior: animOn() ? "smooth" : "auto" });
         }
       }
     }   // 已在最左邊再按 ← / A → 回最左側

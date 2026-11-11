@@ -209,6 +209,15 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", dragTog); else dragTog();
 
+  /* ---------- 動畫效果：大廳關閉時，遊戲內所有 CSS 動畫 / 轉場同步關閉（即時生效） ---------- */
+  (function () {
+    var st = document.createElement("style");
+    st.textContent = "html.mh-no-anim *,html.mh-no-anim *::before,html.mh-no-anim *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}";
+    (document.head || document.documentElement).appendChild(st);
+    function sync() { document.documentElement.classList.toggle("mh-no-anim", prefs().anim === false); }
+    sync(); onChange(sync);
+  })();
+
   window.MiniHub = {
     embedded: !!P, prefs: prefs, theme: theme,
     sfxOn: function () { var p = prefs(); return !p.mute && p.sfx !== false; },
