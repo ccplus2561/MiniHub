@@ -20,7 +20,8 @@ const use = { reads: 0, writes: 0 };
 const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent(new CustomEvent("minihub:usage")); };
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
-const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null, prefs: d.prefs && typeof d.prefs === "object" ? d.prefs : null });
+const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null, prefs: d.prefs && typeof d.prefs === "object" ? d.prefs : null,
+  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, totalCheckins: Number(d.totalCheckins) || 0, lastCheckinAt: ms(d.lastCheckinAt) });
 
 // 「上次登入」：每次新的登入（分頁關閉後重開 / 登出後再登入）記錄一次；畫面顯示的是「這次登入之前」的那一次
 const SS = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return null; };
@@ -179,6 +180,30 @@ async function setJoinRank(v) {
   if (!user || !SAVE_PROFILE) return;
   bump(0, 1);
   await F.updateDoc(F.doc(F.db, "users", user.uid), { joinRank: !!v });
+}
+
+// 每日簽到：以台灣時間（UTC+8）的日曆日為準，每天 00:00 換日。
+// 規則：隔天接著簽 = streak + 1，中斷過 = 重設為 1；每第 7 天（streak 為 7 的倍數）+30 M，其餘 +10 M。
+// 用交易讀最新資料再寫入（多裝置不會算錯）；日期 / 數值是否正確由 Firestore 規則（以伺服器時間）強制檢查。
+const TW_DAY = t => Math.floor((t + 8 * 3600000) / 864e5);
+async function checkin() {
+  const user = F && F.auth.currentUser;
+  if (!user) throw bad("not-signed-in");
+  if (!SAVE_PROFILE) throw bad("save-disabled");
+  const ref = F.doc(F.db, "users", user.uid);
+  bump(1, 1);
+  const out = await F.runTransaction(F.db, async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists()) throw bad("no-profile");
+    const d = s.data(), last = ms(d.lastCheckinAt), today = TW_DAY(Date.now());
+    if (last !== null && TW_DAY(last) >= today) throw bad("already-checked-in");
+    const streak = last !== null && TW_DAY(last) === today - 1 ? (Number(d.streak) || 0) + 1 : 1;
+    const reward = streak % 7 === 0 ? 30 : 10;
+    const r = { mPoints: (Number(d.mPoints) || 0) + reward, streak, totalCheckins: (Number(d.totalCheckins) || 0) + 1 };
+    tx.update(ref, { ...r, lastCheckinAt: F.serverTimestamp() });
+    return { ...r, reward, lastCheckinAt: Date.now() };
+  });
+  return out;
 }
 
 // 修改密碼（僅帳號密碼登入）：先用舊密碼重新驗證，再更新
@@ -400,7 +425,7 @@ window.MiniHubAuth = {
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
-  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount,
+  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount, checkin,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await F.getDoc(F.doc(F.db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(F.auth.currentUser.uid)

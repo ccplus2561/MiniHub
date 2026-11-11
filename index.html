@@ -78,9 +78,9 @@
     }
     if (store) store.removeItem(KEY);
 
-    var VER = "20261111a";   // ← 每次更新網站時修改（日期 + 當天流水字母）
+    var VER = "20261111b";   // ← 每次更新網站時修改（日期 + 當天流水字母）
     var CSS = "css/style.css";
-    var JS = ["js/protect.js", "js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js", "js/checkin-preview.js"];
+    var JS = ["js/protect.js", "js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/remote.js", "js/checkin.js"];
     var WARM_ONLY = "js/minihub-sdk.js";   // 遊戲頁會載入的共用檔：背景更新快取（不等待、不阻擋載入）
     var MOD = "js/firebase.js";
     var v = function (u) { return u + "?v=" + VER; };
@@ -155,7 +155,7 @@
     <button class="mp-pill" id="mpPill" type="button" data-ci-open aria-label="M 點與每日簽到">
       <i class="mp-coin" aria-hidden="true"></i>
       <b class="mp-unit">M</b>
-      <span class="mp-num" data-ci-only="todo done">1,250</span>
+      <span class="mp-num" data-ci-only="todo done" data-ci-pts>0</span>
       <span class="mp-num mp-na" data-ci-only="guest">--</span>
     </button>
 
@@ -194,11 +194,11 @@
             </div>
             <div class="ci-card" data-ci-only="todo">
               <span class="ci-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15l2 2 4-4"/></svg></span>
-              <div class="ci-txt"><small>每日簽到</small><b>今天可領 +10 <span class="mp-unit">M</span></b></div>
+              <div class="ci-txt"><small>每日簽到</small><b>今天可領 +<span data-ci-reward>10</span> <span class="mp-unit">M</span></b></div>
               <button class="btn-primary gold" type="button" data-ci-sign><span>簽到</span></button>
             </div>
             <button class="ci-mini" type="button" data-ci-only="done" data-ci-open>
-              <i class="ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span>已簽到，明天再來</span><em>連續 3 天</em>
+              <i class="ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span>已簽到，明天再來</span><em>連續 <span data-ci-streak>0</span> 天</em>
             </button>
           </div>
         </div>
@@ -882,21 +882,22 @@
       </header>
       <div class="fx-body ci-body">
         <div class="ci-sum">
-          <div><small>我的 M 點</small><b><i class="mp-coin" aria-hidden="true"></i><span class="u">M</span><span data-ci-only="todo done">1,250</span><span data-ci-only="guest">--</span></b></div>
-          <div><small>連續簽到</small><b><span data-ci-only="todo">2 天</span><span data-ci-only="done">3 天</span><span data-ci-only="guest">--</span></b></div>
+          <div><small>我的 M 點</small><b><i class="mp-coin" aria-hidden="true"></i><span class="u">M</span><span data-ci-only="todo done" data-ci-pts>0</span><span data-ci-only="guest">--</span></b></div>
+          <div><small>連續簽到</small><b><span data-ci-only="todo done"><span data-ci-streak>0</span> 天</span><span data-ci-only="guest">--</span></b></div>
+          <div><small>累計簽到</small><b><span data-ci-only="todo done"><span data-ci-total>0</span> 次</span><span data-ci-only="guest">--</span></b></div>
         </div>
-        <ol class="ci-week" aria-label="7 天簽到日曆">
-            <li class="ci-day is-done"><span class="ci-d">第 1 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
-            <li class="ci-day is-done"><span class="ci-d">第 2 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
-            <li class="ci-day is-today"><span class="ci-tag" data-ci-only="todo">今天</span><span class="ci-d">第 3 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
-            <li class="ci-day"><span class="ci-d">第 4 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
-            <li class="ci-day"><span class="ci-d">第 5 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
-            <li class="ci-day"><span class="ci-d">第 6 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
-            <li class="ci-day big"><span class="ci-d">第 7 天</span><svg class="ci-gift" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13"/><path d="M12 7c-1-3-5-4-5-1.5C7 7 9 7 12 7zM12 7c1-3 5-4 5-1.5C17 7 15 7 12 7z"/></svg><b>+30</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+        <ol class="ci-week" id="ciWeek" aria-label="7 天簽到日曆">
+            <li class="ci-day"><span class="ci-tag">今天</span><span class="ci-d">第 1 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-tag">今天</span><span class="ci-d">第 2 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-tag">今天</span><span class="ci-d">第 3 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-tag">今天</span><span class="ci-d">第 4 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-tag">今天</span><span class="ci-d">第 5 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day"><span class="ci-tag">今天</span><span class="ci-d">第 6 天</span><i class="mp-coin" aria-hidden="true"></i><b>+10</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
+            <li class="ci-day big"><span class="ci-tag">今天</span><span class="ci-d">第 7 天</span><svg class="ci-gift" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13"/><path d="M12 7c-1-3-5-4-5-1.5C7 7 9 7 12 7zM12 7c1-3 5-4 5-1.5C17 7 15 7 12 7z"/></svg><b>+30</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>
         </ol>
         <div class="ci-reward">
           <i class="mp-coin" aria-hidden="true"></i>
-          <div><small data-ci-only="todo guest">今日獎勵</small><small data-ci-only="done">今日已領取</small><b>+10 <span class="mp-unit">M</span></b></div>
+          <div><small data-ci-only="todo guest">今日獎勵</small><small data-ci-only="done">今日已領取</small><b>+<span data-ci-reward>10</span> <span class="mp-unit">M</span></b></div>
           <span class="ci-got" data-ci-only="done"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>已入帳</span>
         </div>
       </div>

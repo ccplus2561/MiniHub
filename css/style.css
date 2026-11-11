@@ -1783,10 +1783,10 @@ body.no-anim .ci-card::after, body.no-anim .nav-dot, body.no-anim .btn-primary.g
 /* 簽到視窗（沿用「登入福利」的金色外框） */
 #checkinModal .fx-box { width: min(540px, 100%); max-height: min(780px, calc(100dvh - 32px)); }
 .ci-body { display: flex; flex-direction: column; gap: 16px; padding-top: 18px; }
-.ci-sum { display: flex; gap: 12px; }
-.ci-sum > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; border-radius: 14px; border: 1.5px solid rgba(214, 230, 245, .18); background: rgba(255, 255, 255, .04); }
+.ci-sum { display: flex; gap: 10px; }
+.ci-sum > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 14px; border: 1.5px solid rgba(214, 230, 245, .18); background: rgba(255, 255, 255, .04); }
 .ci-sum small { font-size: 14px; font-weight: 600; color: var(--muted); }
-.ci-sum b { display: flex; align-items: center; gap: 7px; font-size: 22px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+.ci-sum b { display: flex; align-items: center; gap: 7px; font-size: 22px; white-space: nowrap; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
 .ci-sum .mp-coin { font-size: 24px; }
 .ci-sum .u { color: #ffcf5c; font-size: .8em; margin-right: -3px; }
 .ci-week { list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding-top: 6px; }
@@ -1800,6 +1800,8 @@ body.no-anim .ci-card::after, body.no-anim .nav-dot, body.no-anim .btn-primary.g
 .ci-day.big .ci-d { color: #ffcf5c; }
 .ci-ck { position: absolute; top: -7px; right: -6px; width: 22px; height: 22px; display: none; place-items: center; border-radius: 50%; color: #fff; border: 2px solid #162231; background: linear-gradient(180deg, #78b628, #4f8a1c); }
 .ci-ck svg { width: 12px; height: 12px; stroke-width: 3.4; }
+.ci-day:not(.is-today) .ci-tag { display: none; }
+body:not([data-ci="todo"]) .ci-tag { display: none; }
 .ci-tag { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); padding: 1px 9px; border-radius: 999px; font-size: 12px; font-weight: 800; color: #3a2600; white-space: nowrap; background: linear-gradient(135deg, #ffe08a, #f5a623); }
 /* 已簽到的日子（訪客不顯示進度） */
 body:not([data-ci="guest"]) .ci-day.is-done, body[data-ci="done"] .ci-day.is-today { border-color: rgba(120, 182, 40, .55); background: linear-gradient(160deg, rgba(120, 182, 40, .18), rgba(120, 182, 40, .04)), var(--panel); }
