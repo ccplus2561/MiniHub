@@ -130,6 +130,8 @@ async function loadProfile(authUid) {
   return p;
 }
 
+// 註冊帳號首次登入（建立玩家資料）贈送 10 M 點
+const SIGNUP_BONUS = 10;
 // 建立玩家資料：users/{authUid} 與 uids/{gameUid} 在同一筆交易寫入（UID 唯一、只能建立一次）
 async function createProfile({ name, gameUid, publicName, joinRank, prefs }) {
   const user = F && F.auth.currentUser;
@@ -141,12 +143,12 @@ async function createProfile({ name, gameUid, publicName, joinRank, prefs }) {
     if ((await tx.get(uRef)).exists()) throw Object.assign(new Error("already"), { code: "already-has-profile" });
     if ((await tx.get(idRef)).exists()) throw Object.assign(new Error("taken"), { code: "uid-taken" });
     tx.set(idRef, { owner: user.uid });
-    tx.set(uRef, { name, gameUid, email: user.email, createdAt: F.serverTimestamp(), publicName: !!publicName, joinRank: !!joinRank, ...(prefs ? { prefs } : {}) });
+    tx.set(uRef, { name, gameUid, email: user.email, createdAt: F.serverTimestamp(), publicName: !!publicName, joinRank: !!joinRank, mPoints: SIGNUP_BONUS, streak: 0, totalCheckins: 0, ...(prefs ? { prefs } : {}) });
   });
   // 交易已成功＝資料已建立；之後的讀取失敗（規則 / 網路）不應讓畫面顯示「建立失敗」
   try { await recordLogin(user.uid, null); } catch (e) {}          // 首次登入也記一筆，下次登入時才有「上次」可顯示
   try { return await loadProfile(user.uid); }
-  catch (e) { return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null, publicName: !!publicName, joinRank: !!joinRank, prefs: prefs || null, prevLoginAt: null }; }
+  catch (e) { return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null, publicName: !!publicName, joinRank: !!joinRank, prefs: prefs || null, prevLoginAt: null, mPoints: SIGNUP_BONUS, streak: 0, totalCheckins: 0, lastCheckinAt: null }; }
 }
 
 // 變更使用者名稱：14 天限制由 Firestore 規則強制，前端只負責顯示
@@ -183,7 +185,8 @@ async function setJoinRank(v) {
 }
 
 // 每日簽到：以台灣時間（UTC+8）的日曆日為準，每天 00:00 換日。
-// 規則：隔天接著簽 = streak + 1，中斷過 = 重設為 1；每第 7 天（streak 為 7 的倍數）+30 M，其餘 +10 M。
+// 規則：每日簽到 +1 M；隔天接著簽 = streak + 1，中斷過 = 重設為 1；連續天數有額外點數 = 連續天數 × 0.5（無條件捨去）。
+//   獎勵 = 1 + floor(streak × 0.5)，例：第 1 天 +1、第 2 天 +2、第 3 天 +2、第 4 天 +3、第 10 天 +6。
 // 用交易讀最新資料再寫入（多裝置不會算錯）；日期 / 數值是否正確由 Firestore 規則（以伺服器時間）強制檢查。
 const TW_DAY = t => Math.floor((t + 8 * 3600000) / 864e5);
 async function checkin() {
@@ -198,7 +201,7 @@ async function checkin() {
     const d = s.data(), last = ms(d.lastCheckinAt), today = TW_DAY(Date.now());
     if (last !== null && TW_DAY(last) >= today) throw bad("already-checked-in");
     const streak = last !== null && TW_DAY(last) === today - 1 ? (Number(d.streak) || 0) + 1 : 1;
-    const reward = streak % 7 === 0 ? 30 : 10;
+    const reward = 1 + Math.floor(streak * 0.5);
     const r = { mPoints: (Number(d.mPoints) || 0) + reward, streak, totalCheckins: (Number(d.totalCheckins) || 0) + 1 };
     tx.update(ref, { ...r, lastCheckinAt: F.serverTimestamp() });
     return { ...r, reward, lastCheckinAt: Date.now() };

@@ -943,7 +943,7 @@
         new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), 20000))]);
       closeModal("profileModal");
       setAccount(p);
-      toast("歡迎，" + p.name + "！");
+      toast("歡迎，" + p.name + "！首次登入 +" + (p.mPoints || 10) + " M 點");
     } catch (e) {
       console.error("createProfile failed", e);
       if (e.code === "uid-taken") { pickUid(); showErr("UID 已被使用，已換一組新的，請再按一次"); }

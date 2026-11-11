@@ -1714,8 +1714,8 @@ body[data-ci="done"] [data-ci-only]:not([data-ci-only~="done"]) { display: none 
 .mp-coin { position: relative; flex: none; display: inline-block; width: 1em; height: 1em; font-size: 22px; border-radius: 50%; vertical-align: -.2em;
   background: radial-gradient(circle at 32% 26%, #fff6cf 0, #ffd770 34%, #f5a623 78%, #d98a0c 100%);
   box-shadow: inset 0 0 0 .07em rgba(255, 244, 200, .8), inset 0 -.09em .12em rgba(150, 80, 0, .45), 0 .06em .28em rgba(245, 166, 35, .5); }
-.mp-coin::after { content: ""; position: absolute; inset: .2em; border-radius: 50%; border: .07em solid rgba(140, 80, 0, .5); }
-.mp-coin::before { content: ""; position: absolute; z-index: 1; left: .2em; top: .13em; width: .3em; height: .13em; border-radius: 50%; background: rgba(255, 255, 255, .75); transform: rotate(-35deg); }
+.mp-coin::after { content: "M"; position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: .04em; font: 900 .62em/1 "Arial Black", "Helvetica Neue", Arial, sans-serif; color: #7a4300; text-shadow: 0 .03em 0 rgba(255, 244, 200, .7); }
+.mp-coin::before { content: ""; position: absolute; z-index: 1; left: .14em; top: .08em; width: .24em; height: .1em; border-radius: 50%; background: rgba(255, 255, 255, .75); transform: rotate(-35deg); }
 .mp-unit { color: #ffcf5c; font-weight: 800; }
 
 /* M 點膠囊：電腦版在左側導覽、登入按鈕上方；手機版在頂部列（登入鈕左邊） */
@@ -1726,15 +1726,15 @@ body[data-ci="done"] [data-ci-only]:not([data-ci-only~="done"]) { display: none 
   transition: transform .22s var(--ease), box-shadow .22s, background .22s, border-color .22s; }
 .mp-pill .mp-coin { font-size: 22px; }
 .mp-pill .mp-unit { font-size: 16px; }
-.mp-pill .mp-num { flex-basis: 100%; text-align: center; font-size: 17px; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+.mp-pill .mp-num { flex-basis: 100%; min-width: 0; overflow: hidden; white-space: nowrap; text-align: center; font-size: 17px; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
 .mp-pill:hover, .mp-pill:focus-visible { transform: translateY(-2px); border-color: rgba(255, 207, 92, .9); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), 0 10px 22px rgba(245, 166, 35, .35); }
 .mp-pill:active { transform: scale(.95); }
 body[data-ci="guest"] .mp-pill { color: #cfd8e2; border-color: rgba(255, 255, 255, .3); background: rgba(11, 17, 24, .72); }
 body[data-ci="guest"] .mp-pill .mp-coin { filter: grayscale(.85) brightness(.85); }
 body[data-ci="guest"] .mp-pill .mp-unit { color: #cfd8e2; }
-body.m .mp-pill { position: fixed; z-index: 21; top: 9px; right: 112px; width: auto; height: 36px; flex-wrap: nowrap; padding: 0 12px 0 6px; gap: 6px; border-radius: 999px; font-size: 16px; }
+body.m .mp-pill { max-width: 150px; white-space: nowrap; position: fixed; z-index: 21; top: 9px; right: 112px; width: auto; height: 36px; flex-wrap: nowrap; padding: 0 12px 0 6px; gap: 6px; border-radius: 999px; font-size: 16px; }
 body.m .mp-pill .mp-coin { font-size: 24px; }
-body.m .mp-pill .mp-num { flex-basis: auto; font-size: 16px; }
+body.m .mp-pill .mp-num { flex-basis: auto; font-size: 16px; min-width: 0; overflow: hidden; }
 
 /* 左側導覽「首頁」小紅點 */
 .nav-dot { position: absolute; z-index: 6; top: 11px; left: calc(50% + 10px); width: 14px; height: 14px; border-radius: 50%; pointer-events: none;
@@ -1755,14 +1755,14 @@ body.no-anim .nav-dot, body.no-anim .btn-primary.gold { animation: none; }
 .ci-sum { display: flex; gap: 10px; }
 .ci-sum > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 14px; border: 1.5px solid rgba(214, 230, 245, .18); background: rgba(255, 255, 255, .04); }
 .ci-sum small { font-size: 14px; font-weight: 600; color: var(--muted); }
-.ci-sum b { display: flex; align-items: center; gap: 7px; font-size: 22px; white-space: nowrap; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
-.ci-sum .mp-coin { font-size: 24px; }
+.ci-sum b { display: flex; align-items: center; gap: 7px; font-size: 22px; white-space: nowrap; min-width: 0; overflow: hidden; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+.ci-sum .mp-coin { font-size: 1.1em; }
 .ci-sum .u { color: #ffcf5c; font-size: .8em; margin-right: -3px; }
 .ci-week { list-style: none; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding-top: 6px; }
 .ci-day { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 98px; padding: 10px 2px 9px; text-align: center; border-radius: 14px;
   border: 1.5px solid rgba(214, 230, 245, .16); background: linear-gradient(160deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .015)), var(--panel); }
 .ci-day .ci-d { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
-.ci-day b { font-size: 16px; font-weight: 800; color: #fff; }
+.ci-day b { max-width: 100%; overflow: hidden; white-space: nowrap; font-size: 16px; font-weight: 800; color: #fff; }
 .ci-day .mp-coin { font-size: 26px; }
 .ci-day .ci-gift { width: 30px; height: 30px; color: #ffcf5c; stroke-width: 1.8; }
 .ci-day.big { border-color: rgba(255, 207, 92, .5); background: radial-gradient(100px 80px at 50% 0%, rgba(255, 207, 92, .28), transparent 75%), linear-gradient(160deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02)), var(--panel); }
@@ -1785,8 +1785,10 @@ body.no-anim .ci-day { animation: none !important; }
 .ci-reward { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 16px; border: 1.5px solid rgba(255, 207, 92, .45);
   background: radial-gradient(220px 90px at 0% 50%, rgba(255, 207, 92, .22), transparent 70%), rgba(255, 255, 255, .03); }
 .ci-reward .mp-coin { font-size: 44px; }
+.ci-reward b .mp-coin { font-size: .8em; vertical-align: -.12em; }
+.ci-reward > div { min-width: 0; }
 .ci-reward small { display: block; font-size: 14px; font-weight: 700; color: #ffcf5c; letter-spacing: .08em; }
-.ci-reward b { display: block; font-size: 30px; font-weight: 800; color: #fff; line-height: 1.1; }
+.ci-reward b { display: block; white-space: nowrap; font-size: 30px; font-weight: 800; color: #fff; line-height: 1.1; }
 .ci-got { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; font-size: 14px; font-weight: 800; color: #d8f5b0; border: 1px solid rgba(120, 182, 40, .55); background: rgba(120, 182, 40, .2); }
 .ci-got svg { width: 16px; height: 16px; stroke-width: 3; }
 body[data-ci="guest"] .ci-reward { opacity: .75; }
