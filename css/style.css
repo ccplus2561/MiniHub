@@ -2005,14 +2005,6 @@ body.m .brand b { font-size: 22px; }
 .bd .bd-logo { width: min(52vh, 420px); height: min(52vh, 420px); color: var(--accent-2); }
 body.pill-k:not(.m) .mp-pill { border-color: #fff; }
 
-/* 快捷鍵提示：按下亮燈、放開恢復 */
-.hints kbd, .bp-hints kbd { transition: background .08s, color .08s, box-shadow .08s, transform .08s; }
-.hints kbd.lit, .bp-hints kbd.lit { background: var(--accent-2); color: #08121c; border-color: #fff; box-shadow: 0 0 14px var(--accent-2), 0 0 4px #fff; transform: translateY(1px) scale(1.08); }
-
-/* 快捷鍵亮燈：蓋過鍵帽原本的立體樣式與輕按動畫 */
-.hints kbd.lit, .bp-hints kbd.lit { background: var(--accent-2) !important; color: #08121c !important; border-color: #fff !important;
-  box-shadow: 0 0 16px var(--accent-2), 0 0 4px #fff !important; animation: none !important; transform: translateY(2px) scale(1.1) !important; }
-
 /* 手機版首頁：左邊 MiniHub 文字、右邊 Logo，同一行，依寬度自動縮放不換行 */
 body.m .hw-brand { flex-direction: row; align-items: center; justify-content: space-between; gap: 3cqw; width: 100%; container-type: inline-size; }
 body.m .hw-title { order: 1; font-size: 16.5cqw; white-space: nowrap; min-width: 0; }

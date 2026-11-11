@@ -181,7 +181,7 @@
   }
   $("#homeGo") && $("#homeGo").addEventListener("click", () => {
     sfx("confirm");
-    if (signedIn) showView("library"); else $("#loginBtn").click();   // 未登入 → 開啟登入視窗
+    showView("library");   // 開始遊玩 / 進入遊戲庫：一律前往遊戲庫頁
   });
 
   /* ---------- 頁面切換 ---------- */
