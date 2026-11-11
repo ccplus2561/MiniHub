@@ -314,7 +314,33 @@
     barHandle.setAttribute("aria-expanded", on);
     if (on) barTimer = setTimeout(() => setBar(false), 3000);
   }
-  barHandle.addEventListener("click", () => setBar(true));
+  // 把手：點一下叫出頂端列；長按後左右拖曳可停在上緣任意位置（位置會記住）
+  const HX = "minihub.barHandleX";
+  let hx = NaN; try { hx = parseFloat(localStorage.getItem(HX)); } catch (e) {}
+  const placeHandle = () => {
+    if (!(hx >= 0 && hx <= 1)) return barHandle.style.left = "";
+    const w = barHandle.offsetWidth || 80;
+    barHandle.style.left = Math.round(Math.min(Math.max(hx * innerWidth - w / 2, 4), innerWidth - w - 4)) + "px";
+  };
+  addEventListener("resize", placeHandle); placeHandle();
+  (() => {
+    let timer = 0, id = null, drag = false, sx = 0, sy = 0, off = 0, swallow = false;
+    const stop = () => { clearTimeout(timer); if (drag) { barHandle.classList.remove("drag"); try { localStorage.setItem(HX, String(hx)); } catch (e) {} } drag = false; id = null; };
+    barHandle.addEventListener("pointerdown", e => {
+      id = e.pointerId; sx = e.clientX; sy = e.clientY; off = e.clientX - barHandle.getBoundingClientRect().left;
+      clearTimeout(timer);
+      timer = setTimeout(() => { drag = true; swallow = true; barHandle.classList.add("drag"); try { barHandle.setPointerCapture(id); navigator.vibrate && navigator.vibrate(15); } catch (e) {} }, 350);
+    });
+    barHandle.addEventListener("pointermove", e => {
+      if (e.pointerId !== id) return;
+      if (!drag) { if (Math.hypot(e.clientX - sx, e.clientY - sy) > 10) clearTimeout(timer); return; }   // 長按前移動 = 不是長按
+      const w = barHandle.offsetWidth, x = Math.min(Math.max(e.clientX - off, 4), innerWidth - w - 4);
+      hx = (x + w / 2) / innerWidth; barHandle.style.left = Math.round(x) + "px"; e.preventDefault();
+    });
+    ["pointerup", "pointercancel"].forEach(t => barHandle.addEventListener(t, e => { if (e.pointerId === id) stop(); }));
+    barHandle.addEventListener("contextmenu", e => e.preventDefault());
+    barHandle.addEventListener("click", e => { if (swallow) { swallow = false; e.stopImmediatePropagation(); return; } setBar(true); });
+  })();
   player.querySelector(".player-bar").addEventListener("click", () => { if (player.classList.contains("bar-show")) setBar(true); });   // 有操作就重新計時
   document.addEventListener("fullscreenchange", () => setBar(false));
 

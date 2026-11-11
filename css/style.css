@@ -1900,10 +1900,13 @@ body.m .player.bar-show:fullscreen .player-bar {
 }
 body.m .player:not(.with-rail) .bar-handle,
 body.m .player:fullscreen .bar-handle {
-  display: grid; place-items: center; position: absolute; z-index: 4; top: env(safe-area-inset-top); left: 50%;
-  width: 64px; height: 22px; margin-left: -32px; padding: 0; cursor: pointer;
-  color: #cfe6fa; background: rgba(20, 30, 44, .55); border: 1px solid rgba(255, 255, 255, .18); border-top: 0; border-radius: 0 0 14px 14px;
-  -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+  display: grid; place-items: center; position: absolute; z-index: 4; top: env(safe-area-inset-top); left: calc(50% - 40px);
+  width: 80px; height: 30px; padding: 0; cursor: pointer;
+  color: #04121f; background: var(--accent, #1a9fff); border: 2px solid #fff; border-top: 0; border-radius: 0 0 16px 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .6), 0 0 14px color-mix(in srgb, var(--accent, #1a9fff) 70%, transparent);
+  -webkit-tap-highlight-color: transparent; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+  transition: transform .15s, opacity .2s;
 }
+body.m .player .bar-handle.drag { transform: scale(1.15); box-shadow: 0 6px 20px rgba(0, 0, 0, .7), 0 0 22px var(--accent, #1a9fff); transition: transform .15s; }
 body.m .player.bar-show .bar-handle { opacity: 0; pointer-events: none; }
-.bar-handle svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.bar-handle svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 3.2; stroke-linecap: round; stroke-linejoin: round; }

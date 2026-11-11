@@ -174,6 +174,41 @@
   }
   theme();
 
+  /* 排行榜收合鈕：固定貼在畫面右緣；長按後可沿右緣拖曳到喜歡的位置（位置會記住） */
+  function dragTog() {
+    var tog = document.getElementById("sideTog"), side = document.getElementById("side");
+    if (!tog || !side || tog._mhDrag) return; tog._mhDrag = 1;
+    var KEY = "minihub.sideTogY", f = NaN, timer = 0, id = null, drag = false, sx = 0, sy = 0, off = 0, swallow = false;
+    try { f = parseFloat(localStorage.getItem(KEY)); } catch (e) {}
+    tog.style.touchAction = "none"; tog.style.userSelect = tog.style.webkitUserSelect = "none"; tog.style.webkitTouchCallout = "none";
+    function limits() { var r = side.getBoundingClientRect(), h = tog.offsetHeight || 64; return { top: r.top, min: 8, max: innerHeight - h - 8, h: h }; }
+    function place() {                                     // f = 按鈕頂端佔視窗高度的比例；沒拖過就維持遊戲原本位置
+      if (!(f >= 0 && f <= 1)) return tog.style.top = "";
+      var L = limits(); if (!side.getBoundingClientRect().height) return;
+      var y = Math.min(Math.max(f * innerHeight, L.min), L.max); tog.style.top = Math.round(y - L.top) + "px";
+    }
+    function stop() { clearTimeout(timer); if (drag) { tog.style.filter = tog.style.transform = ""; try { localStorage.setItem(KEY, String(f)); } catch (e) {} } drag = false; id = null; }
+    tog.addEventListener("pointerdown", function (e) {
+      id = e.pointerId; sx = e.clientX; sy = e.clientY; off = e.clientY - tog.getBoundingClientRect().top; clearTimeout(timer);
+      timer = setTimeout(function () { drag = true; swallow = true; tog.style.filter = "brightness(1.5)"; tog.style.transform = "scale(1.08)";
+        try { tog.setPointerCapture(id); navigator.vibrate && navigator.vibrate(15); } catch (e) {} }, 350);
+    });
+    tog.addEventListener("pointermove", function (e) {
+      if (e.pointerId !== id) return;
+      if (!drag) { if (Math.hypot(e.clientX - sx, e.clientY - sy) > 10) clearTimeout(timer); return; }
+      var L = limits(), y = Math.min(Math.max(e.clientY - off, L.min), L.max);
+      f = y / innerHeight; tog.style.top = Math.round(y - L.top) + "px"; e.preventDefault();
+    });
+    ["pointerup", "pointercancel"].forEach(function (t) { tog.addEventListener(t, function (e) { if (e.pointerId === id) stop(); }); });
+    tog.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    tog.addEventListener("click", function (e) { if (swallow) { swallow = false; e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+    var re = function () { requestAnimationFrame(place); };
+    addEventListener("resize", re); addEventListener("orientationchange", re);
+    try { new MutationObserver(re).observe(side, { attributes: true, attributeFilter: ["hidden", "style", "class"] }); } catch (e) {}
+    place(); setTimeout(place, 300);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", dragTog); else dragTog();
+
   window.MiniHub = {
     embedded: !!P, prefs: prefs, theme: theme,
     sfxOn: function () { var p = prefs(); return !p.mute && p.sfx !== false; },
