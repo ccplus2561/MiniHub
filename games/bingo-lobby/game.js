@@ -106,7 +106,6 @@
   function openHost() {
     const mine = Room.loadMyRoom();
     hostRoomId.value = mine || Room.newRoomId();
-    $("hostUidLine").textContent = `你的 UID：${Room.getUid()}`;
     hostPw.value = "";
     roomPw.value = "";
     hostPw.disabled = false;
@@ -122,7 +121,9 @@
     hostRoomId.focus();
   }
 
+  let creating = false;
   async function createRoom(id, resume) {
+    if (creating || state.navigating) return;
     if (!Room.isValid(id)) {
       showHostError(`請輸入 ${Room.ID_LEN} 碼數字`);
       return;
@@ -132,19 +133,30 @@
       showHostError(`密碼需為 ${Room.PW_LEN} 碼英數字，或留空不設定`);
       return;
     }
-    // 回到自己已有的房間：若設有主持人密碼，需先輸入
-    const old = await Room.directory.get(id);
-    if (old && old.hostUid === Room.ownerId() && old.hostPw && !(await Room.verify(old, "host", hp))) {
-      showHostError("這間房間已設定主持人密碼，請在上方輸入正確的主持人密碼");
-      return;
+    creating = true;
+    hostErr.hidden = true;
+    const okBtn = hostForm.querySelector('[type="submit"]'), okTxt = okBtn.textContent;
+    okBtn.disabled = true; okBtn.textContent = "建立中…";
+    try {
+      // 回到自己已有的房間：若設有主持人密碼，需先輸入
+      const old = await Room.directory.get(id);
+      if (old && old.hostUid === Room.ownerId() && old.hostPw && !(await Room.verify(old, "host", hp))) {
+        showHostError("這間房間已設定主持人密碼，請在上方輸入正確的主持人密碼");
+        return;
+      }
+      const res = await Room.directory.create(id, { set: !resume && !!(hp || rp), host: hp, room: rp });
+      if (!res.ok) {
+        showHostError(res.error === "taken" ? "這個房號已被別人使用，請換一個" : res.error === "cloud" ? "雲端同步失敗或逾時，請檢查網路後再試" : "無法建立房間，請稍後再試");
+        return;
+      }
+      Room.saveMyRoom(id);
+      go("host", id);
+    } catch (e) {
+      showHostError("建立房間失敗，請稍後再試");
+    } finally {
+      creating = false;
+      okBtn.disabled = false; okBtn.textContent = okTxt;
     }
-    const res = await Room.directory.create(id, { set: !resume && !!(hp || rp), host: hp, room: rp });
-    if (!res.ok) {
-      showHostError(res.error === "taken" ? "這個房號已被別人使用，請換一個" : res.error === "cloud" ? "雲端同步失敗，請稍後再試" : "無法建立房間，請稍後再試");
-      return;
-    }
-    Room.saveMyRoom(id);
-    go("host", id);
   }
 
   // ===== 步驟 2（玩家 / 旁觀）：房間清單 =====
@@ -304,7 +316,6 @@
       const btn = e.target.closest(".room-item");
       if (btn) openRoleStep(btn.dataset.id);
     });
-    $("soloBtn").addEventListener("click", () => go("solo", ""));
     $("enterBtn").addEventListener("click", enterRoom);
     backBtn.addEventListener("click", goBack);
     document.addEventListener("keydown", onKeyDown);

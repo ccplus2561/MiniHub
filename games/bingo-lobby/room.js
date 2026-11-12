@@ -98,6 +98,9 @@
       return A && A.rooms && A.rooms.on() ? A.rooms : null;
     } catch (e) { return null; }
   }
+  // 雲端呼叫逾時保護：連線卡住時不讓畫面一直沒反應
+  const CLOUD_TIMEOUT_MS = 8000;
+  const timeout = p => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), CLOUD_TIMEOUT_MS))]);
   // 房主身份：登入用帳號 uid，訪客用分頁 UID
   function ownerId() { const c = cloud(); return c ? c.uid() : getUid(); }
   const local = {
@@ -114,7 +117,7 @@
       let rows = local._all();
       if (c) {
         try {
-          const remote = await c.list();
+          const remote = await timeout(c.list());
           if (remote) { const ids = new Set(remote.map(r => r.id)); rows = remote.concat(rows.filter(r => !ids.has(r.id))); }
         } catch (e) { /* 雲端失敗時只顯示本機 */ }
       }
@@ -122,7 +125,7 @@
     },
     async get(id) {
       const c = cloud();
-      if (c) { try { const r = await c.get(id); if (r) return r; } catch (e) { /* 改查本機 */ } }
+      if (c) { try { const r = await timeout(c.get(id)); if (r) return r; } catch (e) { /* 改查本機 */ } }
       return local._all().find(r => r.id === id) || null;
     },
     // 同一房主可重複建立（＝回到自己的房間）；別人的房號不可佔用
@@ -139,7 +142,7 @@
       const c = cloud();
       if (c) {
         try {
-          const res = await c.create(id, { salt, hostPw, roomPw });
+          const res = await timeout(c.create(id, { salt, hostPw, roomPw }));
           if (res && !res.ok) return res;
         } catch (e) { return { ok: false, error: "cloud" }; }
       }
