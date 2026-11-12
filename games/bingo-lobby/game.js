@@ -96,9 +96,15 @@
     else if (state.screen === "rooms" || state.screen === "host") showScreen("identity");
   }
 
+  function toast(msg) {
+    if (window.parent !== window && window.parent.MiniHubToast) { try { window.parent.MiniHubToast(msg); return; } catch (e) { /* 改用下方提示 */ } }
+    const sub = $("subtitle"); if (sub) sub.textContent = msg;
+  }
+
   // ===== 步驟 1：選身份 =====
   function chooseRole(role) {
     if (state.navigating) return;
+    if (role === "host" && Room.isPhone()) { sound.hover(); toast("主持僅限平板、電腦使用，手機請改用「玩家」或「旁觀」。"); return; }
     state.role = role;
     sound.enter();
     if (role === "host") openHost();
@@ -408,6 +414,10 @@
 
   // ===== 啟動 =====
   function init() {
+    if (Room.isPhone()) {   // 手機：主持鈕停用並標示
+      const hb = document.querySelector('[data-role="host"]');
+      if (hb) { hb.classList.add("is-disabled"); hb.setAttribute("aria-disabled", "true"); const t = hb.querySelector(".mode-btn__tag"); if (t) t.textContent = "僅限平板 / 電腦"; }
+    }
     MiniHub.onPause(pause);
     bindInput();
     showScreen("identity");

@@ -71,6 +71,13 @@
   const HOST_OK_KEY = "bingoLobby.hostOk";
   function allowHost(id) { write(HOST_OK_KEY, id); }
   function hostAllowed(id) { return read(HOST_OK_KEY) === id; }
+  // 手機判斷：優先採用 MiniHub 首頁的裝置模式（body.m），沒有外層頁面時用 UA / 觸控 + 螢幕寬度判斷。主持僅限平板、電腦。
+  function isPhone() {
+    try { if (window.parent !== window && window.parent.document.body.classList.contains("m")) return true; } catch (e) { /* 跨網域：改用下面判斷 */ }
+    const ua = navigator.userAgent || "";
+    if (/iPhone|iPod|Android.*Mobile|Windows Phone|Mobile Safari/i.test(ua) && !/iPad|Tablet/i.test(ua)) return true;
+    return window.matchMedia && matchMedia("(pointer:coarse)").matches && Math.min(screen.width, screen.height) < 600;
+  }
   function saveMyRoom(id) { write(MY_ROOM_KEY, { id, at: Date.now() }); }
 
   // ===== 密碼（選填，固定 5 碼英數）=====
@@ -205,6 +212,6 @@
 
   window.BingoRoom = {
     ID_LEN, PW_LEN, NAME_MAX, normalizeName, MSG, normalize, normalizePw, pwOk, verify, ownerId, isValid, newRoomId, getUid,
-    loadMyRoom, saveMyRoom, allowHost, hostAllowed, directory, buildUrl, readParams, connect,
+    loadMyRoom, saveMyRoom, isPhone, allowHost, hostAllowed, directory, buildUrl, readParams, connect,
   };
 })();

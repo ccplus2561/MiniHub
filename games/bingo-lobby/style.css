@@ -251,3 +251,4 @@ body {
 .room-btn--primary:hover { background: var(--gold-soft); }
 
 .link-btn { padding: 0; border: 0; background: none; color: var(--gold-soft); font: inherit; text-decoration: underline; cursor: pointer; }
+.mode-btn.is-disabled { opacity: 0.45; filter: grayscale(0.6); }
