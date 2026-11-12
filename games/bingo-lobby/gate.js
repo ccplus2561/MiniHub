@@ -33,7 +33,7 @@
     if (btn) {
       btn.type = "button"; btn.textContent = "前往登入";
       btn.style.cssText = "min-height:46px;padding:0 28px;border:0;border-radius:999px;background:#f6c453;color:#3a0a0f;font:inherit;font-weight:700;cursor:pointer";
-      btn.addEventListener("click", () => { try { P.document.getElementById("loginBtn").click(); } catch (e) { /* 忽略 */ } });
+      btn.addEventListener("click", () => { try { if (P.MiniHubOpenLogin) P.MiniHubOpenLogin(); else P.document.getElementById("loginBtn").click(); } catch (e) { /* 忽略 */ } });
       card.appendChild(btn);
     }
     box.appendChild(card);

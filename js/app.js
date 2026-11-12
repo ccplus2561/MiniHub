@@ -266,6 +266,9 @@
   // 手機版禁止進入不支援手機的遊戲（games.js 的 tags.mobileP === false，例如橫向投屏的賓果抽獎盤）
   const phoneBlocked = g => !!g.path && document.body.classList.contains("m") && !!g.tags && g.tags.mobileP === false;
   function denyPhone(g) { sfx("deny"); toast("「" + g.title + "」不支援手機，請改用電腦或平板開啟。"); }
+  function promptLogin() { if (window.MiniHubAuth) MiniHubAuth.preload(); $("#loginAgreeChk").checked = false; openModal("loginModal"); }
+  // 遊戲內的「前往登入」：先關閉遊戲回到首頁，再開登入視窗（登入視窗在遊戲層底下，不先關閉會看不到）
+  window.MiniHubOpenLogin = () => { if (signedIn) return; if (player.hidden) promptLogin(); else closeGame(() => promptLogin()); };
   function openGame(g, el) {
     if (phoneBlocked(g)) return denyPhone(g);
     if (g.path) {
@@ -274,6 +277,7 @@
         document.addEventListener("minihub:auth", go, { once: true }); setTimeout(() => { authReady = true; go(); }, 5000);
         return;
       }
+      if (!signedIn && g.needLogin) { sfx("deny"); toast("「" + g.title + "」需要登入後才能遊玩，請先登入。"); promptLogin(); return; }   // 需登入的遊戲（多人賓果）：直接擋下並開啟登入視窗，不進入遊戲
       if (!signedIn) { askConsent(() => launchGame(g, el), () => {}); return; }   // 不同意：不進入遊戲
     }
     launchGame(g, el);

@@ -67,7 +67,7 @@ window.GAMES = [
   },
   {
     id: "bingo-lobby", title: "多人賓果", category: "桌遊", emoji: "🎤", icon: "icons/bingo-lobby.svg",
-    colors: ["#6d3fe0", "#241352"], path: "games/bingo-lobby/index.html",
+    colors: ["#6d3fe0", "#241352"], path: "games/bingo-lobby/index.html", needLogin: true,
     desc: "多人一起玩的賓果（需登入）：選身份、建立或加入房間。\n規則：主持人建立房間並抽號，玩家用電子卡對號，連成線即 BINGO；旁觀者可看大螢幕，也可單機玩電子卡。\n操作：滑鼠／觸控點擊；大廳可用鍵盤 1–3 選身份。",
     how: "", featured: false, music: false,
     tags: { single: false, multi: true, desktop: true, kbd: false, mobileP: true, touch: true, score: false, cloud: true }
