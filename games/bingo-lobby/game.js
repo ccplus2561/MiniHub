@@ -33,7 +33,8 @@
   const hostForm = $("hostForm");
   const hostRoomId = $("hostRoomId");
   const hostErr = $("hostErr");
-  const hostResume = $("hostResume");
+  const hostOwned = $("hostOwned"), ownedPw = $("ownedPw"), ownedErr = $("ownedErr"), ownedPwRow = $("ownedPwRow");
+  let mine = null;   // 我目前擁有的房間（一個帳號 / UID 同時只能有一間）
   const roomSearch = $("roomSearch");
   const roomList = $("roomList");
   const roomEmpty = $("roomEmpty");
@@ -103,16 +104,54 @@
   }
 
   // ===== 步驟 2（主持）：自訂房號 =====
-  function openHost() {
-    const mine = Room.loadMyRoom();
-    hostRoomId.value = mine || Room.newRoomId();
+  async function findMine() {
+    let rows = [];
+    try { rows = await Room.directory.list(); } catch (e) { /* 忽略 */ }
+    const me = Room.ownerId();
+    return rows.find(r => r.hostUid === me) || null;
+  }
+
+  async function openHost() {
+    hostRoomId.value = Room.newRoomId();
     hostPw.value = "";
     roomPw.value = "";
-    hostPw.disabled = false;
     hostErr.hidden = true;
-    hostResume.hidden = !mine;
-    hostResume.textContent = mine ? `繼續上次房間 ${mine}` : "";
+    ownedErr.hidden = true;
+    ownedPw.value = "";
+    hostForm.hidden = true; hostOwned.hidden = true;
     showScreen("host");
+    mine = await findMine();
+    if (state.screen !== "host") return;
+    if (mine) {
+      $("ownedId").textContent = mine.id;
+      ownedPwRow.hidden = !mine.hostPw;
+      hostOwned.hidden = false;
+    } else {
+      hostForm.hidden = false;
+      hostRoomId.focus();
+    }
+  }
+
+  async function ownedAction(del) {
+    if (!mine || state.navigating) return;
+    ownedErr.hidden = true;
+    try {
+      const pw = Room.normalizePw(ownedPw.value);
+      if (mine.hostPw && !(await Room.verify(mine, "host", pw))) {
+        ownedErr.textContent = "主持人密碼不正確"; ownedErr.hidden = false; return;
+      }
+      if (del) {
+        await Room.directory.remove(mine.id);
+        try { sessionStorage.removeItem("bingoLobby.myRoom"); } catch (e) { /* 忽略 */ }
+        sound.enter();
+        openHost();
+      } else {
+        Room.saveMyRoom(mine.id);
+        go("host", mine.id);
+      }
+    } catch (e) {
+      ownedErr.textContent = "操作失敗，請稍後再試"; ownedErr.hidden = false;
+    }
   }
 
   function showHostError(msg) {
@@ -135,9 +174,11 @@
     }
     creating = true;
     hostErr.hidden = true;
-    const okBtn = hostForm.querySelector('[type="submit"]'), okTxt = okBtn.textContent;
+    const okBtn = $("hostCreate"), okTxt = okBtn.textContent;
     okBtn.disabled = true; okBtn.textContent = "建立中…";
     try {
+      const owned = await findMine();
+      if (owned && owned.id !== id) { showHostError(`你已有房間 ${owned.id}，需先刪除才能再建立新房間`); openHost(); return; }
       // 回到自己已有的房間：若設有主持人密碼，需先輸入
       const old = await Room.directory.get(id);
       if (old && old.hostUid === Room.ownerId() && old.hostPw && !(await Room.verify(old, "host", hp))) {
@@ -305,8 +346,14 @@
       hostErr.hidden = true;
       enterErr.hidden = true;
     }));
-    hostForm.addEventListener("submit", e => { e.preventDefault(); createRoom(Room.normalize(hostRoomId.value)); });
-    hostResume.addEventListener("click", () => createRoom(Room.loadMyRoom(), true));
+    // 外層頁面的 iframe 沒開 allow-forms，表單 submit 會被瀏覽器靜默擋掉，所以改用按鈕 click / Enter 自行處理
+    const submitHost = () => createRoom(Room.normalize(hostRoomId.value));
+    hostForm.addEventListener("submit", e => e.preventDefault());
+    $("hostCreate").addEventListener("click", submitHost);
+    [hostRoomId, hostPw, roomPw].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitHost(); } }));
+    $("ownedEnter").addEventListener("click", () => ownedAction(false));
+    $("ownedDelete").addEventListener("click", () => ownedAction(true));
+    ownedPw.addEventListener("input", () => { ownedPw.value = Room.normalizePw(ownedPw.value); ownedErr.hidden = true; });
     roomSearch.addEventListener("input", () => {
       roomSearch.value = Room.normalize(roomSearch.value);
       renderRooms();

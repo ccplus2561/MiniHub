@@ -49,10 +49,22 @@
       <input id="roomPw" class="field__input" type="text" maxlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="不設定可留空">
       <p id="hostErr" class="panel__err" role="alert" hidden></p>
       <div class="panel__actions">
-        <button id="hostResume" class="room-btn" type="button" hidden></button>
-        <button class="room-btn room-btn--primary" type="submit">建立並進入</button>
+        <button id="hostCreate" class="room-btn room-btn--primary" type="button">建立並進入</button>
       </div>
     </form>
+    <div id="hostOwned" class="panel" hidden>
+      <p class="field">你已建立房間 <span id="ownedId" class="room-id"></span></p>
+      <p class="panel__note">每個帳號同時只能有一間房間，需先刪除目前的房間才能再建立新的。</p>
+      <div id="ownedPwRow" hidden>
+        <label class="field" for="ownedPw">主持人密碼</label>
+        <input id="ownedPw" class="field__input" type="text" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入 5 碼主持人密碼">
+      </div>
+      <p id="ownedErr" class="panel__err" role="alert" hidden></p>
+      <div class="panel__actions">
+        <button id="ownedDelete" class="room-btn" type="button">刪除房間</button>
+        <button id="ownedEnter" class="room-btn room-btn--primary" type="button">進入房間</button>
+      </div>
+    </div>
   </section>
 
   <!-- 步驟 2（玩家 / 旁觀）：找房間 -->
