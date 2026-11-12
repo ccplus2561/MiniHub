@@ -216,24 +216,34 @@ body {
 .search-row { display: flex; gap: 10px; }
 .search-row .field__input { flex: 1; min-width: 0; }
 
-.room-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; max-height: 46vh; overflow-y: auto; }
-.room-item {
+.room-grid { margin-top: 12px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); max-height: 56vh; overflow-y: auto; padding: 2px; }
+.room-card {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  min-height: 52px;
-  padding: 8px 14px;
-  border: 1px solid rgba(246, 196, 83, 0.35);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
+  flex-direction: column;
+  gap: 6px;
+  min-height: 150px;
+  padding: 12px 14px;
+  border: 1px solid rgba(246, 196, 83, 0.4);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04));
   color: var(--text);
   font: inherit;
+  text-align: left;
   cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, background 0.15s;
 }
-.room-item:hover, .room-item:focus-visible { background: var(--card-hover); border-color: var(--gold); outline: none; }
-.room-item__id { font: 700 20px ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.15em; color: var(--gold-soft); }
-.room-item__meta { font-size: 12px; opacity: 0.65; }
+.room-card:hover, .room-card:focus-visible { transform: translateY(-2px); background: var(--card-hover); border-color: var(--gold); outline: none; }
+.room-card:active { transform: scale(0.98); }
+.room-card__top { display: flex; align-items: center; justify-content: space-between; min-height: 20px; }
+.room-card__badge { padding: 2px 8px; border-radius: 999px; background: #2f7d4f; font-size: 11px; font-weight: 700; }
+.room-card.is-locked .room-card__badge { background: #8a5a12; }
+.room-card__name { font-size: 16px; font-weight: 700; line-height: 1.3; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-all; }
+.room-card__id { font: 700 18px ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.15em; color: var(--gold-soft); }
+.room-card__meta { font-size: 12px; opacity: 0.65; }
+.room-card__go { margin-top: auto; align-self: flex-start; padding: 4px 12px; border-radius: 999px; background: var(--gold); color: #3a0a0f; font-size: 13px; font-weight: 700; }
+.modal { position: fixed; inset: 0; z-index: 9000; display: flex; align-items: center; justify-content: center; padding: 24px; background: rgba(0, 0, 0, 0.6); }
+.modal[hidden] { display: none; }
+.modal__card { width: min(360px, 100%); padding: 20px 18px; border: 1px solid rgba(246, 196, 83, 0.5); border-radius: var(--radius); background: #2a0a10; }
 .room-id { font: 700 18px ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.15em; color: var(--gold); }
 
 .room-btn {

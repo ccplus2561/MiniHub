@@ -45,9 +45,6 @@
       <input id="hostRoomId" class="field__input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" spellcheck="false" aria-describedby="hostErr">
       <label class="field" for="hostName">房間名稱（選填，最多 20 字，玩家 / 旁觀會看到）</label>
       <input id="hostName" class="field__input" type="text" maxlength="20" autocomplete="off" spellcheck="false" placeholder="例如：週五聚會賓果">
-      <label class="field" for="hostPw">主持人密碼（選填，5 碼英數）</label>
-      <input id="hostPw" class="field__input" type="text" maxlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="不設定可留空">
-      <label id="clrHostPwRow" class="panel__note" hidden><input id="clrHostPw" type="checkbox"> 清除主持人密碼</label>
       <label class="field" for="roomPw">房間密碼（選填，5 碼英數）</label>
       <input id="roomPw" class="field__input" type="text" maxlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="不設定可留空">
       <label id="clrRoomPwRow" class="panel__note" hidden><input id="clrRoomPw" type="checkbox"> 清除房間密碼</label>
@@ -61,10 +58,6 @@
       <p class="field">你已建立房間 <span id="ownedId" class="room-id"></span></p>
       <p id="ownedName" class="panel__note" hidden></p>
       <p class="panel__note">每個帳號同時只能有一間房間，需先刪除目前的房間才能再建立新的。</p>
-      <div id="ownedPwRow" hidden>
-        <label class="field" for="ownedPw">主持人密碼</label>
-        <input id="ownedPw" class="field__input" type="text" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入 5 碼主持人密碼">
-      </div>
       <p id="ownedErr" class="panel__err" role="alert" hidden></p>
       <div class="panel__actions">
         <button id="ownedDelete" class="room-btn" type="button">刪除房間</button>
@@ -83,36 +76,25 @@
                placeholder="搜尋房間號碼" aria-label="搜尋房間號碼" spellcheck="false">
         <button id="roomRefresh" class="room-btn" type="button" aria-label="重新整理">↻</button>
       </div>
-      <ul id="roomList" class="room-list" aria-live="polite"></ul>
+      <div id="roomList" class="room-grid" aria-live="polite"></div>
       <p id="roomEmpty" class="panel__note" hidden></p>
     </div>
   </section>
-
-  <!-- 步驟 3（玩家 / 旁觀）：選定房間後再選一次角色 -->
-  <section class="screen" data-screen="role" aria-labelledby="gRole" hidden>
-    <h2 id="gRole" class="group__title">進入房間 <span id="roleRoomId" class="room-id"></span></h2>
-    <div class="group__grid">
-      <button class="mode-btn mode-btn--multi" type="button" data-pick="player" aria-pressed="false">
-        <span class="mode-btn__icon" aria-hidden="true">🎴</span>
-        <span class="mode-btn__name">玩家</span>
-        <span class="mode-btn__tag">電子卡</span>
-      </button>
-      <button class="mode-btn mode-btn--spectate" type="button" data-pick="spectator" aria-pressed="false">
-        <span class="mode-btn__icon" aria-hidden="true">👀</span>
-        <span class="mode-btn__name">旁觀</span>
-        <span class="mode-btn__tag">大螢幕</span>
-      </button>
-    </div>
-    <div id="roomPwRow" class="panel" hidden>
-      <label class="field" for="enterPw">此房間需要密碼</label>
-      <input id="enterPw" class="field__input" type="text" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入 5 碼房間密碼">
-      <p id="enterErr" class="panel__err" role="alert" hidden></p>
-    </div>
-    <div class="panel__actions panel__actions--center">
-      <button id="enterBtn" class="room-btn room-btn--primary" type="button">進入</button>
-    </div>
-  </section>
 </main>
+
+<!-- 房間密碼視窗（點到有鎖的房間時才出現；不用 form，避免 iframe 沒開 allow-forms 被擋） -->
+<div id="pwModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="pwTitle" hidden>
+  <div class="modal__card">
+    <h2 id="pwTitle" class="group__title">此房間需要密碼</h2>
+    <p id="pwRoom" class="panel__note"></p>
+    <input id="enterPw" class="field__input" type="text" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入 5 碼房間密碼" aria-label="房間密碼">
+    <p id="enterErr" class="panel__err" role="alert" hidden></p>
+    <div class="panel__actions">
+      <button id="pwCancel" class="room-btn" type="button">取消</button>
+      <button id="pwOk" class="room-btn room-btn--primary" type="button">進入</button>
+    </div>
+  </div>
+</div>
 
 <script src="../../js/protect.js"></script>
 <script src="../../js/minihub-sdk.js"></script>

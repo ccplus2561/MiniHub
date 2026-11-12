@@ -2202,6 +2202,118 @@ function createDeskBrand({ back = false } = {}) {
 return { createDeskBrand };
 })();
 
+// ===== core/cloud-save.js =====
+M['core/cloud-save'] = (() => {
+const { getState, setState, subscribe } = M['core/state'];
+const { DEFAULT_SETTINGS } = M['config/defaults'];
+const { toast, confirmDialog } = M['utils/dom'];
+// 主持端雲端同步：登入後，遊戲進行中的設定、全部抽號紀錄與名次宣告會同步到 Firestore（games/bingo-lobby/saves/{uid}）。
+// 重新登入、重新整理後進入同一間房，會自動還原上次的進度；結束遊戲、開新局或刪除房間會清除。
+// 只有「主持」角色會同步（旁觀不讀不寫）。單筆上限 20000 字元，所以紀錄做精簡。
+
+const TYPES = ['new', 'repeat', 'blank'];
+const cloud = window.MiniHub && MiniHub.cloud ? MiniHub.cloud('bingo-lobby') : null;
+let cloudUid = '';   // 已完成讀取（才允許寫入）的帳號
+let busy = false;
+let hasRemote = false;   // 雲端目前是否有進行中的存檔
+let applying = false;
+let roomId = '';
+
+const myUid = () => { try { return MiniHub.player().uid || ''; } catch { return ''; } };
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+function pack(state) {
+  const { settings, game } = state;
+  const s = {};
+  for (const k of Object.keys(DEFAULT_SETTINGS)) if (!same(settings[k], DEFAULT_SETTINGS[k])) s[k] = settings[k];
+  const batches = [];
+  const t0 = game.history.length ? game.history[0].ts : 0;
+  const h = game.history.map((r) => {
+    let b = -1;
+    if (r.batchId != null) { b = batches.indexOf(r.batchId); if (b < 0) b = batches.push(r.batchId) - 1; }
+    return [TYPES.indexOf(r.type), r.number, r.paid ? 1 : 0, b, r.ts - t0];
+  });
+  return { v: 1, playing: true, room: roomId, t0, s, h, b: batches, r: game.ranks };
+}
+
+function unpack(d) {
+  if (!d || d.v !== 1 || d.playing !== true || !Array.isArray(d.h)) return null;
+  if (d.room !== roomId) return null;   // 不是這間房的進度
+  const settings = {};
+  for (const k of Object.keys(DEFAULT_SETTINGS)) {
+    const def = DEFAULT_SETTINGS[k];
+    const v = d.s && k in d.s ? d.s[k] : def;
+    const ok = Array.isArray(def) ? Array.isArray(v) : typeof v === typeof def && (typeof v !== 'number' || Number.isFinite(v));
+    settings[k] = ok ? v : def;
+  }
+  settings.locked = true;
+  const batches = Array.isArray(d.b) ? d.b : [];
+  const t0 = Number(d.t0) || 0;
+  const history = [];
+  for (const row of d.h) {
+    if (!Array.isArray(row)) return null;
+    const type = TYPES[row[0]];
+    if (!type) return null;
+    const seq = history.length + 1;
+    history.push({ id: `d${seq}`, seq, type, number: type === 'blank' ? null : row[1], paid: row[2] === 1, batchId: row[3] >= 0 ? batches[row[3]] ?? null : null, ts: t0 + row[4] });
+  }
+  let streak = 0;
+  for (let i = history.length - 1; i >= 0 && history[i].type !== 'new'; i--) streak++;
+  const ranks = Array.isArray(d.r) ? d.r : [];
+  return {
+    settings,
+    game: { status: 'playing', history, paidDrawCount: history.filter((r) => r.paid).length, invalidStreak: streak, ranks },
+  };
+}
+
+function queueSave() {
+  if (!cloud || !cloudUid || cloudUid !== myUid() || applying) return;
+  const st = getState();
+  if (st.game.status === 'playing') { hasRemote = true; cloud.save(pack(st)); }
+  else if (hasRemote) { hasRemote = false; cloud.save({ v: 1, playing: false }); cloud.flush(); }   // 結束／開新局：清除存檔
+}
+
+async function syncCloud() {
+  if (!cloud) return;
+  const uid = myUid();
+  if (!uid) { cloudUid = ''; hasRemote = false; return; }
+  if (uid === cloudUid || busy) return;
+  busy = true;
+  try {
+    const r = await cloud.load();
+    if (!r.ok) return;   // 讀取失敗：不寫入，避免覆蓋雲端資料
+    const restored = unpack(r.data);
+    hasRemote = !!(r.data && r.data.playing === true && r.data.room === roomId);
+    if (restored) {
+      const local = getState().game.status;
+      const take = local !== 'playing' || await confirmDialog({
+        title: '載入雲端進度？',
+        message: '偵測到這間房間上次進行中的抽號紀錄，要載入嗎？目前畫面上的進行中資料會被取代。',
+        confirmText: '載入',
+      });
+      if (take) {
+        applying = true;
+        try { setState({ settings: restored.settings, game: restored.game, ui: { tab: 'draw' } }); } finally { applying = false; }
+        toast('已還原上次的抽號進度');
+      }
+    }
+    cloudUid = uid;
+    queueSave();
+  } finally { busy = false; }
+}
+
+function initCloudSave(room) {
+  if (!cloud || !room) return;
+  roomId = room;
+  subscribe(queueSave);
+  MiniHub.onChange(syncCloud);
+  syncCloud();
+  addEventListener('pagehide', () => cloud.flush());
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') cloud.flush(); });
+}
+return { initCloudSave };
+})();
+
 // ===== main.js =====
 M['main'] = (() => {
 const { getState, setState, subscribe } = M['core/state'];
@@ -2216,12 +2328,13 @@ const { initRulesView } = M['ui/rules-view'];
 const { openReceipt } = M['ui/receipt-view'];
 const { el } = M['utils/dom'];
 const { createDeskBrand } = M['ui/more-menu'];
+const { initCloudSave } = M['core/cloud-save'];
 // 啟動入口：建立分頁並載入各視圖
 
 const STATUS_TEXT = { setup: '設定中', playing: '遊戲進行中', ended: '已結束' };
 
 function start() {
-  // 資料不保存：順手清掉舊版本留在瀏覽器裡的存檔
+  // 本機不保存：順手清掉舊版本留在瀏覽器裡的存檔（雲端進度另見 core/cloud-save）
   try { localStorage.removeItem('bingo-board-v1'); } catch { /* 忽略 */ }
   setState({ ui: { layout: 'desktop' } });
   initTabs(document.querySelectorAll('[data-panel]'));
@@ -2270,6 +2383,12 @@ function start() {
     e.preventDefault();
     e.returnValue = ''; // 舊版瀏覽器需要
   });
+
+  // 主持：把抽號進度同步到 Firestore，重新登入後可還原（旁觀不同步）
+  try {
+    const p = window.BingoRoom && window.BingoRoom.readParams();
+    if (p && p.role === 'host' && p.room) initCloudSave(p.room);
+  } catch (e) { console.warn('[cloud-save]', e); }
 
   // 載入完成：移除載入畫面
   const boot = document.getElementById('boot');

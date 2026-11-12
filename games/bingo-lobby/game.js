@@ -15,8 +15,7 @@
   const SUBTITLE = {
     identity: "請先選擇你的身份",
     host: "自訂房間號碼，建立後讓大家加入",
-    rooms: "選擇要加入的房間",
-    role: "選擇進入的方式",
+    rooms: "點選房間即可直接進入",
   };
 
   // 身份畫面的鍵盤快速鍵
@@ -29,22 +28,18 @@
   const backBtn = $("backBtn");
   const screens = Array.from(document.querySelectorAll("[data-screen]"));
   const roleBtns = Array.from(document.querySelectorAll("[data-role]"));
-  const pickBtns = Array.from(document.querySelectorAll("[data-pick]"));
   const hostForm = $("hostForm");
   const hostRoomId = $("hostRoomId");
   const hostErr = $("hostErr");
-  const hostOwned = $("hostOwned"), ownedPw = $("ownedPw"), ownedErr = $("ownedErr"), ownedPwRow = $("ownedPwRow");
+  const hostOwned = $("hostOwned"), ownedErr = $("ownedErr");
   const hostName = $("hostName"), hostCreate = $("hostCreate"), hostCancel = $("hostCancel");
   let editing = false;   // 修改自己房間的模式
   let mine = null;   // 我目前擁有的房間（一個帳號 / UID 同時只能有一間）
   const roomSearch = $("roomSearch");
   const roomList = $("roomList");
   const roomEmpty = $("roomEmpty");
-  const hostPw = $("hostPw");
   const roomPw = $("roomPw");
-  const roomPwRow = $("roomPwRow");
-  const enterPw = $("enterPw");
-  const enterErr = $("enterErr");
+  const pwModal = $("pwModal"), enterPw = $("enterPw"), enterErr = $("enterErr");
 
   // ===== 狀態 =====
   const state = {
@@ -52,10 +47,8 @@
     timer: 0,
     screen: "identity",
     role: "",     // 第一步選的身份：host | player | spectator
-    pick: "",     // 選定房間後的角色：player | spectator
-    roomId: "",
     rooms: [],
-    room: null,   // 選定的房間資料
+    room: null,   // 等待輸入密碼的房間資料
   };
 
   // ===== 音效（Proxy，失敗不影響流程）=====
@@ -87,12 +80,11 @@
     if (name === "identity") roleBtns[0].focus();
     else if (name === "host") hostRoomId.focus();
     else if (name === "rooms") roomSearch.focus();
-    else if (name === "role") (pickBtns.find(b => b.dataset.pick === state.pick) || pickBtns[0]).focus();
   }
 
   function goBack() {
     if (state.navigating) return;
-    if (state.screen === "role") showScreen("rooms");
+    if (!pwModal.hidden) closePw();
     else if (state.screen === "rooms" || state.screen === "host") showScreen("identity");
   }
 
@@ -124,9 +116,9 @@
     hostRoomId.disabled = on;
     hostCancel.hidden = !on;
     hostCreate.textContent = on ? "儲存修改" : "建立並進入";
-    $("clrHostPwRow").hidden = $("clrRoomPwRow").hidden = !on;
-    $("clrHostPw").checked = $("clrRoomPw").checked = false;
-    hostPw.placeholder = roomPw.placeholder = on ? "不修改請留空" : "不設定可留空";
+    $("clrRoomPwRow").hidden = !on;
+    $("clrRoomPw").checked = false;
+    roomPw.placeholder = on ? "不修改請留空" : "不設定可留空";
     $("gHost").textContent = on ? "修改房間" : "建立房間";
   }
 
@@ -134,11 +126,9 @@
     setEditMode(false);
     hostName.value = "";
     hostRoomId.value = Room.newRoomId();
-    hostPw.value = "";
     roomPw.value = "";
     hostErr.hidden = true;
     ownedErr.hidden = true;
-    ownedPw.value = "";
     hostForm.hidden = true; hostOwned.hidden = true;
     showScreen("host");
     mine = await findMine();
@@ -146,7 +136,6 @@
     if (mine) {
       $("ownedId").textContent = mine.id;
       const on = $("ownedName"); on.hidden = !mine.name; on.textContent = mine.name ? "房間名稱：" + mine.name : "";
-      ownedPwRow.hidden = !mine.hostPw;
       hostOwned.hidden = false;
     } else {
       hostForm.hidden = false;
@@ -159,12 +148,9 @@
     if (!mine || state.navigating) return;
     ownedErr.hidden = true;
     try {
-      const pw = Room.normalizePw(ownedPw.value);
-      if (mine.hostPw && !(await Room.verify(mine, "host", pw))) {
-        ownedErr.textContent = "主持人密碼不正確"; ownedErr.hidden = false; return;
-      }
       if (del) {
         await Room.directory.remove(mine.id);
+        clearHostSave();   // 房間刪除後，一併清除雲端上的抽號進度
         try { sessionStorage.removeItem("bingoLobby.myRoom"); } catch (e) { /* 忽略 */ }
         sound.enter();
         openHost();
@@ -172,12 +158,11 @@
         setEditMode(true);
         hostRoomId.value = mine.id;
         hostName.value = mine.name || "";
-        hostPw.value = ""; roomPw.value = ""; hostErr.hidden = true;
+        roomPw.value = ""; hostErr.hidden = true;
         hostOwned.hidden = true; hostForm.hidden = false;
         hostName.focus();
       } else {
         Room.saveMyRoom(mine.id);
-        Room.allowHost(mine.id);
         go("host", mine.id);
       }
     } catch (e) {
@@ -198,8 +183,8 @@
       showHostError(`請輸入 ${Room.ID_LEN} 碼數字`);
       return;
     }
-    const hp = Room.normalizePw(hostPw.value), rp = Room.normalizePw(roomPw.value);
-    if (!Room.pwOk(hp) || !Room.pwOk(rp)) {
+    const rp = Room.normalizePw(roomPw.value);
+    if (!Room.pwOk(rp)) {
       showHostError(`密碼需為 ${Room.PW_LEN} 碼英數字，或留空不設定`);
       return;
     }
@@ -210,7 +195,7 @@
     okBtn.disabled = true; okBtn.textContent = "建立中…";
     try {
       if (editing) {
-        const pw = { host: $("clrHostPw").checked ? "" : hp || undefined, room: $("clrRoomPw").checked ? "" : rp || undefined };
+        const pw = { room: $("clrRoomPw").checked ? "" : rp || undefined };
         const r = await Room.directory.create(id, pw, nm);
         if (!r.ok) { showHostError("儲存失敗，請稍後再試"); return; }
         sound.enter();
@@ -219,19 +204,12 @@
       }
       const owned = await findMine();
       if (owned && owned.id !== id) { showHostError(`你已有房間 ${owned.id}，需先刪除才能再建立新房間`); openHost(); return; }
-      // 回到自己已有的房間：若設有主持人密碼，需先輸入
-      const old = await Room.directory.get(id);
-      if (old && old.hostUid === Room.ownerId() && old.hostPw && !(await Room.verify(old, "host", hp))) {
-        showHostError("這間房間已設定主持人密碼，請在上方輸入正確的主持人密碼");
-        return;
-      }
-      const res = await Room.directory.create(id, { host: hp, room: rp }, nm);
+      const res = await Room.directory.create(id, { room: rp }, nm);
       if (!res.ok) {
         showHostError(res.error === "taken" ? "這個房號已被別人使用，請換一個" : res.error === "cloud" ? "雲端同步失敗或逾時，請檢查網路後再試" : "無法建立房間，請稍後再試");
         return;
       }
       Room.saveMyRoom(id);
-      Room.allowHost(id);
       go("host", id);
     } catch (e) {
       showHostError("建立房間失敗，請稍後再試");
@@ -268,22 +246,37 @@
   function renderRooms() {
     const q = Room.normalize(roomSearch.value);
     const rows = state.rooms.filter(r => !q || r.id.indexOf(q) >= 0);
+    const me = Room.ownerId();
     roomList.textContent = "";
     rows.forEach(r => {
-      const li = document.createElement("li");
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "room-item";
+      btn.className = "room-card" + (r.roomPw ? " is-locked" : "");
       btn.dataset.id = r.id;
+      btn.setAttribute("aria-label", `${state.role === "spectator" ? "旁觀" : "加入"}房間 ${r.name || r.id}`);
+      const top = document.createElement("span");
+      top.className = "room-card__top";
+      const badge = document.createElement("span");
+      badge.className = "room-card__badge";
+      badge.textContent = r.hostUid === me ? "我的房間" : "開放中";
+      const lock = document.createElement("span");
+      lock.className = "room-card__lock";
+      lock.textContent = r.roomPw ? "🔒" : "";
+      top.append(badge, lock);
+      const name = document.createElement("span");
+      name.className = "room-card__name";
+      name.textContent = r.name || "未命名房間";
       const id = document.createElement("span");
-      id.className = "room-item__id";
-      id.textContent = r.name ? r.name : r.id;
+      id.className = "room-card__id";
+      id.textContent = r.id;
       const meta = document.createElement("span");
-      meta.className = "room-item__meta";
-      meta.textContent = (r.name ? "房號 " + r.id + " · " : "") + (r.roomPw ? "🔒 " : "") + (r.hostUid === Room.ownerId() ? "我的房間 · " : "") + timeAgo(r.at);
-      btn.append(id, meta);
-      li.appendChild(btn);
-      roomList.appendChild(li);
+      meta.className = "room-card__meta";
+      meta.textContent = timeAgo(r.at);
+      const go = document.createElement("span");
+      go.className = "room-card__go";
+      go.textContent = state.role === "spectator" ? "👀 旁觀" : "🎴 加入";
+      btn.append(top, name, id, meta, go);
+      roomList.appendChild(btn);
     });
     roomEmpty.hidden = rows.length > 0;
     if (!rows.length) {
@@ -291,34 +284,50 @@
     }
   }
 
-  // ===== 步驟 3：選定房間 → 再選一次角色 =====
-  function openRoleStep(id) {
-    state.roomId = id;
-    state.room = state.rooms.find(r => r.id === id) || null;
-    roomPwRow.hidden = !(state.room && state.room.roomPw);
+  // ===== 點房間卡 → 直接進入（有房間密碼才先詢問）=====
+  function pickRoom(id) {
+    if (state.navigating) return;
+    const r = state.rooms.find(x => x.id === id);
+    if (!r) return;
+    if (r.roomPw && r.hostUid !== Room.ownerId()) { openPw(r); return; }
+    go(state.role === "spectator" ? "spectator" : "player", id);
+  }
+
+  function openPw(r) {
+    state.room = r;
+    $("pwRoom").textContent = (r.name ? r.name + " · " : "") + "房號 " + r.id;
     enterPw.value = "";
     enterErr.hidden = true;
-    state.pick = state.role === "spectator" ? "spectator" : "player";
-    $("roleRoomId").textContent = (state.room && state.room.name ? state.room.name + " · " : "") + id;
-    renderPick();
+    pwModal.hidden = false;
     sound.enter();
-    showScreen("role");
+    enterPw.focus();
   }
 
-  function renderPick() {
-    pickBtns.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pick === state.pick)));
+  function closePw() {
+    pwModal.hidden = true;
+    state.room = null;
   }
 
-  async function enterRoom() {
-    if (!state.roomId || !state.pick) return;
+  async function submitPw() {
     const r = state.room;
-    if (r && r.roomPw && !(await Room.verify(r, "room", Room.normalizePw(enterPw.value)))) {
+    if (!r) return;
+    if (!(await Room.verify(r, Room.normalizePw(enterPw.value)))) {
       enterErr.textContent = "房間密碼不正確";
       enterErr.hidden = false;
       enterPw.focus();
       return;
     }
-    go(state.pick, state.roomId);
+    const id = r.id;
+    closePw();
+    go(state.role === "spectator" ? "spectator" : "player", id);
+  }
+
+  // 刪除房間時一併清除雲端抽號存檔（主持端存檔路徑與房間無關，只跟帳號有關）
+  function clearHostSave() {
+    try {
+      const c = MiniHub.cloud && MiniHub.cloud("bingo-lobby");
+      if (c && c.available()) { c.save({ v: 1, playing: false }); c.flush(); }
+    } catch (e) { /* 忽略 */ }
   }
 
   // ===== 前往遊戲頁 =====
@@ -339,7 +348,7 @@
 
   // ===== 輸入 =====
   function currentButtons() {
-    return state.screen === "identity" ? roleBtns : state.screen === "role" ? pickBtns : [];
+    return state.screen === "identity" && pwModal.hidden ? roleBtns : [];
   }
 
   function moveFocus(step) {
@@ -357,6 +366,7 @@
     if (!MiniHub.kbdOn()) return;
     if (window.BingoGate && BingoGate.blocked()) return;   // 未登入：鍵盤不作用
     if (e.key === "Escape") { goBack(); return; }
+    if (!pwModal.hidden) return;
     if (state.screen === "identity" && HOTKEYS[e.key]) {
       e.preventDefault();
       chooseRole(HOTKEYS[e.key]);
@@ -374,15 +384,11 @@
       btn.addEventListener("click", () => chooseRole(btn.dataset.role));
       btn.addEventListener("mouseenter", () => sound.hover());
     });
-    pickBtns.forEach(btn => {
-      btn.addEventListener("click", () => { state.pick = btn.dataset.pick; renderPick(); sound.hover(); });
-      btn.addEventListener("mouseenter", () => sound.hover());
-    });
     hostRoomId.addEventListener("input", () => {
       hostRoomId.value = Room.normalize(hostRoomId.value);
       hostErr.hidden = true;
     });
-    [hostPw, roomPw, enterPw].forEach(inp => inp.addEventListener("input", () => {
+    [roomPw, enterPw].forEach(inp => inp.addEventListener("input", () => {
       inp.value = Room.normalizePw(inp.value);
       hostErr.hidden = true;
       enterErr.hidden = true;
@@ -391,22 +397,23 @@
     const submitHost = () => createRoom(Room.normalize(hostRoomId.value));
     hostForm.addEventListener("submit", e => e.preventDefault());
     $("hostCreate").addEventListener("click", submitHost);
-    [hostRoomId, hostName, hostPw, roomPw].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitHost(); } }));
+    [hostRoomId, hostName, roomPw].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitHost(); } }));
     $("ownedEnter").addEventListener("click", () => ownedAction("enter"));
     $("ownedEdit").addEventListener("click", () => ownedAction("edit"));
     hostCancel.addEventListener("click", () => openHost());
     $("ownedDelete").addEventListener("click", () => ownedAction("delete"));
-    ownedPw.addEventListener("input", () => { ownedPw.value = Room.normalizePw(ownedPw.value); ownedErr.hidden = true; });
     roomSearch.addEventListener("input", () => {
       roomSearch.value = Room.normalize(roomSearch.value);
       renderRooms();
     });
     $("roomRefresh").addEventListener("click", refreshRooms);
     roomList.addEventListener("click", e => {
-      const btn = e.target.closest(".room-item");
-      if (btn) openRoleStep(btn.dataset.id);
+      const btn = e.target.closest(".room-card");
+      if (btn) pickRoom(btn.dataset.id);
     });
-    $("enterBtn").addEventListener("click", enterRoom);
+    $("pwOk").addEventListener("click", submitPw);
+    $("pwCancel").addEventListener("click", closePw);
+    enterPw.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitPw(); } });
     backBtn.addEventListener("click", goBack);
     document.addEventListener("keydown", onKeyDown);
     window.addEventListener("pageshow", cancelNavigation); // 從上一頁返回時還原
