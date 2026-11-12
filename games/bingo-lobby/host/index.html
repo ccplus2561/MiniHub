@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" data-layout="desktop">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#8f1124">
+  <title>兵果彩盤</title>
+  <meta name="description" content="除夕家族聚會用的賓果彩盤：抽號、彩池與獎金一目了然，電視投屏即可使用。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%A7%A7%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="boot" class="boot" role="status" aria-live="polite">
+    <div class="boot-icon" aria-hidden="true">🧧</div>
+    <p id="boot-text">載入中…</p>
+  </div>
+
+  <!-- 功能按鈕（由「更多」選單操作，不顯示在畫面上） -->
+  <div id="legacy-controls" hidden>
+    <button id="receipt-btn" type="button" hidden>收據</button>
+    <button id="rules-btn" type="button">規則</button>
+    <button id="sound-btn" type="button" aria-pressed="false">音效</button>
+    <button id="settings-btn" type="button">設定</button>
+  </div>
+
+  <main class="app-main">
+    <section data-panel="draw" class="panel-draw" aria-label="抽號" hidden>
+      <div class="col col-left">
+        <div class="desk-slot"></div>
+        <div id="pool-root"></div>
+      </div>
+      <div class="col col-center">
+        <div id="draw-root"></div>
+        <div id="ticker-root"></div>
+      </div>
+      <div class="col col-right" id="board-root"></div>
+    </section>
+
+    <section data-panel="settings" class="panel-settings" aria-label="設定" hidden>
+      <div class="desk-slot"></div>
+      <div id="settings-root"></div>
+    </section>
+  </main>
+
+  <noscript><p class="file-warning">本頁需要啟用 JavaScript。</p></noscript>
+  <script src="../../../js/protect.js"></script>
+  <script src="../../../js/minihub-sdk.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

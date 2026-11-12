@@ -1,0 +1,253 @@
+:root {
+  --bg-1: #3a0a0f;
+  --bg-2: #14040a;
+  --gold: #f6c453;
+  --gold-soft: #ffe9a8;
+  --red: #c8202f;
+  --card: rgba(255, 255, 255, 0.07);
+  --card-hover: rgba(255, 255, 255, 0.14);
+  --text: #fff4dc;
+  --radius: 18px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  color: var(--text);
+  background: radial-gradient(ellipse at 50% 0%, var(--bg-1), var(--bg-2) 70%) fixed;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lobby {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+
+.lobby__head {
+  position: relative;
+  text-align: center;
+  padding: 12px 56px 8px;
+}
+
+.lobby__title {
+  margin: 0;
+  font-size: clamp(30px, 8vw, 46px);
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  text-shadow: 0 2px 14px rgba(246, 196, 83, 0.35);
+}
+
+.lobby__sub {
+  margin: 6px 0 0;
+  opacity: 0.8;
+}
+
+.sfx-btn {
+  position: absolute;
+  top: 8px;
+  right: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(246, 196, 83, 0.4);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.sfx-btn:hover { background: var(--card-hover); }
+
+.group { margin-top: 22px; }
+
+.group__title {
+  margin: 0 0 10px 4px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--gold-soft);
+  opacity: 0.85;
+}
+
+.group__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 560px) {
+  .group__grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+}
+
+.mode-btn {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 132px;
+  padding: 18px 12px;
+  border: 1px solid rgba(246, 196, 83, 0.35);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.mode-btn:hover,
+.mode-btn:focus-visible {
+  background: var(--card-hover);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(246, 196, 83, 0.25), 0 8px 24px rgba(0, 0, 0, 0.35);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.mode-btn:active { transform: scale(0.97); }
+
+.mode-btn.is-busy {
+  pointer-events: none;
+  border-color: var(--gold);
+  background: rgba(246, 196, 83, 0.22);
+}
+
+.mode-btn__icon { font-size: 38px; line-height: 1; }
+
+.mode-btn__name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.mode-btn__tag {
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--red);
+  font-size: 13px;
+  letter-spacing: 0.15em;
+}
+
+.mode-btn--solo .mode-btn__tag { background: #2f7d4f; }
+
+.lobby__hint {
+  margin: 26px 0 0;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.55;
+}
+
+@media (pointer: coarse) {
+  .lobby__hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mode-btn { transition: none; }
+}
+
+/* ===== 多步驟流程：身份 → 房號 → 角色 ===== */
+.screen[hidden] { display: none; }
+
+@media (min-width: 560px) {
+  .group__grid--3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+.back-btn {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(246, 196, 83, 0.4);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--text);
+  font-size: 20px;
+  cursor: pointer;
+}
+.back-btn:hover { background: var(--card-hover); }
+
+.mode-btn[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: rgba(246, 196, 83, 0.2);
+  box-shadow: 0 0 0 3px rgba(246, 196, 83, 0.25);
+}
+.mode-btn--host .mode-btn__tag { background: #8a5a12; }
+.mode-btn--spectate .mode-btn__tag { background: #3a5f9a; }
+
+.panel {
+  padding: 18px 16px;
+  border: 1px solid rgba(246, 196, 83, 0.35);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+.panel__note { margin: 10px 0 0; font-size: 13px; opacity: 0.7; }
+.panel__err { margin: 8px 0 0; font-size: 13px; color: #ff9a9a; }
+.panel__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.panel__actions--center { justify-content: center; }
+
+.field { display: block; margin-bottom: 8px; font-size: 14px; color: var(--gold-soft); }
+.field__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(246, 196, 83, 0.5);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--gold-soft);
+  font: 700 28px/1.2 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0.25em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.field__input--sm { font-size: 18px; letter-spacing: 0.15em; }
+.field__input:focus-visible { outline: 3px solid rgba(246, 196, 83, 0.35); border-color: var(--gold); }
+
+.search-row { display: flex; gap: 10px; }
+.search-row .field__input { flex: 1; min-width: 0; }
+
+.room-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; max-height: 46vh; overflow-y: auto; }
+.room-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 14px;
+  border: 1px solid rgba(246, 196, 83, 0.35);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.room-item:hover, .room-item:focus-visible { background: var(--card-hover); border-color: var(--gold); outline: none; }
+.room-item__id { font: 700 20px ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.15em; color: var(--gold-soft); }
+.room-item__meta { font-size: 12px; opacity: 0.65; }
+.room-id { font: 700 18px ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 0.15em; color: var(--gold); }
+
+.room-btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid rgba(246, 196, 83, 0.4);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.room-btn:hover { background: var(--card-hover); }
+.room-btn--primary { background: var(--gold); color: #3a0a0f; border-color: var(--gold); font-weight: 700; }
+.room-btn--primary:hover { background: var(--gold-soft); }
+
+.link-btn { padding: 0; border: 0; background: none; color: var(--gold-soft); font: inherit; text-decoration: underline; cursor: pointer; }

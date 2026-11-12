@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<rect x="10" y="10" width="108" height="108" rx="20" fill="#241352" stroke="#8b5cf6" stroke-width="6"/>
+<g fill="#4c2fa0" stroke="#7c5ce0" stroke-width="1.5">
+<rect x="22" y="22" width="14" height="14" rx="3"/><rect x="39" y="22" width="14" height="14" rx="3"/><rect x="56" y="22" width="14" height="14" rx="3"/><rect x="73" y="22" width="14" height="14" rx="3"/><rect x="90" y="22" width="14" height="14" rx="3"/>
+<rect x="22" y="39" width="14" height="14" rx="3"/><rect x="56" y="39" width="14" height="14" rx="3"/><rect x="90" y="39" width="14" height="14" rx="3"/>
+</g>
+<g fill="#f6d365" stroke="#fff8d6" stroke-width="1.5">
+<rect x="39" y="39" width="14" height="14" rx="3"/><rect x="73" y="39" width="14" height="14" rx="3"/>
+</g>
+<line x1="29" y1="29" x2="97" y2="97" stroke="#ff5470" stroke-width="5" stroke-linecap="round" opacity="0"/>
+<g>
+<circle cx="40" cy="92" r="12" fill="#ff7a59"/><circle cx="64" cy="92" r="12" fill="#35c9a5"/><circle cx="88" cy="92" r="12" fill="#f6d365"/>
+<circle cx="40" cy="74" r="0" fill="none"/>
+</g>
+<g fill="#241352" font-family="sans-serif" font-weight="800" font-size="13" text-anchor="middle">
+<text x="40" y="97">B</text><text x="64" y="97">I</text><text x="88" y="97">N</text>
+</g>
+<g fill="#ffffff" stroke="#241352" stroke-width="2">
+<circle cx="52" cy="68" r="8"/><circle cx="76" cy="68" r="8"/>
+<path d="M44 80c0-4 4-7 8-7s8 3 8 7z M68 80c0-4 4-7 8-7s8 3 8 7z" stroke="none"/>
+</g>
+</svg>

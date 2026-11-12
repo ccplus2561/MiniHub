@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#143b49">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23143b49'/%3E%3Ccircle cx='50' cy='50' r='30' fill='%23f6d365'/%3E%3Ctext x='50' y='62' font-size='34' font-weight='800' text-anchor='middle' fill='%23143b49' font-family='sans-serif'%3EB%3C/text%3E%3C/svg%3E">
+  <title>兵果電子卡</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="head">
+      <div class="title-row">
+        <a id="lnk-lobby" class="icon-btn" href="../index.html" aria-label="回大廳" title="回大廳">🏠</a>
+        <h1><span class="logo" aria-hidden="true">B</span>兵果電子卡</h1>
+        <button id="btn-sound" type="button" class="icon-btn" aria-pressed="false" aria-label="音效" title="音效開關">🔇</button>
+      </div>
+      <ol class="steps" aria-label="進度">
+        <li id="step-1" class="on">1 填寫</li><li id="step-2">2 遊戲</li>
+      </ol>
+      <p id="intro"></p>
+    </header>
+
+    <div id="banner" class="banner" role="status" hidden></div>
+
+    <section class="card" id="card" aria-label="賓果卡">
+      <div class="board">
+        <div id="grid" class="grid"></div>
+        <svg id="lines" class="lines" aria-hidden="true"></svg>
+      </div>
+      <noscript><p>此遊戲需要啟用 JavaScript。</p></noscript>
+    </section>
+
+    <div class="status" aria-live="polite">
+      <div class="meter" id="meter" hidden><i id="meter-bar"></i></div>
+      <strong id="progress"></strong>
+      <p id="hint" class="hint" hidden></p>
+      <ul id="messages" class="messages"></ul>
+    </div>
+
+    <div class="actions">
+      <button id="btn-random" type="button" class="btn"><span aria-hidden="true">🎲</span> 隨機產生</button>
+      <button id="btn-fill" type="button" class="btn"><span aria-hidden="true">✨</span> 補齊空格</button>
+      <button id="btn-clear" type="button" class="btn"><span aria-hidden="true">🧹</span> 清空</button>
+      <button id="btn-done" type="button" class="btn primary"><span aria-hidden="true">🔒</span> 完成並開始</button>
+      <button id="btn-unmark" type="button" class="btn" hidden><span aria-hidden="true">↺</span> 清除標記</button>
+      <button id="btn-end" type="button" class="btn primary" hidden><span aria-hidden="true">🏁</span> 結束遊戲</button>
+      <button id="btn-restart" type="button" class="btn danger" hidden><span aria-hidden="true">🔄</span> 重新開始</button>
+    </div>
+  </main>
+
+  <dialog id="dlg" aria-labelledby="dlg-title">
+    <form method="dialog">
+      <h2 id="dlg-title"></h2>
+      <p id="dlg-text"></p>
+      <div class="dlg-actions">
+        <button value="cancel" class="btn">取消</button>
+        <button value="ok" id="dlg-ok" class="btn primary">確定</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="../../../js/protect.js"></script>
+  <script src="../../../js/minihub-sdk.js"></script>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

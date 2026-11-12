@@ -64,5 +64,12 @@ window.GAMES = [
     desc: "自己填號碼的 5 × 5 賓果卡，連線就 BINGO！\n規則：填入 24 格不重複的 1～75 號碼（中央 FREE），鎖定後點擊被叫出的號碼標記，連成線即得分。\n操作：滑鼠／觸控點擊。",
     how: "", featured: false, music: false,
     tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: false, cloud: true }
+  },
+  {
+    id: "bingo-lobby", title: "多人賓果", category: "桌遊", emoji: "🎤", icon: "icons/bingo-lobby.svg",
+    colors: ["#6d3fe0", "#241352"], path: "games/bingo-lobby/index.html",
+    desc: "多人一起玩的賓果：選身份、建立或加入房間。\n規則：主持人建立房間並抽號，玩家用電子卡對號，連成線即 BINGO；旁觀者可看大螢幕，也可單機玩電子卡。\n操作：滑鼠／觸控點擊；大廳可用鍵盤 1–3 選身份。",
+    how: "", featured: false, music: false,
+    tags: { single: true, multi: true, desktop: true, kbd: true, mobileP: true, touch: true, score: false, cloud: false }
   }
 ];
