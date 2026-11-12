@@ -69,32 +69,89 @@
   }
   function saveMyRoom(id) { write(MY_ROOM_KEY, { id, at: Date.now() }); }
 
-  // ===== 房間目錄（暫時的本機替身，介面為 Promise，日後換 Firestore）=====
-  // 換成 Firestore 時：list → 查 rooms 集合（依 at 排序）；create → 寫入 rooms/{id}；
-  // remove → 刪文件；不用改大廳程式。
-  // 目前只存在 localStorage，所以只有「同一個瀏覽器」看得到彼此建立的房間。
-  const directory = {
+  // ===== 密碼（選填，固定 5 碼英數）=====
+  // 只存「加鹽的 SHA-256 雜湊」，不存明碼；這是大廳的入口門檻，不是高強度防護。
+  const PW_LEN = 5;
+  function normalizePw(raw) { return String(raw == null ? "" : raw).replace(/[^A-Za-z0-9]/g, "").slice(0, PW_LEN); }
+  function pwOk(pw) { return pw === "" || new RegExp("^[A-Za-z0-9]{" + PW_LEN + "}$").test(pw); }
+  async function hashPw(salt, pw) {
+    if (!pw) return "";
+    const text = salt + ":" + pw;
+    try {
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+      return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("");
+    } catch (e) { return "p" + text; }
+  }
+  function newSalt() { return randomDigits(8); }
+  async function verify(room, kind, pw) {   // kind: "host" | "room"
+    const stored = kind === "host" ? room.hostPw : room.roomPw;
+    if (!stored) return true;
+    return (await hashPw(room.salt || "", pw)) === stored;
+  }
+
+  // ===== 房間目錄 =====
+  // 已登入：同步到 Firestore（games/bingo-lobby/rooms/{房號}），不同裝置都看得到；
+  // 訪客：不連線，只存本機 localStorage（同一個瀏覽器才看得到）。
+  function cloud() {
+    try {
+      const A = window.parent !== window && window.parent.MiniHubAuth;
+      return A && A.rooms && A.rooms.on() ? A.rooms : null;
+    } catch (e) { return null; }
+  }
+  // 房主身份：登入用帳號 uid，訪客用分頁 UID
+  function ownerId() { const c = cloud(); return c ? c.uid() : getUid(); }
+  const local = {
     _all() {
       const now = Date.now();
-      const rooms = (read(DIR_KEY, true) || []).filter(r => r && isValid(r.id) && now - r.at < ROOM_TTL_MS);
-      return rooms;
+      return (read(DIR_KEY, true) || []).filter(r => r && isValid(r.id) && now - r.at < ROOM_TTL_MS);
     },
+    save(rooms) { write(DIR_KEY, rooms, true); },
+  };
+  const directory = {
+    _all() { return local._all(); },
     async list() {
-      return this._all().sort((a, b) => b.at - a.at);
+      const c = cloud();
+      let rows = local._all();
+      if (c) {
+        try {
+          const remote = await c.list();
+          if (remote) { const ids = new Set(remote.map(r => r.id)); rows = remote.concat(rows.filter(r => !ids.has(r.id))); }
+        } catch (e) { /* 雲端失敗時只顯示本機 */ }
+      }
+      return rows.sort((a, b) => b.at - a.at);
     },
-    // 同一 UID 可重複建立（＝回到自己的房間）；別人的房號不可佔用
-    async create(id, hostUid) {
+    async get(id) {
+      const c = cloud();
+      if (c) { try { const r = await c.get(id); if (r) return r; } catch (e) { /* 改查本機 */ } }
+      return local._all().find(r => r.id === id) || null;
+    },
+    // 同一房主可重複建立（＝回到自己的房間）；別人的房號不可佔用
+    // pw = { host, room }：明碼只在這裡雜湊，之後不保留
+    async create(id, pw) {
       if (!isValid(id)) return { ok: false, error: "invalid" };
-      const rooms = this._all();
-      const hit = rooms.find(r => r.id === id);
-      if (hit && hit.hostUid !== hostUid) return { ok: false, error: "taken" };
-      const next = rooms.filter(r => r.id !== id);
-      next.push({ id, hostUid, at: Date.now() });
-      write(DIR_KEY, next, true);
+      pw = pw || {};
+      const me = ownerId();
+      const old = await this.get(id);
+      if (old && old.hostUid !== me) return { ok: false, error: "taken" };
+      let salt = old && old.salt ? old.salt : newSalt();
+      let hostPw = old ? old.hostPw : "", roomPw = old ? old.roomPw : "";
+      if (pw.set) { salt = newSalt(); hostPw = await hashPw(salt, pw.host || ""); roomPw = await hashPw(salt, pw.room || ""); }
+      const c = cloud();
+      if (c) {
+        try {
+          const res = await c.create(id, { salt, hostPw, roomPw });
+          if (res && !res.ok) return res;
+        } catch (e) { return { ok: false, error: "cloud" }; }
+      }
+      const next = local._all().filter(r => r.id !== id);
+      next.push({ id, hostUid: me, at: Date.now(), salt, hostPw, roomPw });
+      local.save(next);
       return { ok: true };
     },
-    async remove(id, hostUid) {
-      write(DIR_KEY, this._all().filter(r => !(r.id === id && r.hostUid === hostUid)), true);
+    async remove(id) {
+      const me = ownerId(), c = cloud();
+      if (c) { try { await c.remove(id); } catch (e) { /* 忽略 */ } }
+      local.save(local._all().filter(r => !(r.id === id && r.hostUid === me)));
     },
   };
 
@@ -135,7 +192,7 @@
   }
 
   window.BingoRoom = {
-    ID_LEN, MSG, normalize, isValid, newRoomId, getUid,
+    ID_LEN, PW_LEN, MSG, normalize, normalizePw, pwOk, verify, ownerId, isValid, newRoomId, getUid,
     loadMyRoom, saveMyRoom, directory, buildUrl, readParams, connect,
   };
 })();

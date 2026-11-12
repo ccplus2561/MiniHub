@@ -355,8 +355,54 @@ const scores = {
   }
 };
 
+
+/* ---------- 多人賓果：房間目錄（Firestore） ----------
+   games/bingo-lobby/rooms/{房號}：{ hostUid, at, salt, hostPw, roomPw }（hostPw / roomPw 為 SHA-256 雜湊，沒設密碼 = 空字串）
+   僅登入後連線；訪客不連線（大廳會改用本機目錄）。 */
+const ROOM_TTL = 12 * 3600000;
+const roomRef = id => F.doc(F.db, "games", "bingo-lobby", "rooms", String(id));
+const roomRow = d => { const x = d.data(); return { id: d.id, hostUid: String(x.hostUid || ""), at: ms(x.at) || Date.now(), salt: String(x.salt || ""), hostPw: String(x.hostPw || ""), roomPw: String(x.roomPw || ""), cloud: true }; };
+const roomsOn = () => !!(F && F.auth.currentUser && SAVE_PROFILE);
+const rooms = {
+  on: roomsOn,
+  uid: () => (roomsOn() ? F.auth.currentUser.uid : ""),
+  async list() {
+    if (!roomsOn()) return null;
+    bump(1, 0);
+    const s = await F.getDocs(F.query(F.collection(F.db, "games", "bingo-lobby", "rooms"), F.orderBy("at", "desc"), F.limit(30)));
+    bump(s.size, 0);
+    return s.docs.map(roomRow).filter(r => /^\d{6}$/.test(r.id) && Date.now() - r.at < ROOM_TTL);
+  },
+  async get(id) {
+    if (!roomsOn()) return null;
+    bump(1, 0);
+    const s = await F.getDoc(roomRef(id));
+    return s.exists() ? roomRow(s) : null;
+  },
+  // 建立 / 更新自己的房間；別人未過期的房號回傳 { ok:false, error:"taken" }
+  async create(id, { salt, hostPw, roomPw }) {
+    if (!roomsOn()) return null;
+    const uid = F.auth.currentUser.uid;
+    bump(1, 1);
+    return F.runTransaction(F.db, async tx => {
+      const s = await tx.get(roomRef(id));
+      if (s.exists()) {
+        const r = roomRow(s);
+        if (r.hostUid !== uid && Date.now() - r.at < ROOM_TTL) return { ok: false, error: "taken" };
+      }
+      tx.set(roomRef(id), { hostUid: uid, at: F.serverTimestamp(), salt: String(salt || ""), hostPw: String(hostPw || ""), roomPw: String(roomPw || "") });
+      return { ok: true };
+    });
+  },
+  async remove(id) {
+    if (!roomsOn()) return;
+    bump(0, 1);
+    await F.deleteDoc(roomRef(id));
+  }
+};
+
 window.MiniHubAuth = {
-  hasSession, scores,
+  hasSession, scores, rooms,
   preload: () => boot().catch(() => {}),     // 按下「登入」時預先載入，之後彈出視窗才不會被瀏覽器擋
   ping, usage: () => ({ ...use }),
   // key: "google" | "github"

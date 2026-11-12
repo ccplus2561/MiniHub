@@ -37,6 +37,11 @@
   const roomSearch = $("roomSearch");
   const roomList = $("roomList");
   const roomEmpty = $("roomEmpty");
+  const hostPw = $("hostPw");
+  const roomPw = $("roomPw");
+  const roomPwRow = $("roomPwRow");
+  const enterPw = $("enterPw");
+  const enterErr = $("enterErr");
 
   // ===== 狀態 =====
   const state = {
@@ -47,6 +52,7 @@
     pick: "",     // 選定房間後的角色：player | spectator
     roomId: "",
     rooms: [],
+    room: null,   // 選定的房間資料
   };
 
   // ===== 音效（Proxy，失敗不影響流程）=====
@@ -101,6 +107,9 @@
     const mine = Room.loadMyRoom();
     hostRoomId.value = mine || Room.newRoomId();
     $("hostUidLine").textContent = `你的 UID：${Room.getUid()}`;
+    hostPw.value = "";
+    roomPw.value = "";
+    hostPw.disabled = false;
     hostErr.hidden = true;
     hostResume.hidden = !mine;
     hostResume.textContent = mine ? `繼續上次房間 ${mine}` : "";
@@ -113,14 +122,25 @@
     hostRoomId.focus();
   }
 
-  async function createRoom(id) {
+  async function createRoom(id, resume) {
     if (!Room.isValid(id)) {
       showHostError(`請輸入 ${Room.ID_LEN} 碼數字`);
       return;
     }
-    const res = await Room.directory.create(id, Room.getUid());
+    const hp = Room.normalizePw(hostPw.value), rp = Room.normalizePw(roomPw.value);
+    if (!Room.pwOk(hp) || !Room.pwOk(rp)) {
+      showHostError(`密碼需為 ${Room.PW_LEN} 碼英數字，或留空不設定`);
+      return;
+    }
+    // 回到自己已有的房間：若設有主持人密碼，需先輸入
+    const old = await Room.directory.get(id);
+    if (old && old.hostUid === Room.ownerId() && old.hostPw && !(await Room.verify(old, "host", hp))) {
+      showHostError("這間房間已設定主持人密碼，請在上方輸入正確的主持人密碼");
+      return;
+    }
+    const res = await Room.directory.create(id, { set: !resume && !!(hp || rp), host: hp, room: rp });
     if (!res.ok) {
-      showHostError(res.error === "taken" ? "這個房號已被別人使用，請換一個" : "無法建立房間，請稍後再試");
+      showHostError(res.error === "taken" ? "這個房號已被別人使用，請換一個" : res.error === "cloud" ? "雲端同步失敗，請稍後再試" : "無法建立房間，請稍後再試");
       return;
     }
     Room.saveMyRoom(id);
@@ -166,7 +186,7 @@
       id.textContent = r.id;
       const meta = document.createElement("span");
       meta.className = "room-item__meta";
-      meta.textContent = (r.hostUid === Room.getUid() ? "我的房間 · " : "") + timeAgo(r.at);
+      meta.textContent = (r.roomPw ? "🔒 " : "") + (r.hostUid === Room.ownerId() ? "我的房間 · " : "") + timeAgo(r.at);
       btn.append(id, meta);
       li.appendChild(btn);
       roomList.appendChild(li);
@@ -180,6 +200,10 @@
   // ===== 步驟 3：選定房間 → 再選一次角色 =====
   function openRoleStep(id) {
     state.roomId = id;
+    state.room = state.rooms.find(r => r.id === id) || null;
+    roomPwRow.hidden = !(state.room && state.room.roomPw);
+    enterPw.value = "";
+    enterErr.hidden = true;
     state.pick = state.role === "spectator" ? "spectator" : "player";
     $("roleRoomId").textContent = id;
     renderPick();
@@ -191,8 +215,15 @@
     pickBtns.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pick === state.pick)));
   }
 
-  function enterRoom() {
+  async function enterRoom() {
     if (!state.roomId || !state.pick) return;
+    const r = state.room;
+    if (r && r.roomPw && !(await Room.verify(r, "room", Room.normalizePw(enterPw.value)))) {
+      enterErr.textContent = "房間密碼不正確";
+      enterErr.hidden = false;
+      enterPw.focus();
+      return;
+    }
     go(state.pick, state.roomId);
   }
 
@@ -256,8 +287,13 @@
       hostRoomId.value = Room.normalize(hostRoomId.value);
       hostErr.hidden = true;
     });
+    [hostPw, roomPw, enterPw].forEach(inp => inp.addEventListener("input", () => {
+      inp.value = Room.normalizePw(inp.value);
+      hostErr.hidden = true;
+      enterErr.hidden = true;
+    }));
     hostForm.addEventListener("submit", e => { e.preventDefault(); createRoom(Room.normalize(hostRoomId.value)); });
-    hostResume.addEventListener("click", () => createRoom(Room.loadMyRoom()));
+    hostResume.addEventListener("click", () => createRoom(Room.loadMyRoom(), true));
     roomSearch.addEventListener("input", () => {
       roomSearch.value = Room.normalize(roomSearch.value);
       renderRooms();

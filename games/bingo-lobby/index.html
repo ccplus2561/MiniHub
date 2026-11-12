@@ -43,6 +43,10 @@
     <form id="hostForm" class="panel" autocomplete="off">
       <label class="field" for="hostRoomId">房間號碼（隨機產生 6 碼數字，可自訂）</label>
       <input id="hostRoomId" class="field__input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" spellcheck="false" aria-describedby="hostErr">
+      <label class="field" for="hostPw">主持人密碼（選填，5 碼英數）</label>
+      <input id="hostPw" class="field__input" type="text" maxlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="不設定可留空">
+      <label class="field" for="roomPw">房間密碼（選填，5 碼英數）</label>
+      <input id="roomPw" class="field__input" type="text" maxlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="不設定可留空">
       <p id="hostUidLine" class="panel__note"></p>
       <p id="hostErr" class="panel__err" role="alert" hidden></p>
       <div class="panel__actions">
@@ -81,6 +85,11 @@
         <span class="mode-btn__name">旁觀</span>
         <span class="mode-btn__tag">大螢幕</span>
       </button>
+    </div>
+    <div id="roomPwRow" class="panel" hidden>
+      <label class="field" for="enterPw">此房間需要密碼</label>
+      <input id="enterPw" class="field__input" type="text" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="輸入 5 碼房間密碼">
+      <p id="enterErr" class="panel__err" role="alert" hidden></p>
     </div>
     <div class="panel__actions panel__actions--center">
       <button id="enterBtn" class="room-btn room-btn--primary" type="button">進入</button>
