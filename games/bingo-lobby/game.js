@@ -34,6 +34,8 @@
   const hostRoomId = $("hostRoomId");
   const hostErr = $("hostErr");
   const hostOwned = $("hostOwned"), ownedPw = $("ownedPw"), ownedErr = $("ownedErr"), ownedPwRow = $("ownedPwRow");
+  const hostName = $("hostName"), hostCreate = $("hostCreate"), hostCancel = $("hostCancel");
+  let editing = false;   // 修改自己房間的模式
   let mine = null;   // 我目前擁有的房間（一個帳號 / UID 同時只能有一間）
   const roomSearch = $("roomSearch");
   const roomList = $("roomList");
@@ -111,7 +113,20 @@
     return rows.find(r => r.hostUid === me) || null;
   }
 
+  function setEditMode(on) {
+    editing = on;
+    hostRoomId.disabled = on;
+    hostCancel.hidden = !on;
+    hostCreate.textContent = on ? "儲存修改" : "建立並進入";
+    $("clrHostPwRow").hidden = $("clrRoomPwRow").hidden = !on;
+    $("clrHostPw").checked = $("clrRoomPw").checked = false;
+    hostPw.placeholder = roomPw.placeholder = on ? "不修改請留空" : "不設定可留空";
+    $("gHost").textContent = on ? "修改房間" : "建立房間";
+  }
+
   async function openHost() {
+    setEditMode(false);
+    hostName.value = "";
     hostRoomId.value = Room.newRoomId();
     hostPw.value = "";
     roomPw.value = "";
@@ -124,6 +139,7 @@
     if (state.screen !== "host") return;
     if (mine) {
       $("ownedId").textContent = mine.id;
+      const on = $("ownedName"); on.hidden = !mine.name; on.textContent = mine.name ? "房間名稱：" + mine.name : "";
       ownedPwRow.hidden = !mine.hostPw;
       hostOwned.hidden = false;
     } else {
@@ -132,7 +148,8 @@
     }
   }
 
-  async function ownedAction(del) {
+  async function ownedAction(act) {
+    const del = act === "delete";
     if (!mine || state.navigating) return;
     ownedErr.hidden = true;
     try {
@@ -145,8 +162,16 @@
         try { sessionStorage.removeItem("bingoLobby.myRoom"); } catch (e) { /* 忽略 */ }
         sound.enter();
         openHost();
+      } else if (act === "edit") {
+        setEditMode(true);
+        hostRoomId.value = mine.id;
+        hostName.value = mine.name || "";
+        hostPw.value = ""; roomPw.value = ""; hostErr.hidden = true;
+        hostOwned.hidden = true; hostForm.hidden = false;
+        hostName.focus();
       } else {
         Room.saveMyRoom(mine.id);
+        Room.allowHost(mine.id);
         go("host", mine.id);
       }
     } catch (e) {
@@ -161,7 +186,7 @@
   }
 
   let creating = false;
-  async function createRoom(id, resume) {
+  async function createRoom(id) {
     if (creating || state.navigating) return;
     if (!Room.isValid(id)) {
       showHostError(`請輸入 ${Room.ID_LEN} 碼數字`);
@@ -172,11 +197,20 @@
       showHostError(`密碼需為 ${Room.PW_LEN} 碼英數字，或留空不設定`);
       return;
     }
+    const nm = Room.normalizeName(hostName.value);
     creating = true;
     hostErr.hidden = true;
     const okBtn = $("hostCreate"), okTxt = okBtn.textContent;
     okBtn.disabled = true; okBtn.textContent = "建立中…";
     try {
+      if (editing) {
+        const pw = { host: $("clrHostPw").checked ? "" : hp || undefined, room: $("clrRoomPw").checked ? "" : rp || undefined };
+        const r = await Room.directory.create(id, pw, nm);
+        if (!r.ok) { showHostError("儲存失敗，請稍後再試"); return; }
+        sound.enter();
+        await openHost();
+        return;
+      }
       const owned = await findMine();
       if (owned && owned.id !== id) { showHostError(`你已有房間 ${owned.id}，需先刪除才能再建立新房間`); openHost(); return; }
       // 回到自己已有的房間：若設有主持人密碼，需先輸入
@@ -185,12 +219,13 @@
         showHostError("這間房間已設定主持人密碼，請在上方輸入正確的主持人密碼");
         return;
       }
-      const res = await Room.directory.create(id, { set: !resume && !!(hp || rp), host: hp, room: rp });
+      const res = await Room.directory.create(id, { host: hp, room: rp }, nm);
       if (!res.ok) {
         showHostError(res.error === "taken" ? "這個房號已被別人使用，請換一個" : res.error === "cloud" ? "雲端同步失敗或逾時，請檢查網路後再試" : "無法建立房間，請稍後再試");
         return;
       }
       Room.saveMyRoom(id);
+      Room.allowHost(id);
       go("host", id);
     } catch (e) {
       showHostError("建立房間失敗，請稍後再試");
@@ -236,10 +271,10 @@
       btn.dataset.id = r.id;
       const id = document.createElement("span");
       id.className = "room-item__id";
-      id.textContent = r.id;
+      id.textContent = r.name ? r.name : r.id;
       const meta = document.createElement("span");
       meta.className = "room-item__meta";
-      meta.textContent = (r.roomPw ? "🔒 " : "") + (r.hostUid === Room.ownerId() ? "我的房間 · " : "") + timeAgo(r.at);
+      meta.textContent = (r.name ? "房號 " + r.id + " · " : "") + (r.roomPw ? "🔒 " : "") + (r.hostUid === Room.ownerId() ? "我的房間 · " : "") + timeAgo(r.at);
       btn.append(id, meta);
       li.appendChild(btn);
       roomList.appendChild(li);
@@ -258,7 +293,7 @@
     enterPw.value = "";
     enterErr.hidden = true;
     state.pick = state.role === "spectator" ? "spectator" : "player";
-    $("roleRoomId").textContent = id;
+    $("roleRoomId").textContent = (state.room && state.room.name ? state.room.name + " · " : "") + id;
     renderPick();
     sound.enter();
     showScreen("role");
@@ -350,9 +385,11 @@
     const submitHost = () => createRoom(Room.normalize(hostRoomId.value));
     hostForm.addEventListener("submit", e => e.preventDefault());
     $("hostCreate").addEventListener("click", submitHost);
-    [hostRoomId, hostPw, roomPw].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitHost(); } }));
-    $("ownedEnter").addEventListener("click", () => ownedAction(false));
-    $("ownedDelete").addEventListener("click", () => ownedAction(true));
+    [hostRoomId, hostName, hostPw, roomPw].forEach(inp => inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); submitHost(); } }));
+    $("ownedEnter").addEventListener("click", () => ownedAction("enter"));
+    $("ownedEdit").addEventListener("click", () => ownedAction("edit"));
+    hostCancel.addEventListener("click", () => openHost());
+    $("ownedDelete").addEventListener("click", () => ownedAction("delete"));
     ownedPw.addEventListener("input", () => { ownedPw.value = Room.normalizePw(ownedPw.value); ownedErr.hidden = true; });
     roomSearch.addEventListener("input", () => {
       roomSearch.value = Room.normalize(roomSearch.value);

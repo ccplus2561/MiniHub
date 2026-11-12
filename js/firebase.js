@@ -357,11 +357,11 @@ const scores = {
 
 
 /* ---------- 多人賓果：房間目錄（Firestore） ----------
-   games/bingo-lobby/rooms/{房號}：{ hostUid, at, salt, hostPw, roomPw }（hostPw / roomPw 為 SHA-256 雜湊，沒設密碼 = 空字串）
+   games/bingo-lobby/rooms/{房號}：{ hostUid, at, name, salt, hostPw, roomPw }（hostPw / roomPw 為 SHA-256 雜湊，沒設密碼 = 空字串）
    僅登入後連線；訪客不連線（大廳會改用本機目錄）。 */
 const ROOM_TTL = 12 * 3600000;
 const roomRef = id => F.doc(F.db, "games", "bingo-lobby", "rooms", String(id));
-const roomRow = d => { const x = d.data(); return { id: d.id, hostUid: String(x.hostUid || ""), at: ms(x.at) || Date.now(), salt: String(x.salt || ""), hostPw: String(x.hostPw || ""), roomPw: String(x.roomPw || ""), cloud: true }; };
+const roomRow = d => { const x = d.data(); return { id: d.id, hostUid: String(x.hostUid || ""), name: String(x.name || ""), at: ms(x.at) || Date.now(), salt: String(x.salt || ""), hostPw: String(x.hostPw || ""), roomPw: String(x.roomPw || ""), cloud: true }; };
 const roomsOn = () => !!(F && F.auth.currentUser && SAVE_PROFILE);
 const rooms = {
   on: roomsOn,
@@ -380,7 +380,7 @@ const rooms = {
     return s.exists() ? roomRow(s) : null;
   },
   // 建立 / 更新自己的房間；別人未過期的房號回傳 { ok:false, error:"taken" }
-  async create(id, { salt, hostPw, roomPw }) {
+  async create(id, { salt, hostPw, roomPw, name }) {
     if (!roomsOn()) return null;
     const uid = F.auth.currentUser.uid;
     bump(1, 1);
@@ -390,7 +390,7 @@ const rooms = {
         const r = roomRow(s);
         if (r.hostUid !== uid && Date.now() - r.at < ROOM_TTL) return { ok: false, error: "taken" };
       }
-      tx.set(roomRef(id), { hostUid: uid, at: F.serverTimestamp(), salt: String(salt || ""), hostPw: String(hostPw || ""), roomPw: String(roomPw || "") });
+      tx.set(roomRef(id), { hostUid: uid, at: F.serverTimestamp(), name: String(name || "").slice(0, 20), salt: String(salt || ""), hostPw: String(hostPw || ""), roomPw: String(roomPw || "") });
       return { ok: true };
     });
   },

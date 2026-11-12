@@ -43,17 +43,23 @@
     <form id="hostForm" class="panel" autocomplete="off">
       <label class="field" for="hostRoomId">房間號碼（隨機產生 6 碼數字，可自訂）</label>
       <input id="hostRoomId" class="field__input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" spellcheck="false" aria-describedby="hostErr">
+      <label class="field" for="hostName">房間名稱（選填，最多 20 字，玩家 / 旁觀會看到）</label>
+      <input id="hostName" class="field__input" type="text" maxlength="20" autocomplete="off" spellcheck="false" placeholder="例如：週五聚會賓果">
       <label class="field" for="hostPw">主持人密碼（選填，5 碼英數）</label>
       <input id="hostPw" class="field__input" type="text" maxlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="不設定可留空">
+      <label id="clrHostPwRow" class="panel__note" hidden><input id="clrHostPw" type="checkbox"> 清除主持人密碼</label>
       <label class="field" for="roomPw">房間密碼（選填，5 碼英數）</label>
       <input id="roomPw" class="field__input" type="text" maxlength="5" pattern="[A-Za-z0-9]{5}" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="不設定可留空">
+      <label id="clrRoomPwRow" class="panel__note" hidden><input id="clrRoomPw" type="checkbox"> 清除房間密碼</label>
       <p id="hostErr" class="panel__err" role="alert" hidden></p>
       <div class="panel__actions">
+        <button id="hostCancel" class="room-btn" type="button" hidden>取消</button>
         <button id="hostCreate" class="room-btn room-btn--primary" type="button">建立並進入</button>
       </div>
     </form>
     <div id="hostOwned" class="panel" hidden>
       <p class="field">你已建立房間 <span id="ownedId" class="room-id"></span></p>
+      <p id="ownedName" class="panel__note" hidden></p>
       <p class="panel__note">每個帳號同時只能有一間房間，需先刪除目前的房間才能再建立新的。</p>
       <div id="ownedPwRow" hidden>
         <label class="field" for="ownedPw">主持人密碼</label>
@@ -62,6 +68,7 @@
       <p id="ownedErr" class="panel__err" role="alert" hidden></p>
       <div class="panel__actions">
         <button id="ownedDelete" class="room-btn" type="button">刪除房間</button>
+        <button id="ownedEdit" class="room-btn" type="button">修改</button>
         <button id="ownedEnter" class="room-btn room-btn--primary" type="button">進入房間</button>
       </div>
     </div>

@@ -67,6 +67,10 @@
     const r = read(MY_ROOM_KEY);
     return r && isValid(r.id) && Date.now() - r.at < ROOM_TTL_MS ? r.id : "";
   }
+  // 主持人已通過密碼驗證的房間（只存這個分頁；主持頁用它擋住直接開網址的人）
+  const HOST_OK_KEY = "bingoLobby.hostOk";
+  function allowHost(id) { write(HOST_OK_KEY, id); }
+  function hostAllowed(id) { return read(HOST_OK_KEY) === id; }
   function saveMyRoom(id) { write(MY_ROOM_KEY, { id, at: Date.now() }); }
 
   // ===== 密碼（選填，固定 5 碼英數）=====
@@ -82,6 +86,8 @@
       return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("");
     } catch (e) { return "p" + text; }
   }
+  const NAME_MAX = 20;   // 房間名稱：可中文 / 英數 / 符號，最多 20 字
+  function normalizeName(raw) { return Array.from(String(raw == null ? "" : raw).replace(/[\r\n\t]+/g, " ").trim()).slice(0, NAME_MAX).join(""); }
   function newSalt() { return randomDigits(8); }
   async function verify(room, kind, pw) {   // kind: "host" | "room"
     const stored = kind === "host" ? room.hostPw : room.roomPw;
@@ -130,24 +136,27 @@
     },
     // 同一房主可重複建立（＝回到自己的房間）；別人的房號不可佔用
     // pw = { host, room }：明碼只在這裡雜湊，之後不保留
-    async create(id, pw) {
+    // pw = { host, room }：undefined = 沿用原本、"" = 清除、字串 = 設為新密碼（明碼只在這裡雜湊，之後不保留）
+    // name = 房間名稱（undefined = 沿用原本）
+    async create(id, pw, name) {
       if (!isValid(id)) return { ok: false, error: "invalid" };
       pw = pw || {};
       const me = ownerId();
       const old = await this.get(id);
       if (old && old.hostUid !== me) return { ok: false, error: "taken" };
-      let salt = old && old.salt ? old.salt : newSalt();
-      let hostPw = old ? old.hostPw : "", roomPw = old ? old.roomPw : "";
-      if (pw.set) { salt = newSalt(); hostPw = await hashPw(salt, pw.host || ""); roomPw = await hashPw(salt, pw.room || ""); }
+      const salt = old && old.salt ? old.salt : newSalt();
+      const hostPw = pw.host === undefined ? (old ? old.hostPw : "") : await hashPw(salt, pw.host);
+      const roomPw = pw.room === undefined ? (old ? old.roomPw : "") : await hashPw(salt, pw.room);
+      const nm = name === undefined ? (old ? old.name || "" : "") : normalizeName(name);
       const c = cloud();
       if (c) {
         try {
-          const res = await timeout(c.create(id, { salt, hostPw, roomPw }));
+          const res = await timeout(c.create(id, { salt, hostPw, roomPw, name: nm }));
           if (res && !res.ok) return res;
         } catch (e) { return { ok: false, error: "cloud" }; }
       }
       const next = local._all().filter(r => r.id !== id);
-      next.push({ id, hostUid: me, at: Date.now(), salt, hostPw, roomPw });
+      next.push({ id, hostUid: me, at: Date.now(), name: nm, salt, hostPw, roomPw });
       local.save(next);
       return { ok: true };
     },
@@ -195,7 +204,7 @@
   }
 
   window.BingoRoom = {
-    ID_LEN, PW_LEN, MSG, normalize, normalizePw, pwOk, verify, ownerId, isValid, newRoomId, getUid,
-    loadMyRoom, saveMyRoom, directory, buildUrl, readParams, connect,
+    ID_LEN, PW_LEN, NAME_MAX, normalizeName, MSG, normalize, normalizePw, pwOk, verify, ownerId, isValid, newRoomId, getUid,
+    loadMyRoom, saveMyRoom, allowHost, hostAllowed, directory, buildUrl, readParams, connect,
   };
 })();
