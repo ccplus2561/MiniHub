@@ -2156,13 +2156,48 @@ function openMoreMenu() {
   modal = showModal({ title: '更多', content, actions: [{ text: '關閉', kind: 'secondary' }] });
 }
 
-/** 建立「兵果彩盤＋更多」列（電腦版專用，手機版以 CSS 隱藏） */
+/** 房間資訊（房號＋名稱）：房號來自網址 ?room=，名稱向房間目錄查詢；點一下複製房號 */
+let roomInfoPromise = null;
+function loadRoomInfo() {
+  const R = window.BingoRoom;
+  if (!R) return null;
+  const id = R.readParams().room;
+  if (!id) return null;
+  if (!roomInfoPromise) roomInfoPromise = R.directory.get(id).then((r) => ({ id, name: r && r.name ? r.name : '' }), () => ({ id, name: '' }));
+  return { id, promise: roomInfoPromise };
+}
+
+function createRoomChip() {
+  const info = loadRoomInfo();
+  if (!info) return null;
+  const nameEl = el('span', { class: 'room-name' }, '');
+  const tagEl = el('span', { class: 'room-tag' }, '房號');
+  const idEl = el('span', { class: 'room-id' }, info.id);
+  const chip = el('button', { type: 'button', class: 'room-chip', title: '點一下複製房號', 'aria-label': `房號 ${info.id}，點一下複製` }, tagEl, idEl, nameEl);
+  chip.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(info.id); } catch { return; }
+    tagEl.textContent = '已複製';
+    chip.classList.add('copied');
+    setTimeout(() => { tagEl.textContent = '房號'; chip.classList.remove('copied'); }, 1200);
+  });
+  info.promise.then((r) => {
+    nameEl.textContent = r.name;
+    nameEl.title = r.name;
+    chip.classList.toggle('has-name', !!r.name);
+  });
+  return chip;
+}
+
+/** 建立頂端標題列：品牌＋狀態　｜　房間資訊　｜　（返回）＋更多（電腦版專用，手機版以 CSS 隱藏） */
 function createDeskBrand({ back = false } = {}) {
   return el('div', { class: 'desk-brand' },
-    el('span', { class: 'desk-brand-title' }, '🧧 兵果彩盤'),
-    el('span', { class: 'status-badge', dataset: { status: 'setup' } }, '設定中'),
-    back ? el('button', { type: 'button', class: 'btn btn-gold desk-back', onClick: () => setState({ ui: { tab: 'draw' } }) }, '← 返回抽號') : null,
-    el('button', { type: 'button', class: 'btn btn-primary desk-more', onClick: openMoreMenu, 'aria-haspopup': 'dialog' }, '☰ 更多'));
+    el('div', { class: 'desk-brand-main' },
+      el('span', { class: 'desk-brand-title' }, '🧧 兵果彩盤'),
+      el('span', { class: 'status-badge', dataset: { status: 'setup' } }, '設定中')),
+    createRoomChip(),
+    el('div', { class: 'desk-actions' },
+      back ? el('button', { type: 'button', class: 'btn btn-gold desk-back', onClick: () => setState({ ui: { tab: 'draw' } }) }, '← 返回抽號') : null,
+      el('button', { type: 'button', class: 'btn btn-primary desk-more', onClick: openMoreMenu, 'aria-haspopup': 'dialog' }, '☰ 更多')));
 }
 return { createDeskBrand };
 })();

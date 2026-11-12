@@ -605,19 +605,45 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 .app-main { flex: 1; min-height: 0; padding: var(--gap); }
 .file-warning { margin: 0; padding: 12px 16px; background: var(--gold-300); color: var(--red-900); font-weight: 600; }
 
-/* 標題列（兵果彩盤＋狀態＋更多） */
-.desk-brand { display: flex; align-items: center; gap: 12px; flex: none; }
-.desk-brand-title { font-family: var(--font-brand); font-weight: 900; font-size: clamp(1.4rem, 3.4vh, 2rem); color: var(--red-700); letter-spacing: .06em; white-space: nowrap; }
-.desk-more { margin-left: auto; min-height: clamp(40px, 5.4vh, 52px); padding: 0 18px; font-size: clamp(1rem, 2.1vh, 1.2rem); }
+/* 頂端標題列（品牌＋狀態　｜　房間資訊　｜　更多）：橫跨整個畫面寬度 */
+.desk-brand {
+  display: flex; align-items: center; gap: 14px; flex: none; min-width: 0;
+  padding: 8px 10px 8px 18px; background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius-lg); box-shadow: 0 2px 0 rgba(168, 20, 42, .06), 0 6px 16px rgba(122, 15, 29, .06);
+}
+.desk-brand-main { display: flex; align-items: center; gap: 10px; flex: none; }
+.desk-brand-title { font-family: var(--font-brand); font-weight: 900; font-size: clamp(1.25rem, 3vh, 1.75rem); color: var(--red-700); letter-spacing: .03em; white-space: nowrap; }
+.desk-actions { display: flex; align-items: center; gap: 10px; flex: none; margin-left: auto; }
+.desk-more, .desk-back { flex: none; white-space: nowrap; min-height: clamp(40px, 5.4vh, 52px); padding: 0 18px; font-size: clamp(1rem, 2.1vh, 1.2rem); }
 .status-badge { font-size: var(--fs-sm); font-weight: 700; padding: 2px 12px; border-radius: 999px; white-space: nowrap; background: var(--gold-100); color: var(--red-900); border: 1px solid var(--line); }
 .status-badge[data-status="playing"] { background: var(--gold-500); border-color: #b57d10; }
 .status-badge[data-status="ended"] { background: #cdbfa8; }
+
+/* 房間資訊：房號（可複製）＋房間名稱，名稱過長自動省略 */
+.room-chip {
+  display: flex; align-items: center; gap: 10px; min-width: 0; max-width: 100%; margin-left: auto;
+  padding: 4px 16px 4px 6px; border-radius: 999px; cursor: pointer; font: inherit; color: var(--ink);
+  background: linear-gradient(var(--gold-100), #fbe5a8); border: 1px solid #d9b259;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.room-chip:hover { box-shadow: 0 2px 8px rgba(181, 125, 16, .35); }
+.room-chip:active { transform: scale(.98); }
+.room-tag { flex: none; padding: 2px 10px; border-radius: 999px; background: var(--red-700); color: var(--gold-100); font-size: var(--fs-sm); font-weight: 700; letter-spacing: .08em; }
+.room-chip.copied .room-tag { background: var(--ok); }
+.room-id { flex: none; font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; font-weight: 800; font-size: clamp(1.05rem, 2.4vh, 1.4rem); letter-spacing: .14em; color: var(--red-900); }
+.room-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: clamp(.95rem, 2.1vh, 1.2rem); max-width: 22em; }
+.room-chip.has-name .room-id { padding-right: 10px; border-right: 1px solid rgba(122, 15, 29, .25); }
+.room-name:empty { display: none; }
+.room-chip + .desk-actions { margin-left: 0; }
+@media (max-width: 1100px) { .room-tag { display: none; } .room-chip { padding-left: 14px; } }
 
 /* 抽號畫面：三欄 */
 .panel-draw {
   display: grid; height: 100%; gap: var(--gap);
   grid-template-columns: minmax(250px, 24%) minmax(0, 1fr) minmax(320px, 30%);
+  grid-template-rows: auto minmax(0, 1fr);
 }
+.panel-draw > .desk-slot { grid-column: 1 / -1; }
 .col { min-height: 0; display: flex; flex-direction: column; gap: var(--gap); }
 .col > div:not(.desk-slot) { min-height: 0; display: flex; flex-direction: column; }
 .col .card, .col .draw-panel, .col .board-wrap { margin: 0; }
@@ -665,13 +691,8 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 .panel-settings { height: 100%; overflow-y: auto; padding: 0 2px 8px; }
 .panel-settings .desk-slot { margin-bottom: 12px; position: sticky; top: 0; z-index: 5; background: var(--paper); padding: 4px 0 8px; }
 #toast-root { bottom: 24px; }
-.desk-more { flex: none; white-space: nowrap; }
-.desk-brand-title { font-size: clamp(1.25rem, 3vh, 1.75rem); letter-spacing: .03em; }
-.desk-brand { gap: 8px; }
 
 /* 設定頁：返回抽號（靠右，在「更多」左邊） */
-.desk-back { margin-left: auto; flex: none; white-space: nowrap; min-height: clamp(40px, 5.4vh, 52px); padding: 0 18px; font-size: clamp(1rem, 2.1vh, 1.2rem); }
-.desk-back + .desk-more { margin-left: 0; }
 
 /* ===== 設定頁：兩欄卡片＋可收合的獎金設定（一屏看完） ===== */
 .panel-settings .desk-slot { max-width: none; }
