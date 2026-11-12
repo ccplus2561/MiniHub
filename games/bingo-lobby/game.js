@@ -261,6 +261,7 @@
   function onKeyDown(e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (!MiniHub.kbdOn()) return;
+    if (window.BingoGate && BingoGate.blocked()) return;   // 未登入：鍵盤不作用
     if (e.key === "Escape") { goBack(); return; }
     if (state.screen === "identity" && HOTKEYS[e.key]) {
       e.preventDefault();
