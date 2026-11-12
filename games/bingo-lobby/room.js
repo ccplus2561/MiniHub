@@ -6,9 +6,8 @@
   const MY_ROOM_KEY = "bingoLobby.myRoom";
   const DIR_KEY = "bingoLobby.dirStub";
   const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
-  const ID_MIN = 4;
-  const ID_MAX = 8;
-  const ID_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // 去掉易混淆字元
+  const ID_LEN = 6; // 房號：固定 6 碼數字
+  const UID_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"; // UID 用，去掉易混淆字元
   const UID_LEN = 6;
   const CHANNEL_PREFIX = "bingo-room-";
 
@@ -29,25 +28,37 @@
   }
 
   // ===== 房號 / UID =====
-  // 房號：4–8 碼英數字（一律大寫）。預設房號 = 主持人自己的 UID，也可自訂。
+  // 房號：6 碼數字（只能數字）。預設隨機產生，也可自訂。
   function normalize(raw) {
-    return String(raw == null ? "" : raw).toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, ID_MAX);
+    return String(raw == null ? "" : raw).replace(/\D/g, "").slice(0, ID_LEN);
   }
   function isValid(id) {
-    const n = normalize(id);
-    return n.length >= ID_MIN && n === String(id);
+    return /^\d{6}$/.test(String(id));
   }
-  function randomId(len) {
+  function randomDigits(len) {
     const buf = new Uint32Array(len);
     if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf);
     else for (let i = 0; i < len; i++) buf[i] = Math.floor(Math.random() * 4294967296);
-    return Array.from(buf, n => ID_ALPHABET[n % ID_ALPHABET.length]).join("");
+    return Array.from(buf, n => String(n % 10)).join("");
+  }
+  // 產生一組目前沒人使用的隨機房號
+  function newRoomId() {
+    const used = new Set(directory._all().map(r => r.id));
+    let id = randomDigits(ID_LEN);
+    for (let i = 0; i < 20 && used.has(id); i++) id = randomDigits(ID_LEN);
+    return id;
   }
 
-  // 每個人（每台裝置）一組 UID。日後換成 Firebase Auth 的 uid，只要改這個函式。
+  // 每個人（每個分頁）一組 UID（只用來辨識房主，不對外顯示成房號）。日後換成 Firebase Auth 的 uid，只要改這個函式。
   function getUid() {
     let uid = read(UID_KEY);
-    if (!isValid(uid)) { uid = randomId(UID_LEN); write(UID_KEY, uid); }
+    if (!/^[A-Z0-9]{6}$/.test(String(uid))) {
+      const buf = new Uint32Array(UID_LEN);
+      if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(buf);
+      else for (let i = 0; i < UID_LEN; i++) buf[i] = Math.floor(Math.random() * 4294967296);
+      uid = Array.from(buf, n => UID_ALPHABET[n % UID_ALPHABET.length]).join("");
+      write(UID_KEY, uid);
+    }
     return uid;
   }
 
@@ -124,7 +135,7 @@
   }
 
   window.BingoRoom = {
-    ID_MIN, ID_MAX, MSG, normalize, isValid, randomId, getUid,
+    ID_LEN, MSG, normalize, isValid, newRoomId, getUid,
     loadMyRoom, saveMyRoom, directory, buildUrl, readParams, connect,
   };
 })();

@@ -41,9 +41,8 @@
   <section class="screen" data-screen="host" aria-labelledby="gHost" hidden>
     <h2 id="gHost" class="group__title">建立房間</h2>
     <form id="hostForm" class="panel" autocomplete="off">
-      <label class="field" for="hostRoomId">房間號碼（預設為你的 UID，可自訂 4–8 碼英數字）</label>
-      <input id="hostRoomId" class="field__input" type="text" maxlength="8" spellcheck="false"
-             autocapitalize="characters" aria-describedby="hostErr">
+      <label class="field" for="hostRoomId">房間號碼（隨機產生 6 碼數字，可自訂）</label>
+      <input id="hostRoomId" class="field__input" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="6" spellcheck="false" aria-describedby="hostErr">
       <p id="hostUidLine" class="panel__note"></p>
       <p id="hostErr" class="panel__err" role="alert" hidden></p>
       <div class="panel__actions">
@@ -58,8 +57,8 @@
     <h2 id="gRooms" class="group__title">目前的房間</h2>
     <div class="panel">
       <div class="search-row">
-        <input id="roomSearch" class="field__input field__input--sm" type="search" maxlength="8"
-               placeholder="搜尋房間號碼" aria-label="搜尋房間號碼" spellcheck="false" autocapitalize="characters">
+        <input id="roomSearch" class="field__input field__input--sm" type="search" inputmode="numeric" maxlength="6"
+               placeholder="搜尋房間號碼" aria-label="搜尋房間號碼" spellcheck="false">
         <button id="roomRefresh" class="room-btn" type="button" aria-label="重新整理">↻</button>
       </div>
       <ul id="roomList" class="room-list" aria-live="polite"></ul>

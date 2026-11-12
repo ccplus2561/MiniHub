@@ -99,7 +99,7 @@
   // ===== 步驟 2（主持）：自訂房號 =====
   function openHost() {
     const mine = Room.loadMyRoom();
-    hostRoomId.value = mine || Room.getUid();
+    hostRoomId.value = mine || Room.newRoomId();
     $("hostUidLine").textContent = `你的 UID：${Room.getUid()}`;
     hostErr.hidden = true;
     hostResume.hidden = !mine;
@@ -115,7 +115,7 @@
 
   async function createRoom(id) {
     if (!Room.isValid(id)) {
-      showHostError(`請輸入 ${Room.ID_MIN}–${Room.ID_MAX} 碼英文字母或數字`);
+      showHostError(`請輸入 ${Room.ID_LEN} 碼數字`);
       return;
     }
     const res = await Room.directory.create(id, Room.getUid());
