@@ -3,8 +3,7 @@
 
   // ===== 設定常數 =====
   const MAX = 75;
-  const COLS = [["B", 1, 15], ["I", 16, 30], ["N", 31, 45], ["G", 46, 60], ["O", 61, 75]];
-  const RANK_COUNT = 3;
+    const RANK_COUNT = 3;
   const STATUS_TEXT = { setup: "設定中", playing: "進行中", ended: "已結束", wait: "等待主持人" };
   const CLOUD_RETRY_MS = 2000;
   const STALE_MS = 90 * 1000;   // 超過這段時間沒收到更新，提示可能已離線
@@ -21,7 +20,6 @@
     if (text != null) n.textContent = text;
     return n;
   }
-  const letterOf = n => (COLS.find(c => n >= c[1] && n <= c[2]) || ["?"])[0];
   const money = n => "$" + Number(n || 0).toLocaleString("en-US");
   const pad = n => String(n).padStart(2, "0");
 
@@ -29,19 +27,18 @@
   let data = null;       // 主持人公開的最新資料
   let prevN = null;      // 上次顯示的抽號次數（只有變多才播動畫）
   let conn = null, unwatch = null, cloudTimer = 0;
+  let burst = [];        // 尚未看完的連抽結果：{ seq, t, num }
+  let burstOpen = false;
 
   // ===== 號碼表（只建立一次）=====
   function buildBoard() {
     const board = $("board");
-    COLS.forEach(([l, lo, hi]) => {
-      board.appendChild(el("span", "board__let", l));
-      for (let n = lo; n <= hi; n++) {
-        const c = el("span", "cell", String(n));
-        c.setAttribute("role", "gridcell");
-        cells.set(n, c);
-        board.appendChild(c);
-      }
-    });
+    for (let n = 1; n <= MAX; n++) {
+      const c = el("span", "cell", String(n));
+      c.setAttribute("role", "gridcell");
+      cells.set(n, c);
+      board.appendChild(c);
+    }
   }
 
   // ===== 繪製 =====
@@ -61,7 +58,7 @@
       $("ballNote").textContent = "這次沒有號碼";
     } else {
       ball.dataset.kind = t === 1 ? "repeat" : "new";
-      ball.append(el("span", "ball__let", letterOf(num)), el("span", "ball__txt", String(num)));
+      ball.appendChild(el("span", "ball__txt", String(num)));
       $("ballNote").textContent = t === 1 ? "重複號碼（已抽過）" : "新號碼";
     }
   }
@@ -92,7 +89,7 @@
       else if (o.rank !== p) { row.classList.add("is-merged"); row.appendChild(el("span", "", "併入第 " + o.rank + " 名")); }
       else {
         row.classList.add("is-done");
-        row.appendChild(el("span", "", "🎉 已出爐" + (o.tie > 1 ? "（同時 " + o.tie + " 人）" : "") + (o.seq ? " · 第 " + o.seq + " 次抽號" : "")));
+        row.appendChild(el("span", "", "🎉 已出爐" + (o.tie > 1 ? "（同時 " + o.tie + " 人）" : "") + (o.seq ? " · 第 " + o.seq + " 次" : "")));
       }
       box.appendChild(row);
     }
@@ -111,6 +108,8 @@
 
     setBall(last);
     if (d && prevN !== null && n > prevN && last) { void ball.offsetWidth; ball.classList.add("is-pop"); }
+    if (d && prevN !== null && n - prevN >= 2) addBurst(n, n - prevN, d.recent || []);
+    if (!d || n < (prevN || 0)) closeBurst();   // 新局或沒資料：清掉未看完的結果
     prevN = n;
 
     $("count").textContent = d ? "已抽出 " + drawn.length + " / " + MAX + "　·　共抽 " + n + " 次" : "";
@@ -142,6 +141,34 @@
     else nt.hidden = true;
 
     if (d && d.at) { const t = new Date(d.at); $("stamp").textContent = "更新於 " + pad(t.getHours()) + ":" + pad(t.getMinutes()) + ":" + pad(t.getSeconds()); }
+  }
+
+  // ===== 連續抽號：全螢幕逐一顯示，看完才關閉（避免漏看）=====
+  function addBurst(n, k, recent) {
+    const rows = recent.slice(-Math.min(k, recent.length));
+    rows.forEach(([t, num], i) => burst.push({ seq: n - rows.length + i + 1, t, num }));
+    renderBurst();
+  }
+  function renderBurst() {
+    const box = $("burst");
+    if (!burst.length) { closeBurst(); return; }
+    burstOpen = true;
+    box.hidden = false;
+    $("burstTitle").textContent = "連續抽出 " + burst.length + " 個號碼";
+    const list = $("burstList");
+    list.textContent = "";
+    burst.forEach(b => {
+      const blank = b.t === 2 || b.num == null;
+      const item = el("div", "bb bb--" + (blank ? "blank" : b.t === 1 ? "repeat" : "new"));
+      item.appendChild(el("span", "bb__seq", "第 " + b.seq + " 次"));
+      item.appendChild(el("span", blank ? "bb__word" : "bb__num", blank ? "銘謝惠顧" : String(b.num)));
+      if (!blank && b.t === 1) item.appendChild(el("span", "bb__tag", "重複"));
+      list.appendChild(item);
+    });
+  }
+  function closeBurst() {
+    burst = []; burstOpen = false;
+    const box = $("burst"); if (box) box.hidden = true;
   }
 
   function apply(d) {
@@ -193,6 +220,7 @@
     addEventListener("pagehide", () => { try { if (unwatch) unwatch(); if (conn) conn.close(); } catch (e) { /* 忽略 */ } });
   }
 
+  $("burstOk").addEventListener("click", closeBurst);
   buildBoard();
   render();
   start();

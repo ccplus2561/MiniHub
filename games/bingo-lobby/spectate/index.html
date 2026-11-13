@@ -49,6 +49,12 @@
   <p id="stamp" class="stamp"></p>
 </main>
 
+<div id="burst" class="burst" role="dialog" aria-modal="true" aria-labelledby="burstTitle" hidden>
+  <h2 id="burstTitle" class="burst__title">連續抽出</h2>
+  <div id="burstList" class="burst__list" aria-live="polite"></div>
+  <button id="burstOk" class="burst__ok" type="button">我看完了</button>
+</div>
+
 <script src="../../../js/protect.js"></script>
 <script src="../../../js/minihub-sdk.js"></script>
 <script src="../gate.js"></script>
