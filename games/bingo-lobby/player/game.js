@@ -278,6 +278,7 @@
       ? (ended ? '遊戲已結束。' : '點擊被叫出的號碼來標記，連成線後可繼續玩，準備好再按「結束遊戲」。')
       : `填入 24 格數字（${MIN}～${MAX}，不可重複），或使用「隨機產生」。`;
     playing ? refreshPlay(poppedKey) : refreshEdit();
+    queueSave();
   }
 
   function refreshEdit() {
@@ -409,12 +410,94 @@
     if (on) sound.beep(660); toast(on ? '音效已開啟' : '音效已關閉');
   });
 
+  /* ---------- 房間同步：卡片數值依「房號 + 玩家」分開保存，意外退出可即時恢復 ---------- */
+  // 只有多人模式（mode=multi 且有 6 碼房號）才同步；單人練習不存。
+  // 本機（localStorage）每次變動立即寫入 → 重新整理／關掉再開馬上恢復；雲端（Firestore）防抖寫入 → 換裝置也能恢復。
+  const ROOM = (() => {
+    const q = new URLSearchParams(location.search), id = q.get('room') || '';
+    return q.get('mode') === 'multi' && /^\d{6}$/.test(id) ? id : '';
+  })();
+  const SYNC_TTL = 12 * 60 * 60 * 1000; // 與房間存活時間一致
+  const P = (() => { try { return parent !== window && parent.document ? parent : null; } catch (e) { return null; } })();
+  const cloud = () => { try { const A = P && P.MiniHubAuth; return A && A.cards && A.rooms.on() ? A.cards : null; } catch (e) { return null; } };
+  const uidNow = () => { try { return MiniHub.player().uid || ''; } catch (e) { return ''; } };
+  let syncStarted = false, syncReady = false, lastKey = '', saveTimer = 0, cloudPending = false;
+
+  const stateKey = () => JSON.stringify({ mode, grid, marked, ended });
+  const snapshot = () => ({ v: 1, mode, grid, marked, ended, at: Date.now() });
+  const lsKey = () => `bingoLobby.card.${ROOM}.${uidNow()}`;
+
+  function sane(d) {
+    const g5 = (a, ok) => Array.isArray(a) && a.length === SIZE && a.every(r => Array.isArray(r) && r.length === SIZE && r.every(ok));
+    return !!d && (d.mode === 'edit' || d.mode === 'play') && Date.now() - (d.at || 0) < SYNC_TTL
+      && g5(d.grid, v => typeof v === 'string' && /^\d{0,2}$/.test(v)) && g5(d.marked, v => typeof v === 'boolean');
+  }
+  function readLocal() { try { const d = JSON.parse(localStorage.getItem(lsKey())); return sane(d) ? d : null; } catch (e) { return null; } }
+  function writeLocal(d) { try { localStorage.setItem(lsKey(), JSON.stringify(d)); } catch (e) { /* 忽略 */ } }
+
+  function applySaved(d) {
+    mode = d.mode; grid = d.grid.map(r => [...r]); marked = d.marked.map(r => [...r]); ended = !!d.ended;
+    marked[CENTER][CENTER] = true; notice = ''; animate = false;
+    prevLines = mode === 'play' ? findCompletedLines(marked).length : 0; // 恢復時不重播紙花
+    lastKey = stateKey();
+    buildGrid(); refresh();
+  }
+
+  async function pushCloud() {
+    const c = cloud();
+    if (!c) { cloudPending = true; return; }
+    try { await c.save(ROOM, snapshot()); cloudPending = false; } catch (e) { cloudPending = true; }
+  }
+  // 狀態有變才存；本機立即、雲端延遲 0.6 秒合併（雲端比對完成前只存本機）
+  function queueSave() {
+    if (!ROOM || !syncStarted) return;
+    const k = stateKey();
+    if (k === lastKey) return;
+    lastKey = k;
+    writeLocal(snapshot());
+    if (!syncReady) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(pushCloud, 600);
+  }
+  function flushNow() { if (!ROOM || !syncReady) return; clearTimeout(saveTimer); writeLocal(snapshot()); pushCloud(); }
+  addEventListener('pagehide', flushNow);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushNow(); else if (cloudPending) pushCloud(); });
+  addEventListener('online', () => { if (cloudPending) pushCloud(); });
+
+  // 登入完成（取得 uid）後：先用本機資料立即恢復，再與雲端比較，取較新的一份
+  async function startSync() {
+    if (!ROOM || syncStarted || !uidNow()) return;
+    syncStarted = true;
+    const local = readLocal();
+    if (local) { applySaved(local); toast(`已恢復房間 ${ROOM} 的卡片`); }
+    const base = stateKey();
+    let remote = null, reached = false;
+    for (let i = 0; i < 6 && !reached; i++) {
+      const c = cloud();
+      if (c) { try { remote = await c.load(ROOM); reached = true; } catch (e) { break; } }
+      else await new Promise(r => setTimeout(r, 1000));
+    }
+    const untouched = stateKey() === base; // 等雲端回應時玩家若已動過卡片，就以玩家當下的為準
+    let applied = false;
+    if (sane(remote) && untouched && (!local || remote.at > local.at)) {
+      applySaved(remote); writeLocal(remote); applied = true;
+      if (!local) toast(`已恢復房間 ${ROOM} 的卡片`);
+    }
+    syncReady = true;
+    lastKey = stateKey();
+    // 本機較新（或雲端沒有）→ 把目前卡片推上雲端
+    if (!applied && (mode === 'play' || grid.some(r => r.some(v => v !== '')))) pushCloud();
+  }
+
   // 大廳整合（SDK）
   (function setupHub() {
     try { MiniHub.onPause(() => sound.suspend()); } catch (e) { /* 忽略 */ }
+    try { MiniHub.onChange(startSync); } catch (e) { /* 忽略 */ }
   })();
 
   buildGrid();
   refresh();
+  startSync();
+  if (ROOM && !syncStarted) { const t = setInterval(() => { startSync(); if (syncStarted) clearInterval(t); }, 1000); }
 
 })();

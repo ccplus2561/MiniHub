@@ -422,8 +422,34 @@ const rooms = {
   }
 };
 
+/* ---------- 多人賓果：玩家卡片同步（Firestore） ----------
+   games/bingo-lobby/cards/{房號}_{玩家uid}：{ room, uid, data(JSON 字串), at }
+   每位玩家在每個房間各一份，互不影響；只有本人讀寫（請確認 Firestore 規則允許 request.auth.uid == resource.data.uid）。 */
+const cardRef = (room, uid) => F.doc(F.db, "games", "bingo-lobby", "cards", String(room) + "_" + uid);
+const cards = {
+  async load(room) {
+    if (!roomsOn()) return null;
+    bump(1, 0);
+    const s = await F.getDoc(cardRef(room, F.auth.currentUser.uid));
+    if (!s.exists()) return null;
+    try { return JSON.parse(String(s.data().data || "")); } catch (e) { return null; }
+  },
+  async save(room, data) {
+    if (!roomsOn()) return false;
+    const uid = F.auth.currentUser.uid;
+    bump(0, 1);
+    await F.setDoc(cardRef(room, uid), { room: String(room), uid, data: JSON.stringify(data), at: F.serverTimestamp() });
+    return true;
+  },
+  async remove(room) {
+    if (!roomsOn()) return;
+    bump(0, 1);
+    await F.deleteDoc(cardRef(room, F.auth.currentUser.uid));
+  }
+};
+
 window.MiniHubAuth = {
-  hasSession, scores, rooms,
+  hasSession, scores, rooms, cards,
   preload: () => boot().catch(() => {}),     // 按下「登入」時預先載入，之後彈出視窗才不會被瀏覽器擋
   ping, usage: () => ({ ...use }),
   // key: "google" | "github"
