@@ -2010,3 +2010,62 @@ body.pill-k:not(.m) .mp-pill { border-color: #fff; }
 body.m .hw-brand { flex-direction: row; align-items: center; justify-content: space-between; gap: 3cqw; width: 100%; container-type: inline-size; }
 body.m .hw-title { order: 1; font-size: 16.5cqw; white-space: nowrap; min-width: 0; }
 body.m .hw-logo { order: 2; width: 27cqw; height: 27cqw; max-width: 130px; max-height: 130px; }
+
+
+/* ======================================================================
+   手機版：登入 / 註冊 / 長按說明視窗「閃爍、像破圖」修正（只作用在 登入、帳密登入、建立資料、登入說明 四個視窗）
+   原因：視窗底下的載入背景（光球漂移 + 粒子）、模糊光球、@property 旋轉光環邊框（每幀重繪 + mask）、
+         呼吸光暈 box-shadow、drop-shadow 動畫、掃光等十幾層常駐動畫同時疊在一起，
+         手機 GPU 來不及合成 → 圖塊閃爍。這裡在手機 / 觸控裝置上改成靜態，只保留視窗本身一次性淡入。
+   ====================================================================== */
+@media (max-width: 820px), (pointer: coarse) {
+  /* 1) 登入視窗底下的流動背景：停止光球漂移 / 格線 / 粒子，只留靜態漸層 */
+  #loginModal .splash-bg .orb, #loginModal .splash-bg .grid { animation: none !important; will-change: auto !important; }
+  #loginModal .splash-bg .p, #loginModal .splash-bg .o3 { display: none !important; }
+
+  /* 2) 模糊光球與粒子整層拿掉 */
+  #acctModal .auth-fx, #profileModal .auth-fx, #loginModal .bp-orb { display: none !important; }
+
+  /* 3) 旋轉光環邊框（@property --ang 動畫）→ 靜態外框 */
+  #acctModal .auth-box::after, #profileModal .auth-box::after, #helpModal .ann-box::after, #loginModal .modal-logo::before { animation: none !important; }
+
+  /* 4) 常駐循環動畫關閉（呼吸光、浮動、掃光、箭頭、標題流光、脈衝、對焦呼吸） */
+  #loginModal :focus-visible, #loginModal .btn-primary, #loginModal .btn-primary::after, #loginModal .btn-google,
+  #acctModal :focus-visible, #acctModal .btn-primary, #acctModal .btn-primary::after, #acctModal .btn-google,
+  #profileModal :focus-visible, #profileModal .btn-primary, #profileModal .btn-primary::after, #profileModal .btn-google,
+  #helpModal :focus-visible, #helpModal .btn-primary, #helpModal .btn-primary::after, #helpModal .btn-google { animation: none !important; }
+  #loginModal .auth-ico, #loginModal .auth-ico svg, #loginModal .switch-cta, #loginModal .switch-cta svg, #loginModal .switch-cta::after, #loginModal .modal-logo, #loginModal h3, #loginModal .help-hint svg,
+  #acctModal .auth-ico, #acctModal .auth-ico svg, #acctModal .switch-cta, #acctModal .switch-cta svg, #acctModal .switch-cta::after, #acctModal .modal-logo, #acctModal h3, #acctModal .help-hint svg,
+  #profileModal .auth-ico, #profileModal .auth-ico svg, #profileModal .switch-cta, #profileModal .switch-cta svg, #profileModal .switch-cta::after, #profileModal .modal-logo, #profileModal h3, #profileModal .help-hint svg,
+  #helpModal .auth-ico, #helpModal .auth-ico svg, #helpModal .switch-cta, #helpModal .switch-cta svg, #helpModal .switch-cta::after, #helpModal .modal-logo, #helpModal h3, #helpModal .help-hint svg { animation: none !important; }
+  #loginModal .ann-ico, #loginModal .ann-ico svg, #loginModal .fx-ico svg, #loginModal .pstepper li.on i,
+  #acctModal .ann-ico, #acctModal .ann-ico svg, #acctModal .fx-ico svg, #acctModal .pstepper li.on i,
+  #profileModal .ann-ico, #profileModal .ann-ico svg, #profileModal .fx-ico svg, #profileModal .pstepper li.on i,
+  #helpModal .ann-ico, #helpModal .ann-ico svg, #helpModal .fx-ico svg, #helpModal .pstepper li.on i { animation: none !important; }
+
+  /* 5) 發光濾鏡（drop-shadow）拿掉 */
+  #loginModal .auth-ico svg, #loginModal .modal-logo svg, #loginModal .fx-ico svg,
+  #acctModal .auth-ico svg, #acctModal .modal-logo svg, #acctModal .fx-ico svg,
+  #profileModal .auth-ico svg, #profileModal .modal-logo svg, #profileModal .fx-ico svg,
+  #helpModal .auth-ico svg, #helpModal .modal-logo svg, #helpModal .fx-ico svg { filter: none !important; }
+
+  /* 6) 進場：視窗外層保留一次性淡入；內部逐項錯開浮現 / 縮放彈出全部取消，減少同時合成的圖層 */
+  #loginModal .modal-box,
+  #acctModal .modal-box,
+  #profileModal .modal-box,
+  #helpModal .modal-box { animation: none !important; }
+  #loginModal:not([hidden]) .auth-top, #loginModal:not([hidden]) .pstepper, #loginModal:not([hidden]) .auth-body, #loginModal:not([hidden]) .auth-foot,
+  #acctModal:not([hidden]) .auth-top, #acctModal:not([hidden]) .pstepper, #acctModal:not([hidden]) .auth-body, #acctModal:not([hidden]) .auth-foot,
+  #profileModal:not([hidden]) .auth-top, #profileModal:not([hidden]) .pstepper, #profileModal:not([hidden]) .auth-body, #profileModal:not([hidden]) .auth-foot,
+  #helpModal:not([hidden]) .auth-top, #helpModal:not([hidden]) .pstepper, #helpModal:not([hidden]) .auth-body, #helpModal:not([hidden]) .auth-foot { animation: none !important; }
+  #loginModal:not([hidden]) .modal-box > *, #helpModal .fx-list li, #helpModal .fx-ico, #acctPw2Box:not([hidden]), #acctNameHint:not([hidden]) { animation: none !important; }
+
+  /* 7) 長按說明視窗背景加深，底下的登入畫面不再透出重繪 */
+  #helpModal { background: rgba(5, 9, 14, .9); }
+}
+
+/* 設定 > 動畫效果 關閉時：這四個視窗內的動畫一律停止（含電腦版） */
+body.no-anim #loginModal *, body.no-anim #loginModal *::before, body.no-anim #loginModal *::after,
+body.no-anim #acctModal *, body.no-anim #acctModal *::before, body.no-anim #acctModal *::after,
+body.no-anim #profileModal *, body.no-anim #profileModal *::before, body.no-anim #profileModal *::after,
+body.no-anim #helpModal *, body.no-anim #helpModal *::before, body.no-anim #helpModal *::after { animation: none !important; }
