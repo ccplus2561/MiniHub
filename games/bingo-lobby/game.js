@@ -9,7 +9,7 @@
     solo:      "player/index.html?mode=solo",
     host:      "host/index.html?role=host",
     player:    "player/index.html?mode=multi&role=player",
-    spectator: "host/index.html?role=spectator",
+    spectator: "spectate/index.html?role=spectator",
   };
 
   const SUBTITLE = {

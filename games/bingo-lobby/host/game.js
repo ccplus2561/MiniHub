@@ -91,6 +91,7 @@ const DEFAULT_SETTINGS = {
   hostFeePercent: 10,
   locked: false,
   prizeEnabled: true, // 關閉後：沒有獎金池、不收費、抽號不受任何金錢限制
+  spectatorShowPool: false, // 旁觀者是否看得到目前獎金池金額（預設不公開）
   rules: DEFAULT_RULES.map((r) => ({ ...r })),
   rulesNote: DEFAULT_RULES_NOTE,
 };
@@ -453,11 +454,12 @@ function normalizeRatio(values) {
 // ---------- 可編輯規則 ----------
 
 // 遊戲進行中，僅開放「加買卡」與「人數」；辛苦費 % 與安慰獎金額開局後一律鎖定
-const EDITABLE_WHILE_PLAYING = ['players', 'newCardCount', 'renewCardCount', 'rules'];
+const EDITABLE_WHILE_PLAYING = ['players', 'newCardCount', 'renewCardCount', 'rules', 'spectatorShowPool'];
 
 function isEditable(key, status) {
   if (status === 'setup') return true;
   if (status === 'playing') return EDITABLE_WHILE_PLAYING.includes(key);
+  if (key === 'spectatorShowPool') return true;   // 旁觀顯示開關：隨時可切換
   return false;
 }
 
@@ -713,7 +715,8 @@ function initSettings(root) {
       el(
         'div',
         { class: 'card mode-card' },
-        toggleField('prizeEnabled', '啟用獎金功能', '關閉後沒有獎金池與費用，抽獎不受任何金錢限制，只記錄名次', status)
+        toggleField('prizeEnabled', '啟用獎金功能', '關閉後沒有獎金池與費用，抽獎不受任何金錢限制，只記錄名次', status),
+        prizeOn ? toggleField('spectatorShowPool', '旁觀者顯示獎金池', '開啟後旁觀畫面會顯示目前總彩池金額（只顯示總額，不含保底與各項明細）；關閉則完全不傳送金額', status) : null
       ),
       prizeOn ? el(
         'div',
@@ -2314,6 +2317,73 @@ function initCloudSave(room) {
 return { initCloudSave };
 })();
 
+// ===== core/spectate.js =====
+M['core/spectate'] = (() => {
+const { getState, subscribe } = M['core/state'];
+const { calcTotalPool } = M['core/finance'];
+// 旁觀公開資料：主持人端把「可公開」的內容送給旁觀頁（同瀏覽器走 BroadcastChannel、跨裝置走 Firestore live 文件）。
+// 不含：設定、卡片數量、保底金額、辛苦費；獎金池總額只有在主持人開啟「旁觀者顯示獎金池」時才會寫入。
+const CLOUD_DELAY_MS = 1200;
+const TYPE_CODE = { new: 0, repeat: 1, blank: 2 };
+
+function snapshot(room) {
+  const state = getState();
+  const { settings: s, game: g } = state;
+  const drawn = [];
+  const seen = new Set();
+  for (const r of g.history) if (r.type === 'new' && r.number != null && !seen.has(r.number)) { seen.add(r.number); drawn.push(r.number); }
+  const row = (r) => [TYPE_CODE[r.type] ?? 2, r.number];
+  const last = g.history[g.history.length - 1];
+  const showPool = !!(s.prizeEnabled && s.spectatorShowPool);
+  return {
+    v: 1, room, status: g.status, n: g.history.length,
+    drawn, last: last ? row(last) : null, recent: g.history.slice(-5).map(row),
+    ranks: g.ranks.map((r) => [r.rank, r.tieCount, r.atSeq]),
+    pool: showPool ? calcTotalPool(state) : null,
+    at: Date.now(),
+  };
+}
+
+function initSpectatePublish(room) {
+  const R = window.BingoRoom;
+  if (!R || !room) return;
+  const conn = R.connect({ code: room, role: 'host' });
+  let timer = 0, sentKey = '', pending = null;
+
+  const liveApi = () => {
+    try {
+      const A = window.parent !== window && window.parent.MiniHubAuth;
+      return A && A.rooms && A.rooms.live && A.rooms.on() ? A.rooms.live : null;
+    } catch (e) { return null; }
+  };
+  const keyOf = (snap) => JSON.stringify({ ...snap, at: 0 });
+
+  function flushCloud() {
+    timer = 0;
+    const api = liveApi();
+    if (!api || !pending) return;
+    const snap = pending, key = keyOf(snap);
+    if (key === sentKey) return;
+    sentKey = key;
+    api.publish(room, snap).catch(() => { sentKey = ''; });
+  }
+
+  function push() {
+    const snap = snapshot(room);
+    pending = snap;
+    conn.send(R.MSG.SNAPSHOT, snap);
+    if (!timer) timer = setTimeout(flushCloud, CLOUD_DELAY_MS);
+  }
+
+  conn.on((m) => { if (m.type === R.MSG.SNAPSHOT_REQ) conn.send(R.MSG.SNAPSHOT, snapshot(room)); });
+  subscribe(push);
+  try { MiniHub.onChange(() => { sentKey = ''; push(); }); } catch (e) { /* 忽略 */ }
+  addEventListener('pagehide', () => { clearTimeout(timer); flushCloud(); conn.close(); });
+  push();
+}
+return { initSpectatePublish };
+})();
+
 // ===== main.js =====
 M['main'] = (() => {
 const { getState, setState, subscribe } = M['core/state'];
@@ -2329,6 +2399,7 @@ const { openReceipt } = M['ui/receipt-view'];
 const { el } = M['utils/dom'];
 const { createDeskBrand } = M['ui/more-menu'];
 const { initCloudSave } = M['core/cloud-save'];
+const { initSpectatePublish } = M['core/spectate'];
 // 啟動入口：建立分頁並載入各視圖
 
 const STATUS_TEXT = { setup: '設定中', playing: '遊戲進行中', ended: '已結束' };
@@ -2388,7 +2459,8 @@ function start() {
   try {
     const p = window.BingoRoom && window.BingoRoom.readParams();
     if (p && p.role === 'host' && p.room) initCloudSave(p.room);
-  } catch (e) { console.warn('[cloud-save]', e); }
+    if (p && p.role === 'host' && p.room) initSpectatePublish(p.room);   // 旁觀：公開抽號資料給旁觀頁
+  } catch (e) { console.warn('[cloud-save / spectate]', e); }
 
   // 載入完成：移除載入畫面
   const boot = document.getElementById('boot');

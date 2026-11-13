@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7a0f1d">
+<title>多人賓果・旁觀</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="spec">
+  <header class="spec__head">
+    <a class="spec__back" href="../index.html" aria-label="離開旁觀">←</a>
+    <div class="spec__title">
+      <h1 id="roomName">旁觀中</h1>
+      <p id="roomMeta" class="spec__meta"></p>
+    </div>
+    <span id="badge" class="badge" data-s="wait">連線中</span>
+  </header>
+
+  <p id="notice" class="notice" role="status" hidden></p>
+
+  <div class="spec__grid">
+    <section class="card card--now" aria-label="目前抽出">
+      <h2 class="card__title">目前抽出</h2>
+      <div id="ball" class="ball" data-kind="none" aria-live="polite"><span class="ball__txt">—</span></div>
+      <p id="ballNote" class="ball__note">等待主持人抽號</p>
+      <p id="count" class="count"></p>
+      <h3 class="sub">最新 5 次</h3>
+      <div id="recent" class="recent" aria-label="最新五次抽號"></div>
+    </section>
+
+    <section class="card card--rank" aria-label="名次">
+      <h2 class="card__title">🎉 名次</h2>
+      <div id="ranks" class="ranks"></div>
+      <div id="pool" class="pool" hidden>
+        <p class="pool__label">🏆 目前獎金池</p>
+        <p id="poolAmt" class="pool__amt" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <section class="card card--board" aria-label="號碼表">
+      <h2 class="card__title">已抽出號碼 <small id="boardCount"></small></h2>
+      <div id="board" class="board" role="grid" aria-label="1 到 75 號碼表"></div>
+      <h3 class="sub">抽出順序</h3>
+      <div id="order" class="order" aria-label="已抽出號碼依序"></div>
+    </section>
+  </div>
+  <p id="stamp" class="stamp"></p>
+</main>
+
+<script src="../../../js/protect.js"></script>
+<script src="../../../js/minihub-sdk.js"></script>
+<script src="../gate.js"></script>
+<script src="../room.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

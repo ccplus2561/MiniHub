@@ -363,7 +363,27 @@ const ROOM_TTL = 12 * 3600000;
 const roomRef = id => F.doc(F.db, "games", "bingo-lobby", "rooms", String(id));
 const roomRow = d => { const x = d.data(); return { id: d.id, hostUid: String(x.hostUid || ""), name: String(x.name || ""), at: ms(x.at) || Date.now(), salt: String(x.salt || ""), hostPw: String(x.hostPw || ""), roomPw: String(x.roomPw || ""), cloud: true }; };
 const roomsOn = () => !!(F && F.auth.currentUser && SAVE_PROFILE);
+// 旁觀即時資料：games/bingo-lobby/live/{房號}，只有主持人寫入公開內容（號碼、名次；獎金池僅在主持人開放時才含金額）
+const liveRef = id => F.doc(F.db, "games", "bingo-lobby", "live", String(id));
+const live = {
+  async publish(id, data) {
+    if (!roomsOn()) return;
+    bump(0, 1);
+    await F.setDoc(liveRef(id), { data: JSON.stringify(data), at: F.serverTimestamp() });
+  },
+  // 回傳取消監聽函式；cb(資料或 null, 錯誤)
+  watch(id, cb) {
+    if (!roomsOn()) return null;
+    return F.onSnapshot(liveRef(id), s => {
+      bump(1, 0);
+      let d = null;
+      if (s.exists()) { try { d = JSON.parse(String(s.data().data || "")); } catch (e) { d = null; } }
+      cb(d, null);
+    }, err => cb(null, err));
+  }
+};
 const rooms = {
+  live,
   on: roomsOn,
   uid: () => (roomsOn() ? F.auth.currentUser.uid : ""),
   async list() {
@@ -396,6 +416,7 @@ const rooms = {
   },
   async remove(id) {
     if (!roomsOn()) return;
+    try { bump(0, 1); await F.deleteDoc(liveRef(id)); } catch (e) { /* 沒有旁觀資料就略過 */ }
     bump(0, 1);
     await F.deleteDoc(roomRef(id));
   }
