@@ -108,6 +108,7 @@
 
     setBall(last);
     if (d && prevN !== null && n > prevN && last) { void ball.offsetWidth; ball.classList.add("is-pop"); }
+    if (burstOpen && n > (prevN || 0)) closeBurst();   // 主持又抽了新號碼：沒按「我看完了」也自動關閉
     if (d && prevN !== null && n - prevN >= 2) addBurst(n, n - prevN, d.recent || []);
     if (!d || n < (prevN || 0)) closeBurst();   // 新局或沒資料：清掉未看完的結果
     prevN = n;
@@ -123,12 +124,6 @@
       c.classList.toggle("on", drawnSet.has(num));
       c.classList.toggle("now", num === nowNum);
     });
-
-    const order = $("order");
-    order.textContent = "";
-    if (!drawn.length) order.appendChild(el("em", "", "尚未抽出任何號碼"));
-    drawn.forEach(num => order.appendChild(el("i", "", String(num))));
-    order.scrollLeft = order.scrollWidth; order.scrollTop = order.scrollHeight;
 
     // 獎金池：只有主持人開放時，資料裡才會有金額
     const showPool = !!d && d.pool != null;
