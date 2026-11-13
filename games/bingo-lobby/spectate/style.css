@@ -111,8 +111,8 @@ h1,h2,h3,p{margin:0}
 
   .card--board{display:flex;flex-direction:column}
   .card--board .card__title{flex:none}
-  .board{flex:none;gap:clamp(3px,.35vw,7px)}
-  .cell{border-radius:clamp(5px,.5vw,10px);font-size:var(--cell-fs,clamp(.7rem,1.35vw,1.7rem))}
+  .board{flex:1 1 0;min-height:0;align-items:stretch;grid-template-columns:repeat(10,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));gap:clamp(4px,.6vw,10px)}
+  .cell{aspect-ratio:auto;border-radius:clamp(6px,.8vw,14px);font-size:var(--cell-fs,clamp(.9rem,min(2.6vw,5vh),3rem))}
     }
 /* 橫向（電腦、橫放平板）：左＝目前抽出＋名次，右＝號碼表（5×15）＋抽出順序，右側寬度不超過一半 */
 @media (min-width:700px) and (min-height:480px) and (orientation:landscape){
@@ -122,7 +122,7 @@ h1,h2,h3,p{margin:0}
   .card--now .ball{margin:0}
   .card--now .now__info{width:auto;flex:1 1 0;min-width:0}
   .card--now .recent{max-width:calc(var(--chip)*5 + 40px)}
-  .card--board{--cell-fs:clamp(.7rem,1.35vw,1.7rem)}
+  .card--board{--cell-fs:clamp(.9rem,min(2.6vw,5vh),3rem)}
 }
 /* 直向（直放平板）：上＝目前抽出＋名次並排，下＝號碼表 */
 @media (min-width:700px) and (min-height:480px) and (orientation:portrait){
