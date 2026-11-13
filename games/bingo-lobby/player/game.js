@@ -173,6 +173,8 @@
   let prevLines = 0;
   let ended = false; // 玩家手動結束後不能再標記
   let animate = true; // 只在整張重建時播放入場動畫
+  let drawn = new Set(); // 多人模式：主持人已抽出的號碼（卡片依此自動對號）
+  let hostData = null;   // 多人模式：主持人公開的最新資料
 
   const $ = id => document.getElementById(id);
   const gridEl = $('grid'), progressEl = $('progress'), messagesEl = $('messages');
@@ -239,10 +241,10 @@
           cells[key] = { wrap, el: input };
         } else {
           const b = document.createElement('button');
-          b.type = 'button'; b.className = 'num'; b.disabled = ended; b.textContent = grid[r][c];
+          b.type = 'button'; b.className = 'num'; b.disabled = ended || !!ROOM; b.textContent = grid[r][c];
           b.setAttribute('aria-label', `號碼 ${grid[r][c]}`);
           b.addEventListener('click', () => {
-            if (ended) return;
+            if (ended || ROOM) return; // 多人模式由主持人抽號自動對號，不可手動標記
             marked[r][c] = !marked[r][c];
             sound.beep(marked[r][c] ? 740 : 420, .07); buzz(12);
             refresh(key);
@@ -271,10 +273,17 @@
     for (const b of [btn.random, btn.fill, btn.clear, btn.done]) b.hidden = playing;
     btn.restart.hidden = !playing;
     btn.end.hidden = !playing || ended; btn.unmark.hidden = !playing || ended;
+    if (ROOM) { // 多人模式：開始 / 結束 / 開新局全由主持人控制，玩家只能在開放時填寫數字
+      btn.done.hidden = btn.restart.hidden = btn.end.hidden = btn.unmark.hidden = true;
+      document.querySelector('.actions').hidden = playing;
+    }
     $('step-1').className = playing ? 'done' : 'on';
     $('step-2').className = playing ? 'on' : '';
     document.body.dataset.mode = mode;
-    introEl.textContent = playing
+    introEl.textContent = ROOM
+      ? (!playing ? `填入 24 格數字（${MIN}～${MAX}，不可重複），或用「隨機產生」。主持人按下開始後，卡片會自動鎖定。`
+        : ended ? '本局已結束，等主持人開新局（卡片數字會保留）。' : '卡片已鎖定，主持人抽出的號碼會自動標記。')
+      : playing
       ? (ended ? '遊戲已結束。' : '點擊被叫出的號碼來標記，連成線後可繼續玩，準備好再按「結束遊戲」。')
       : `填入 24 格數字（${MIN}～${MAX}，不可重複），或使用「隨機產生」。`;
     playing ? refreshPlay(poppedKey) : refreshEdit();
@@ -386,6 +395,7 @@
 
   // 防呆：遊戲中，或編輯中已填入數字時，重新整理／關閉頁面會先跳出警告
   addEventListener('beforeunload', e => {
+    if (ROOM) return; // 多人模式卡片會自動保存並恢復
     if (mode !== 'play' && !grid.some(row => row.some(v => v !== ''))) return;
     e.preventDefault(); e.returnValue = '';
   });
@@ -485,9 +495,79 @@
     }
     syncReady = true;
     lastKey = stateKey();
+    reconcile(); // 還原完成後，才套用主持人目前的狀態（避免空卡被先鎖定）
     // 本機較新（或雲端沒有）→ 把目前卡片推上雲端
     if (!applied && (mode === 'play' || grid.some(r => r.some(v => v !== '')))) pushCloud();
   }
+
+  /* ---------- 主持人同步：開始 → 鎖卡、抽號 → 自動對號、開新局 → 保留數字並解鎖 ---------- */
+  const marksFromDrawn = () => {
+    const m = newMarked();
+    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++)
+      if (!isFree(r, c) && grid[r][c] !== '' && drawn.has(Number(grid[r][c]))) m[r][c] = true;
+    return m;
+  };
+  // 鎖卡前整理：保留合法且不重複的數字，其餘清空後隨機補齊（晚進房或沒填完也能玩）
+  function lockable(g) {
+    const seen = new Set();
+    return fillBlanks(g.map(row => row.map(v => {
+      if (v === '' || checkCell(v)) return '';
+      const n = Number(v);
+      if (seen.has(n)) return '';
+      seen.add(n); return v;
+    })));
+  }
+  function reconcile() {
+    if (!ROOM || !hostData || !syncReady) return;
+    const st = hostData.status;
+    drawn = new Set((Array.isArray(hostData.drawn) ? hostData.drawn : []).map(Number));
+    if (st === 'playing' || st === 'ended') {
+      if (mode === 'edit') {
+        const dlg = $('dlg'); if (dlg.open) dlg.close('cancel');
+        const before = JSON.stringify(grid), next = lockable(grid);
+        grid = next; mode = 'play'; notice = ''; animate = true; prevLines = 0;
+        marked = marksFromDrawn(); ended = st === 'ended'; prevLines = findCompletedLines(marked).length;
+        buildGrid(); refresh();
+        toast(before === JSON.stringify(grid) ? '主持人已開始，卡片已鎖定' : '主持人已開始，空格已自動補齊並鎖定');
+        return;
+      }
+      const next = marksFromDrawn();
+      let popped = null;
+      for (let r = 0; r < SIZE && !popped; r++) for (let c = 0; c < SIZE; c++) if (next[r][c] && !marked[r][c]) { popped = `${r},${c}`; break; }
+      const endedChanged = ended !== (st === 'ended');
+      marked = next; ended = st === 'ended';
+      if (endedChanged) buildGrid();
+      if (popped) { sound.beep(740, .07); buzz(12); }
+      refresh(popped || undefined);
+    } else if (mode === 'play') { // 主持人開新局：數字保留，清除連線與標記，重新開放修改
+      mode = 'edit'; ended = false; marked = newMarked(); prevLines = 0; notice = ''; animate = true;
+      buildGrid(); refresh(); toast('主持人開新局：數字已保留，可重新修改');
+    }
+  }
+  function receiveHost(d) {
+    if (!ROOM || !d || d.v !== 1 || d.room !== ROOM) return;
+    if (hostData && d.at < hostData.at) return; // 忽略較舊的資料
+    hostData = d; reconcile();
+  }
+  let unwatchHost = null;
+  function attachHost() {
+    if (unwatchHost) return true;
+    try {
+      const A = P && P.MiniHubAuth;
+      if (!A || !A.rooms || !A.rooms.live || !A.rooms.on()) return false;
+      unwatchHost = A.rooms.live.watch(ROOM, d => receiveHost(d));
+      return !!unwatchHost;
+    } catch (e) { return false; }
+  }
+  (function startHostWatch() {
+    if (!ROOM) return;
+    try { // 同瀏覽器即時（BroadcastChannel）
+      const R = window.BingoRoom;
+      if (R) { const conn = R.connect({ code: ROOM, role: 'player' }); conn.on(m => { if (m.type === R.MSG.SNAPSHOT) receiveHost(m.data); }); conn.send(R.MSG.SNAPSHOT_REQ); addEventListener('pagehide', () => { try { conn.close(); } catch (e) { /* 忽略 */ } }); }
+    } catch (e) { /* 忽略 */ }
+    if (!attachHost()) { const t = setInterval(() => { if (attachHost()) clearInterval(t); }, 2000); }
+    try { MiniHub.onChange(attachHost); } catch (e) { /* 忽略 */ }
+  })();
 
   // 大廳整合（SDK）
   (function setupHub() {
