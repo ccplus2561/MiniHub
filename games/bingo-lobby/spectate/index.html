@@ -23,11 +23,15 @@
   <div class="spec__grid">
     <section class="card card--now" aria-label="目前抽出">
       <h2 class="card__title">目前抽出</h2>
-      <div id="ball" class="ball" data-kind="none" aria-live="polite"><span class="ball__txt">—</span></div>
-      <p id="ballNote" class="ball__note">等待主持人抽號</p>
-      <p id="count" class="count"></p>
-      <h3 class="sub">最新 5 次</h3>
-      <div id="recent" class="recent" aria-label="最新五次抽號"></div>
+      <div class="now">
+        <div id="ball" class="ball" data-kind="none" aria-live="polite"><span class="ball__txt">—</span></div>
+        <div class="now__info">
+          <p id="ballNote" class="ball__note">等待主持人抽號</p>
+          <p id="count" class="count"></p>
+          <h3 class="sub">最新 5 次</h3>
+          <div id="recent" class="recent" aria-label="最新五次抽號"></div>
+        </div>
+      </div>
     </section>
 
     <section class="card card--rank" aria-label="名次">

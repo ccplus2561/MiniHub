@@ -1573,6 +1573,7 @@ function initDrawView(root) {
     }
 
     busy = true;
+    window.__bingoHoldPublish = true; // 連抽播放中：暫不對旁觀者公開，抽完一次送出
     update();
 
     const total = result.records.length;
@@ -1603,6 +1604,8 @@ function initDrawView(root) {
       }
     } finally {
       busy = false;
+      window.__bingoHoldPublish = false;
+      try { window.dispatchEvent(new Event('bingo-publish-resume')); } catch (e) { /* 忽略 */ }
       stepper.set(1); // 每次連抽結束，次數恢復為 1
       update();
     }
@@ -2348,7 +2351,7 @@ function initSpectatePublish(room) {
   const R = window.BingoRoom;
   if (!R || !room) return;
   const conn = R.connect({ code: room, role: 'host' });
-  let timer = 0, sentKey = '', pending = null;
+  let timer = 0, sentKey = '', pending = null, lastSnap = null;
 
   const liveApi = () => {
     try {
@@ -2369,14 +2372,17 @@ function initSpectatePublish(room) {
   }
 
   function push() {
+    if (window.__bingoHoldPublish) return; // 連抽中先不送，結束後由 resume 事件補送
     const snap = snapshot(room);
+    lastSnap = snap;
     pending = snap;
     conn.send(R.MSG.SNAPSHOT, snap);
     if (!timer) timer = setTimeout(flushCloud, CLOUD_DELAY_MS);
   }
 
-  conn.on((m) => { if (m.type === R.MSG.SNAPSHOT_REQ) conn.send(R.MSG.SNAPSHOT, snapshot(room)); });
+  conn.on((m) => { if (m.type === R.MSG.SNAPSHOT_REQ) conn.send(R.MSG.SNAPSHOT, (window.__bingoHoldPublish && lastSnap) || snapshot(room)); });
   subscribe(push);
+  addEventListener('bingo-publish-resume', push);
   try { MiniHub.onChange(() => { sentKey = ''; push(); }); } catch (e) { /* 忽略 */ }
   addEventListener('pagehide', () => { clearTimeout(timer); flushCloud(); conn.close(); });
   push();
