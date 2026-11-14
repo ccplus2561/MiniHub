@@ -172,7 +172,19 @@ function reset() {
   notify();
   return state;
 }
-return { getState, setState, subscribe, reset };
+
+/** 開新局：清除對局紀錄，但保留上局的設定參數（單價、獎金比例、規則、各項開關）；人數與新／續卡張數屬於單局數字，歸零 */
+function resetKeepSettings() {
+  const fresh = createDefaultState(), s = state.settings;
+  state = {
+    settings: { ...s, prizeRatio: [...s.prizeRatio], rules: s.rules.map((r) => ({ ...r })), players: 0, newCardCount: 0, renewCardCount: 0, locked: false },
+    game: fresh.game,
+    ui: { ...state.ui },
+  };
+  notify();
+  return state;
+}
+return { getState, setState, subscribe, reset, resetKeepSettings };
 })();
 
 // ===== ui/tabs.js =====
@@ -385,7 +397,7 @@ return { formatMoney, formatNumber, floorTo10 };
 
 // ===== ui/settings-view.js =====
 M['ui/settings-view'] = (() => {
-const { getState, setState, reset, subscribe } = M['core/state'];
+const { getState, setState, reset, resetKeepSettings, subscribe } = M['core/state'];
 const { DEFAULT_SETTINGS, DEFAULT_RULES, DEFAULT_RULES_NOTE, LIMITS } = M['config/defaults'];
 const { openRules } = M['ui/rules-view'];
 const { el, toast, confirmDialog } = M['utils/dom'];
@@ -671,18 +683,21 @@ function initSettings(root) {
   }
 
   async function onReset() {
+    const ended = getState().game.status === 'ended';   // 本局已結束 → 開新局：保留上局設定參數
     const ok = await confirmDialog({
-      title: '重新開始？',
-      message: '將清除所有設定與對局紀錄，回到初始狀態，此操作無法復原。',
-      confirmText: '確定清除',
+      title: ended ? '開新局？' : '重新開始？',
+      message: ended
+        ? '將清除本局的抽號與名次紀錄。設定參數（單價、獎金比例、規則、各項開關）會保留，人數與新／續卡張數歸零。'
+        : '將清除所有設定與對局紀錄，回到初始狀態，此操作無法復原。',
+      confirmText: ended ? '🔄 開新局' : '確定清除',
       danger: true,
     });
     if (!ok) return;
     if (!(await MiniHub.requestNext())) return;
-    reset();
+    if (ended) resetKeepSettings(); else reset();
     setState({ ui: { tab: 'settings' } }); // 重新開始後停留在設定頁
     render();
-    toast('已重新開始');
+    toast(ended ? '已開新局，設定參數已保留' : '已重新開始');
   }
 
   function render() {
@@ -1451,7 +1466,7 @@ return { endGame, buildReceipt };
 
 // ===== ui/receipt-view.js =====
 M['ui/receipt-view'] = (() => {
-const { getState, setState, reset } = M['core/state'];
+const { getState, setState, reset, resetKeepSettings } = M['core/state'];
 const { endGame, buildReceipt } = M['core/receipt'];
 const { el, toast, confirmDialog } = M['utils/dom'];
 const { formatMoney, formatNumber } = M['utils/format'];
@@ -1496,16 +1511,16 @@ function openReceipt() {
   const onNewGame = async () => {
     const ok = await confirmDialog({
       title: '開新局？',
-      message: '將清除本局所有設定與紀錄，回到初始狀態，此操作無法復原。建議先截圖或複製收據。',
+      message: '將清除本局的抽號與名次紀錄，此操作無法復原，建議先截圖或複製收據。設定參數（單價、獎金比例、規則、各項開關）會保留，人數與新／續卡張數歸零。',
       confirmText: '🔄 開新局',
       danger: true,
     });
     if (!ok) return;
     if (!(await MiniHub.requestNext())) return;
     close();
-    reset();
+    resetKeepSettings();
     setState({ ui: { tab: 'settings' } });
-    toast('已開新局');
+    toast('已開新局，設定參數已保留');
   };
 
   const overlay = el('div', { class: 'receipt-overlay', role: 'dialog', 'aria-modal': 'true', 'aria-label': '本局結算收據' },
@@ -2151,43 +2166,13 @@ function prefersReducedMotion() {
 }
 
 function initEffects({ soundBtn }) {
-  // 不支援的功能直接隱藏開關，不報錯
-  if (!sound.isSupported()) soundBtn.hidden = true;
-
-  // ---- 開關按鈕 ----
-  function paintToggle(btn, name, on) {
-    btn.setAttribute('aria-pressed', String(on));
-    btn.setAttribute('aria-label', `${name}：${on ? '開啟，點擊關閉' : '關閉，點擊開啟'}`);
-    btn.dataset.on = String(on);
-    btn.replaceChildren(
-      el('span', { class: 'hdr-icon', 'aria-hidden': 'true' }, on ? '🔊' : '🔇'),
-      el('span', { class: 'hdr-text' }, name)
-    );
-  }
-
-  soundBtn.addEventListener('click', () => {
-    const want = !getState().ui.soundOn;
-    if (want) {
-      // 必須在這個 click 手勢內同步建立並 resume AudioContext
-      if (!sound.setEnabled(true)) {
-        toast('這個瀏覽器無法啟用音效', 'error');
-        return;
-      }
-      sound.play('new'); // 開啟時的試聽
-    } else {
-      sound.setEnabled(false);
-    }
-    setState({ ui: { soundOn: want } });
-  });
+  // 音效是否播放完全由大廳設定決定（MiniHub.sfxOn）；本頁不再有獨立的音效開關，舊按鈕一律隱藏
+  soundBtn.hidden = true;
 
   // ---- 依 state 變化觸發 ----
   let prev = snapshot(getState());
 
   function onState(state) {
-    paintToggle(soundBtn, '音效', state.ui.soundOn);
-    // state 與引擎不同步時（例如重新載入）以 state 為準
-    if (!state.ui.soundOn && sound.isEnabled()) sound.setEnabled(false);
-
     const events = diffEvents(prev, snapshot(state));
     prev = snapshot(state);
     for (const e of events) handle(e);
@@ -2207,8 +2192,8 @@ function initEffects({ soundBtn }) {
       case 'rankRetract':
         sound.play('undo');
         break;
-      case 'rank':
-        sound.play('bingo');
+      case 'rank': // 名次出爐：第 1、2、3 名與第 4 名以後各用不同的音效
+        sound.play(e.rank === 1 ? 'bingo' : e.rank === 2 ? 'rank2' : e.rank === 3 ? 'rank3' : 'rank4');
         celebrate(e.rank, e.tieCount, M['core/claims'].namesOf(e.rank));
         break;
     }

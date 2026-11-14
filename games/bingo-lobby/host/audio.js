@@ -68,6 +68,37 @@
       duration: 0.22,
       notes: [{ t: 0, dur: 0.18, freq: 720, freqEnd: 360, type: 'sine', gain: 0.4 }],
     },
+    // ---- 名次出爐（第 1 名用上面的 bingo；2、3、4 名以後音色與長度各不相同）----
+    rank2: { // 第 2 名：方波琶音上行＋收尾和弦
+      duration: 1.1,
+      notes: [
+        { t: 0, dur: 0.12, freq: 440, type: 'square', gain: 0.16 },
+        { t: 0.1, dur: 0.12, freq: 554.4, type: 'square', gain: 0.16 },
+        { t: 0.2, dur: 0.12, freq: 659.25, type: 'square', gain: 0.16 },
+        { t: 0.34, dur: 0.6, freq: 880, type: 'triangle', gain: 0.4 },
+        { t: 0.34, dur: 0.6, freq: 659.25, type: 'triangle', gain: 0.28 },
+      ],
+    },
+    rank3: { // 第 3 名：兩聲柔和的鐘聲
+      duration: 0.9,
+      notes: [
+        { t: 0, dur: 0.4, freq: 784, type: 'sine', gain: 0.45 },
+        { t: 0, dur: 0.4, freq: 1568, type: 'sine', gain: 0.1 },
+        { t: 0.22, dur: 0.6, freq: 1046.5, type: 'sine', gain: 0.45 },
+        { t: 0.22, dur: 0.6, freq: 2093, type: 'sine', gain: 0.1 },
+      ],
+    },
+    rank4: { // 第 4 名以後：單聲短促叮
+      duration: 0.4,
+      notes: [{ t: 0, dur: 0.3, freq: 988, type: 'sine', gain: 0.4 }, { t: 0, dur: 0.3, freq: 1976, type: 'sine', gain: 0.08 }],
+    },
+    // ---- 介面按鈕（輕、短，不刺耳）----
+    tap: { duration: 0.08, notes: [{ t: 0, dur: 0.06, freq: 660, type: 'sine', gain: 0.22 }] },
+    confirm: { duration: 0.2, notes: [{ t: 0, dur: 0.07, freq: 660, type: 'sine', gain: 0.24 }, { t: 0.07, dur: 0.1, freq: 880, type: 'sine', gain: 0.24 }] },
+    cancel: { duration: 0.16, notes: [{ t: 0, dur: 0.12, freq: 520, freqEnd: 380, type: 'sine', gain: 0.22 }] },
+    warn: { duration: 0.2, notes: [{ t: 0, dur: 0.07, freq: 300, type: 'triangle', gain: 0.26 }, { t: 0.09, dur: 0.09, freq: 240, type: 'triangle', gain: 0.26 }] },
+    toggleOn: { duration: 0.16, notes: [{ t: 0, dur: 0.12, freq: 600, freqEnd: 900, type: 'sine', gain: 0.22 }] },
+    toggleOff: { duration: 0.16, notes: [{ t: 0, dur: 0.12, freq: 700, freqEnd: 450, type: 'sine', gain: 0.22 }] },
   };
 
 
@@ -159,7 +190,7 @@
      * 關閉、不支援或任何錯誤時都靜默略過。
      */
     function play(name, { delay = 0 } = {}) {
-      if (!enabled || !hubSfx() || !ctx || !master) return false;
+      if (!enabled || !hubSfx() || !ctx || !master) return false; // 是否播放：大廳音效設定（MiniHub.sfxOn）＋已在使用者手勢內解鎖
       const def = SOUND_DEFS[name];
       if (!def) return false;
       try {
@@ -217,6 +248,26 @@
     return { play, setEnabled, isEnabled, isSupported, suspend };
   }
 
+  const sound = createSound();
+  window.GameAudio = sound;
 
-  window.GameAudio = createSound();
+  // ---- 自動解鎖：第一次點擊／按鍵（使用者手勢）時建立 AudioContext；之後是否發聲只看 MiniHub.sfxOn() ----
+  const arm = () => {
+    try { if (!MiniHub.sfxOn()) return; } catch (e) { /* 沒有 SDK 就視為開啟 */ }
+    if (!sound.isEnabled()) sound.setEnabled(true);
+  };
+  for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, arm, { capture: true, passive: true });
+
+  // ---- 每個按鈕的點擊音效（事件委派，涵蓋之後動態產生的按鈕與彈窗）----
+  // 有自己音效的流程（連抽按鈕）不重複發聲；加上 data-nosfx 可略過單一按鈕。
+  addEventListener('click', (e) => {
+    const t = e.target && e.target.closest ? e.target.closest('button, summary, input[type="checkbox"], .room-chip') : null;
+    if (!t || t.disabled || t.closest('[data-nosfx]') || t.classList.contains('btn-batch')) return;
+    let name = 'tap';
+    if (t.type === 'checkbox') name = t.checked ? 'toggleOn' : 'toggleOff';
+    else if (t.classList.contains('btn-danger') || t.classList.contains('btn-danger-outline')) name = 'warn';
+    else if (t.classList.contains('btn-primary') || t.classList.contains('btn-gold')) name = 'confirm';
+    else if (t.classList.contains('btn-secondary') && /^(取消|關閉|返回|關閉收據)/.test((t.textContent || '').trim())) name = 'cancel';
+    sound.play(name);
+  }, true);
 })();
