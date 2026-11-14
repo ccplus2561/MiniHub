@@ -1040,8 +1040,8 @@
   let curAccount = "", curProvider = "";   // 帳號密碼登入者的帳號名稱（Google / GitHub 為空字串）
   function setAccount(p) {
     window.MiniHubAccount = p
-      ? { name: p.name, uid: p.gameUid || p.uid, email: curAccount ? "" : p.email, account: curAccount, provider: curProvider, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null, mPoints: p.mPoints || 0, streak: p.streak || 0, totalCheckins: p.totalCheckins || 0, lastCheckinAt: p.lastCheckinAt || null }
-      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null, prefs: null, mPoints: 0, streak: 0, totalCheckins: 0, lastCheckinAt: null };
+      ? { name: p.name, uid: p.gameUid || p.uid, email: curAccount ? "" : p.email, account: curAccount, provider: curProvider, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null, mPoints: p.mPoints || 0, streak: p.streak || 0, totalCheckins: p.totalCheckins || 0, lastCheckinAt: p.lastCheckinAt || null, rankBonus: p.rankBonus || {} }
+      : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null, prefs: null, mPoints: 0, streak: 0, totalCheckins: 0, lastCheckinAt: null, rankBonus: {} };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
   let photo = "";

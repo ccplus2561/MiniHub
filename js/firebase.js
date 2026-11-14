@@ -21,7 +21,7 @@ const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
 const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null, prefs: d.prefs && typeof d.prefs === "object" ? d.prefs : null,
-  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, totalCheckins: Number(d.totalCheckins) || 0, lastCheckinAt: ms(d.lastCheckinAt) });
+  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, totalCheckins: Number(d.totalCheckins) || 0, lastCheckinAt: ms(d.lastCheckinAt), rankBonus: d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {} });
 
 // 「上次登入」：每次新的登入（分頁關閉後重開 / 登出後再登入）記錄一次；畫面顯示的是「這次登入之前」的那一次
 const SS = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return null; };
@@ -186,12 +186,14 @@ async function setJoinRank(v) {
 
 // 每日簽到：以台灣時間（UTC+8）的日曆日為準，每天 00:00 換日。
 // 規則：每日簽到 +1 M；隔天接著簽 = streak + 1，中斷過 = 重設為 1；連續天數有額外點數 = 連續天數 × 0.5（保留小數）。
-//   獎勵 = 1 + streak × 0.5，例：第 1 天 +1.5、第 2 天 +2、第 3 天 +2.5、第 4 天 +3、第 10 天 +6。
+//   連續天數最多 7 天：第 7 天之後的隔天（第 8 天）重新從第 1 天計算。
+//   獎勵 = 1 + streak × 0.5，例：第 1 天 +1.5、第 2 天 +2、第 3 天 +2.5、第 4 天 +3 … 第 7 天 +4.5。
 // 排行榜加碼：貪吃蛇 / 2048 / 方塊消消樂 / 水果忍者 的排行榜第 1 名，每款遊戲每天可多領 +1 M（與簽到同一次領取）。
 //   users/{uid}.rankBonus = { 遊戲id: 最後領取的台灣日編號 }；當天已領過的遊戲不會重複領。
 //   就算今天已簽到，之後才登上第 1 名，下次登入 / 再次領取時仍可補領加碼。
 // 用交易讀最新資料再寫入（多裝置不會算錯）；日期 / 數值是否正確由 Firestore 規則（以伺服器時間）強制檢查。
 const TW_DAY = t => Math.floor((t + 8 * 3600000) / 864e5);
+const STREAK_MAX = 7;
 const RANK_BONUS_GAMES = ["snake", "puzzle", "block-blast", "fruit-slice"], RANK_BONUS = 1;
 // 目前自己是第 1 名的加碼遊戲（查詢失敗 / 沒加入排行榜的遊戲一律視為不是第 1 名）
 async function rankFirstGames(uid) {
@@ -224,7 +226,7 @@ async function checkin() {
     if (signed && !wins.length) throw bad("already-checked-in");
     let streak = Number(d.streak) || 0, total = Number(d.totalCheckins) || 0, reward = 0;
     if (!signed) {
-      streak = last !== null && TW_DAY(last) === today - 1 ? streak + 1 : 1;
+      streak = last !== null && TW_DAY(last) === today - 1 && streak < STREAK_MAX ? streak + 1 : 1;   // 連續滿 7 天後，隔天重新從 1 開始
       total += 1; reward = 1 + streak * 0.5;
     }
     const bonus = wins.length * RANK_BONUS;
@@ -233,7 +235,7 @@ async function checkin() {
     if (!signed) upd.lastCheckinAt = F.serverTimestamp();
     if (wins.length) { const nb = { ...claimed }; wins.forEach(g => { nb[g] = today; }); upd.rankBonus = nb; }
     tx.update(ref, upd);
-    return { ...r, reward, bonus, bonusGames: wins, signed: !signed, lastCheckinAt: signed ? last : Date.now() };
+    return { ...r, reward, bonus, bonusGames: wins, rankBonus: upd.rankBonus || claimed, signed: !signed, lastCheckinAt: signed ? last : Date.now() };
   });
   return out;
 }
