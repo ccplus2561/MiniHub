@@ -1,4 +1,4 @@
-import { SIZE, MIN, MAX, isFree } from './config.js';
+import { SIZE, MIN, MAX, LETTERS, isFree, colRange } from './config.js';
 
 /** 單格檢查：空白回傳 null；不合法回傳錯誤訊息字串。 */
 export function checkCell(raw) {
@@ -10,14 +10,18 @@ export function checkCell(raw) {
 }
 
 /** 掃描整張卡，回傳 { errors, duplicates, messages, filled } */
-export function validateGrid(grid) {
+export function validateGrid(grid, official = false) {
   const errors = new Map(), seen = new Map();
   let filled = 0;
   for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
     if (isFree(r, c)) continue;
     const raw = grid[r][c];
     if (raw !== '') filled++;
-    const msg = checkCell(raw);
+    let msg = checkCell(raw);
+    if (!msg && official && raw !== '') {
+      const { min, max } = colRange(c), n = Number(raw);
+      if (n < min || n > max) msg = `${LETTERS[c]} 欄需為 ${min}～${max}`;
+    }
     if (msg) { errors.set(`${r},${c}`, msg); continue; }
     if (raw === '') continue;
     const n = Number(raw);

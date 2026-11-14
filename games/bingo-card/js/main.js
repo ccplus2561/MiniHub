@@ -1,4 +1,4 @@
-import { SIZE, MIN, MAX, FILLABLE, CENTER, isFree } from './config.js';
+import { SIZE, MIN, MAX, FILLABLE, CENTER, LETTERS, colRange, isFree } from './config.js';
 import { validateGrid } from './validation.js';
 import { generateGrid, fillBlanks, emptyGrid } from './random.js';
 import { findCompletedLines, LINES } from './bingo.js';
@@ -7,6 +7,7 @@ import { beep, fanfare } from './sound.js';
 
 // 遊戲資料只存在記憶體（不使用 localStorage / IndexedDB）；登入後才會透過 MiniHub.cloud 存到雲端
 let mode = 'edit'; // 'edit' | 'play'
+let official = true; // BINGO 正常版（預設開啟）：每欄限定 B 1～15、I 16～30、N 31～45、G 46～60、O 61～75
 let grid = emptyGrid();
 let marked = newMarked();
 let cells = {};
@@ -132,13 +133,33 @@ function refresh(poppedKey) {
   document.body.dataset.mode = mode;
   introEl.textContent = playing
     ? (ended ? '遊戲已結束。' : '點擊被叫出的號碼來標記，連成線後可繼續玩，準備好再按「結束遊戲」。')
-    : `填入 24 格數字（${MIN}～${MAX}，不可重複），或使用「隨機產生」。`;
+    : official
+      ? '填入 24 格數字（B 1～15、I 16～30、N 31～45、G 46～60、O 61～75，不可重複），或使用「隨機產生」。'
+      : `填入 24 格數字（${MIN}～${MAX}，不可重複），或使用「隨機產生」。`;
+  paintOpt(playing);
   playing ? refreshPlay(poppedKey) : refreshEdit();
 }
 
+const optEl = $('opt-official'), colsEl = $('cols');
+function paintOpt(playing) {
+  optEl.checked = official; optEl.disabled = playing;
+  $('opt').classList.toggle('locked', playing);
+  $('opt-hint').textContent = official ? '開啟：每欄限定範圍（B 1～15、I 16～30…）' : '關閉：1～75 全部隨機，不分欄';
+  colsEl.hidden = !official;
+  if (official && !colsEl.children.length)
+    colsEl.replaceChildren(...LETTERS.map((L, c) => { const s = document.createElement('span'); const { min, max } = colRange(c); s.innerHTML = `${L}<small>${min}–${max}</small>`; return s; }));
+}
+optEl.addEventListener('change', () => {
+  if (mode === 'play') { optEl.checked = official; return; }
+  official = optEl.checked; notice = '';
+  const bad = official && grid.some((row, r) => row.some((v, c) => !isFree(r, c) && v !== '' && (Number(v) < colRange(c).min || Number(v) > colRange(c).max)));
+  refresh();
+  toast(bad ? '已開啟正常版：不在該欄範圍的數字已標示，請修正或重新隨機' : official ? '已開啟 BINGO 正常版' : '已關閉：1～75 全部隨機');
+});
+
 function refreshEdit() {
   bannerEl.hidden = true; hintEl.hidden = true; drawLines([]);
-  const { errors, duplicates, messages, filled } = validateGrid(grid);
+  const { errors, duplicates, messages, filled } = validateGrid(grid, official);
   for (const [key, { wrap, el }] of Object.entries(cells)) {
     if (!el) continue;
     const bad = errors.has(key) || duplicates.has(key);
@@ -213,7 +234,7 @@ function setGrid(next, msg) {
 }
 
 async function complete() {
-  const { messages, filled } = validateGrid(grid);
+  const { messages, filled } = validateGrid(grid, official);
   if (filled < FILLABLE) { notice = `還有 ${FILLABLE - filled} 格未填，填滿後才能完成。`; refresh(); shake(); return; }
   if (messages.length) { notice = '請先修正標示的錯誤或重複數字。'; refresh(); shake(); return; }
   if (!await ask('鎖定這張卡片？', '完成後數字將鎖定，無法修改。要開始遊戲嗎？', '開始遊戲')) return;
@@ -250,9 +271,9 @@ addEventListener('beforeunload', e => {
 btn.random.addEventListener('click', async () => {
   const hasData = grid.some(row => row.some(v => v !== ''));
   if (hasData && !await ask('重新隨機？', '目前填寫的數字會被整張覆蓋。若想保留已填數字，請用「補齊空格」。', '重新隨機')) return;
-  setGrid(generateGrid(), '已隨機產生，仍可修改');
+  setGrid(generateGrid(official), '已隨機產生，仍可修改');
 });
-btn.fill.addEventListener('click', () => setGrid(fillBlanks(grid), '已補齊空格（保留你填的數字）'));
+btn.fill.addEventListener('click', () => setGrid(fillBlanks(grid, official), '已補齊空格（保留你填的數字）'));
 btn.clear.addEventListener('click', async () => {
   if (grid.some(row => row.some(v => v !== '')) && !await ask('清空整張卡片？', '所有已填數字會被清除。', '清空')) return;
   setGrid(emptyGrid());
@@ -269,7 +290,7 @@ let cloudUid = '', cloudBusy = false; // cloudUid：已完成讀取（才允許�
 const myUid = () => { try { return MiniHub.player().uid || ''; } catch { return ''; } };
 function queueSave() {
   if (!cloud || !cloudUid || cloudUid !== myUid()) return;
-  cloud.save({ v: 1, mode, ended, grid, marked });
+  cloud.save({ v: 1, mode, ended, official, grid, marked });
 }
 const hasLocalData = () => mode === 'play' || grid.some(row => row.some(v => v !== ''));
 function cleanGrid(g) {
@@ -289,8 +310,9 @@ function cleanGrid(g) {
 function applySave(d) {
   const g = cleanGrid(d && d.grid);
   if (!g) return false;
+  official = typeof d.official === 'boolean' ? d.official : false; // 舊存檔沒有分欄限制
   let m = d.mode === 'play' ? 'play' : 'edit';
-  if (m === 'play') { const v = validateGrid(g); if (v.filled < FILLABLE || v.messages.length) m = 'edit'; }
+  if (m === 'play') { const v = validateGrid(g, official); if (v.filled < FILLABLE || v.messages.length) m = 'edit'; }
   const mk = newMarked();
   if (m === 'play' && Array.isArray(d.marked)) for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (d.marked[r] && d.marked[r][c] === true) mk[r][c] = true;
   grid = g; mode = m; marked = mk; ended = m === 'play' && d.ended === true;

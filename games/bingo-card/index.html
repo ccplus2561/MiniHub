@@ -25,7 +25,13 @@
 
     <div id="banner" class="banner" role="status" hidden></div>
 
+    <label class="opt" id="opt" for="opt-official">
+      <span class="opt-text"><strong>BINGO 正常版</strong><small id="opt-hint"></small></span>
+      <input id="opt-official" class="switch" type="checkbox" checked>
+    </label>
+
     <section class="card" id="card" aria-label="賓果電子卡">
+      <div id="cols" class="cols" aria-hidden="true"></div>
       <div class="board">
         <div id="grid" class="grid"></div>
         <svg id="lines" class="lines" aria-hidden="true"></svg>
@@ -63,6 +69,6 @@
     </div>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="js/main.js?v=2"></script>
+  <script type="module" src="js/main.js?v=3"></script>
 </body>
 </html>

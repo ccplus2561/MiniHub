@@ -147,3 +147,21 @@ dialog h2 { margin: 0 0 8px; font-size: 1.6rem; } dialog p { margin: 0 0 20px; f
 }
 #dlg-text { white-space: pre-line; }
 .dlg-actions .btn { min-width: 6.5em; }
+
+/* BINGO 正常版開關 */
+.opt { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 0 0 12px; padding: 12px 16px; border-radius: 16px; background: var(--panel); border: 1.5px solid var(--panel-line); cursor: pointer; }
+.opt-text { display: flex; flex-direction: column; }
+.opt-text strong { font-size: 1.15rem; }
+.opt-text small { color: var(--soft); font-size: .95rem; }
+.opt.locked { opacity: .75; cursor: default; }
+.switch { appearance: none; -webkit-appearance: none; flex: none; position: relative; width: 52px; height: 30px; margin: 0; border-radius: 99px; background: #51646f; cursor: pointer; transition: background .2s; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.switch:checked { background: var(--gold); }
+.switch:checked::after { transform: translateX(22px); background: #143b49; }
+.switch:disabled { cursor: default; }
+.switch:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
+/* B I N G O 欄標 */
+.cols { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin: 0 0 6px; text-align: center; font-weight: 900; font-size: 1.2rem; color: var(--head); }
+.cols[hidden] { display: none; }
+.cols span { display: block; }
+.cols small { display: block; font-weight: 600; font-size: .7rem; color: var(--k); }
