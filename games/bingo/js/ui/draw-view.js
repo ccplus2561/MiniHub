@@ -2,11 +2,10 @@
 // DOM 只建立一次，之後由 state.subscribe 驅動更新（按鈕不會被重建，鍵盤焦點與遙控器操作不中斷）。
 import { getState, setState, subscribe } from '../core/state.js';
 import { drawnNumbers, appendRecords } from '../core/draw-engine.js';
-import { paidDraw, maxBatchCount, maxBatchAmount } from '../core/batch-draw.js';
+import { batchDraw, maxBatchCount } from '../core/batch-draw.js';
 import { canDeclareRank, declareRank, nextRank, retractLastRank, coveredPositions } from '../core/ranks.js';
-import { NUMBER_MAX, FINANCE, BATCH_PLAY_INTERVAL_MS } from '../config/defaults.js';
+import { NUMBER_MAX, RANK_COUNT, BATCH_PLAY_INTERVAL_MS } from '../config/defaults.js';
 import { el, toast, confirmDialog, showModal } from '../utils/dom.js';
-import { formatMoney } from '../utils/format.js';
 import { createCheckPanel } from './check-view.js';
 import { endGameFlow } from './receipt-view.js';
 
@@ -111,12 +110,12 @@ export function initDrawView(root) {
   }
 
   /**
-   * 連抽：先一次算出結果，再每 0.8 秒套用一筆（每一步的 state 都一致，彩池逐筆增加）。
+   * 連抽：先一次算出結果，再每 0.8 秒套用一筆（每一步的 state 都一致）。
    * 同時開啟懸浮視窗，逐筆顯示本次所有抽出內容；抽完後按「確定」關閉，次數恢復為 1。
    */
   async function onBatch() {
     if (busy) return;
-    const result = paidDraw(getState(), stepper.get());
+    const result = batchDraw(getState(), stepper.get());
     if (!result.ok) {
       toast(MESSAGES[result.code] ?? result.message, 'error');
       return;
@@ -133,8 +132,6 @@ export function initDrawView(root) {
     update();
 
     const total = result.records.length;
-    const price = getState().settings.drawPrice;
-    const prizeOn = getState().settings.prizeEnabled;
     const grid = el('div', { class: 'batch-results', role: 'list', 'aria-label': '本次連抽結果' },
       ...Array.from({ length: total }, () => el('div', { class: 'chip is-empty', role: 'listitem' })));
     grid.style.setProperty('--n', String(total));
@@ -166,7 +163,7 @@ export function initDrawView(root) {
 
     const shownRecords = result.records.slice(0, shown);
     const count = (type) => shownRecords.filter((r) => r.type === type).length;
-    const parts = [prizeOn ? `共 ${shown} 次・${formatMoney(shown * price)}` : `共 ${shown} 次`, `新號 ${count('new')}`];
+    const parts = [`共 ${shown} 次`, `新號 ${count('new')}`];
     if (count('repeat')) parts.push(`重複 ${count('repeat')}`);
     if (count('blank')) parts.push(`銘謝惠顧 ${count('blank')}`);
     summary.textContent = parts.join('・');
@@ -179,7 +176,7 @@ export function initDrawView(root) {
   function onRankBtn() {
     if (busy) return;
     const { game } = getState();
-    if (game.status === 'playing' && coveredPositions(game.ranks) >= FINANCE.prizeRankCount) {
+    if (game.status === 'playing' && coveredPositions(game.ranks) >= RANK_COUNT) {
       endGameFlow();
       return;
     }
@@ -191,15 +188,15 @@ export function initDrawView(root) {
     const state = getState();
     const rank = nextRank(state);
     const canDeclare = canDeclareRank(state);
-    const maxTie = state.settings.prizeEnabled ? Math.max(1, state.settings.players) : 99;
+    const maxTie = 99;
     const tie = createStepper({ min: 1, max: maxTie, value: 1, label: '同時賓果人數', onChange: () => refreshNote() });
     const note = el('p', { class: 'field-hint' });
     const refreshNote = () => {
       const n = tie.get();
-      const last = Math.min(FINANCE.prizeRankCount, rank + n - 1);
+      const last = Math.min(RANK_COUNT, rank + n - 1);
       note.textContent = n > 1 && last > rank
-        ? `${n} 人同時賓果：第 ${rank}～${last} 名獎金合併後 ${n} 人平分，下一個名次為第 ${rank + n} 名。`
-        : n > 1 ? `${n} 人同時賓果，平分第 ${rank} 名獎金。` : '只有 1 人賓果時維持 1。';
+        ? `${n} 人同時賓果：共同占用第 ${rank}～${last} 名，下一個名次為第 ${rank + n} 名。`
+        : n > 1 ? `${n} 人同時賓果，共同占用第 ${rank} 名。` : '只有 1 人賓果時維持 1。';
     };
     refreshNote();
 
@@ -279,20 +276,19 @@ export function initDrawView(root) {
     const maxCount = maxBatchCount(settings);
     stepper.setBounds(1, maxCount);
     const n = stepper.get();
-    const amount = n * settings.drawPrice;
     const overLimit = n > settings.maxBatchDraws;
     batchLabel.textContent = `🎰 連抽 ${n} 次`;
-    batchSub.textContent = settings.prizeEnabled ? `${formatMoney(amount)}（上限為 ${formatMoney(maxBatchAmount(settings))}）` : `一次最多 ${maxCount} 次`;
+    batchSub.textContent = `一次最多 ${maxCount} 次`;
     batchBtn.disabled = !canDraw || overLimit;
     if (busy || !playing) stepper.setDisabled(true);
 
     // 名次、結束
-    const rankFull = coveredPositions(game.ranks) >= FINANCE.prizeRankCount;
+    const rankFull = coveredPositions(game.ranks) >= RANK_COUNT;
     rankBtn.textContent = rankFull && playing ? '🏁 結束遊戲' : rankFull ? '🎉 名次已登錄完' : `🎉 第 ${nextRank(state)} 名賓果`;
     rankBtn.disabled = !playing || busy || (game.ranks.length === 0 && !canDeclareRank(state));
     const ended = game.status === 'ended';
 
-    hint.textContent = ended ? '本局已結束，可查看結算收據或到設定頁開新局' : !playing ? MESSAGES.NOT_PLAYING : busy ? '連抽播放中，請稍候…' : allDrawn ? MESSAGES.ALL_DRAWN : '';
+    hint.textContent = ended ? '本局已結束，可查看本局結果或到設定頁開新局' : !playing ? MESSAGES.NOT_PLAYING : busy ? '連抽播放中，請稍候…' : allDrawn ? MESSAGES.ALL_DRAWN : '';
     hint.classList.toggle('is-warn', allDrawn && playing && !busy);
     gotoSettings.hidden = playing || ended;
 

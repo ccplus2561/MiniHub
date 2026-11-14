@@ -1,7 +1,7 @@
 /* 版面（僅電腦版，16:9 投屏、整頁不捲動）
    ┌ 左 24% ────┬ 中（彈性）──────────┬ 右 30% ──┐
    │ 賓果抽獎盤 更多│ 抽號卡：大球＋連抽   │ 號碼矩陣 │
-   │ 獎金池      │ 最新 5 次           │          │
+   │ 抽獎進度    │ 最新 5 次           │          │
    └────────────┴────────────────────┴──────────┘
    設定頁：同樣頂端有「賓果抽獎盤 更多」，內容置中、可捲動。 */
 
@@ -33,7 +33,7 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 .col-right { display: flex; }
 .col-right > .board-wrap { flex: 1; }
 
-/* 左：獎金池（填滿剩餘高度，已抽出貼底） */
+/* 左：抽獎進度（填滿剩餘高度，已抽出貼底） */
 .prize-card { flex: 1; display: flex; flex-direction: column; padding: 16px 18px; overflow: hidden; }
 .pool-label { font-size: clamp(.95rem, 2vh, 1.15rem); }
 .pool-amount-xl { font-size: clamp(2.2rem, 6.4vh, 4rem); line-height: 1.15; }
@@ -118,12 +118,6 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 .unit-input:not(:has(.unit)) .input { text-align: right; }
 .set-row .switch-row, .set-row .switch { margin: 0; }
 .set-row.is-wide .set-control { display: block; }
-.set-row.is-wide .ratio-foot { margin-top: 10px; }
-
-/* 獎金設定：預設遮蔽 */
-.prize-cover { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 44px 16px; color: var(--muted); font-weight: 700; font-size: 1.1rem; }
-.prize-cover .btn { min-height: 48px; padding: 0 28px; }
-.prize-hide-row { display: flex; justify-content: flex-end; padding: 12px 0 8px; }
 
 /* 規則內容編輯 */
 .rules-edit-body { padding: 12px 0 6px; }

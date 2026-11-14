@@ -4,7 +4,7 @@ import { initTabs } from './ui/tabs.js';
 import { initSettings } from './ui/settings-view.js';
 import { initDrawView } from './ui/draw-view.js';
 import { initTickerView } from './ui/ticker-view.js';
-import { initPrizeView } from './ui/prize-view.js';
+import { initProgressView } from './ui/progress-view.js';
 import { initBoardView } from './ui/board-view.js';
 import { initEffects } from './ui/effects.js';
 import { initRulesView } from './ui/rules-view.js';
@@ -20,7 +20,7 @@ function start() {
   try { localStorage.removeItem('bingo-board-v1'); } catch { /* 忽略 */ }
   setState({ ui: { layout: 'desktop' } });
   initTabs(document.querySelectorAll('[data-panel]'));
-  initPrizeView(document.getElementById('pool-root'));
+  initProgressView(document.getElementById('pool-root'));
   initDrawView(document.getElementById('draw-root'));
   initTickerView(document.getElementById('ticker-root'));
   initBoardView(document.getElementById('board-root'));
@@ -54,7 +54,7 @@ function start() {
       badge.textContent = STATUS_TEXT[status] ?? status;
       badge.dataset.status = status;
     });
-    receiptBtn.hidden = status !== 'ended'; // 結束後才顯示「🧾 收據」
+    receiptBtn.hidden = status !== 'ended'; // 結束後才顯示「🧾 結果」
   };
   updateBadge();
   subscribe(updateBadge);

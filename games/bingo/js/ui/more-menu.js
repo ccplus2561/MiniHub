@@ -1,4 +1,4 @@
-// 電腦版：標題列移除後，在獎金池上方顯示「賓果抽獎盤」＋「更多」按鈕；
+// 電腦版：標題列移除後，在抽獎進度上方顯示「賓果抽獎盤」＋「更多」按鈕；
 // 更多選單依序：規則、驗卡、音效、設定、結束遊戲（結束遊戲有確認視窗，見 endGameFlow）。
 import { getState, setState } from '../core/state.js';
 import { el, showModal } from '../utils/dom.js';
@@ -47,7 +47,7 @@ function openMoreMenu() {
     item('❓', '規則', () => $('rules-btn').click()),
     item('🔍', '驗卡', () => openCheckModal()),
     item(tab === 'settings' ? '🎲' : '⚙️', tab === 'settings' ? '回到抽號卡' : '設定', () => $('settings-btn').click()),
-    item('🏁', status === 'ended' ? '查看結算收據' : '結束遊戲', () => (status === 'ended' ? openReceipt() : endGameFlow()), { disabled: status === 'setup' })
+    item('🏁', status === 'ended' ? '查看本局結果' : '結束遊戲', () => (status === 'ended' ? openReceipt() : endGameFlow()), { disabled: status === 'setup' })
   );
   modal = showModal({ title: '更多', content, actions: [{ text: '關閉', kind: 'secondary' }] });
 }

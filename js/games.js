@@ -54,7 +54,7 @@ window.GAMES = [
   {
     id: "bingo", title: "賓果抽獎盤", category: "桌遊", emoji: "🧧", icon: "icons/bingo.svg",
     colors: ["#a8142a", "#4a0a14"], path: "games/bingo/index.html",
-    desc: "聚會用的賓果抽獎盤：抽號、彩池與獎金一目了然。\n規則：主持人抽號、玩家用紙卡對號，登錄名次後自動分配獎金。\n操作：滑鼠／觸控點擊，建議用電腦或平板橫向投屏。",
+    desc: "聚會用的賓果抽獎盤：抽號、名次與進度一目了然。\n規則：主持人抽號、玩家用紙卡對號，並登錄名次。\n操作：滑鼠／觸控點擊，建議用電腦或平板橫向投屏。",
     how: "", featured: false, music: false,
     tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: false, touch: true, score: false, cloud: true }
   },

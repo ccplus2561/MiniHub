@@ -22,7 +22,7 @@ function pack(state) {
   const h = game.history.map((r) => {
     let b = -1;
     if (r.batchId != null) { b = batches.indexOf(r.batchId); if (b < 0) b = batches.push(r.batchId) - 1; }
-    return [TYPES.indexOf(r.type), r.number, r.paid ? 1 : 0, b, r.ts];
+    return [TYPES.indexOf(r.type), r.number, 0, b, r.ts];
   });
   return { v: 1, playing: true, s, h, b: batches, r: game.ranks };
 }
@@ -44,14 +44,14 @@ function unpack(d) {
     const type = TYPES[row[0]];
     if (!type) return null;
     const seq = history.length + 1;
-    history.push({ id: `d${seq}`, seq, type, number: type === 'blank' ? null : row[1], paid: row[2] === 1, batchId: row[3] >= 0 ? batches[row[3]] ?? null : null, ts: row[4] });
+    history.push({ id: `d${seq}`, seq, type, number: type === 'blank' ? null : row[1], batchId: row[3] >= 0 ? batches[row[3]] ?? null : null, ts: row[4] });
   }
   let streak = 0;
   for (let i = history.length - 1; i >= 0 && history[i].type !== 'new'; i--) streak++;
   const ranks = Array.isArray(d.r) ? d.r : [];
   return {
     settings,
-    game: { status: 'playing', history, paidDrawCount: history.filter((r) => r.paid).length, invalidStreak: streak, ranks },
+    game: { status: 'playing', history, invalidStreak: streak, ranks },
   };
 }
 

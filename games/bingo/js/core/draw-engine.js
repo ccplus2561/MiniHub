@@ -1,15 +1,13 @@
 // 抽號引擎：純函式、無 DOM。不直接修改 state，回傳新的 game 欄位供呼叫端 setState。
-import { NUMBER_MIN, NUMBER_MAX, DRAW_RULES } from '../config/defaults.js';
-import { calcPressure } from './finance.js';
+import { NUMBER_MIN, NUMBER_MAX, DRAW_RULES, DEFAULT_PRESSURE } from '../config/defaults.js';
 
 const TOTAL = NUMBER_MAX - NUMBER_MIN + 1;
 
 const clamp01 = (n) => Math.min(1, Math.max(0, n));
 
-/** 預設壓力值：由 finance 的 calcPressure 提供（無 state 時退回常數） */
-export function defaultPressure(state) {
-  if (state && state.settings.prizeEnabled === false) return 0; // 獎金關閉：沒有金錢壓力
-  return state ? calcPressure(state) : DRAW_RULES.defaultPressure;
+/** 預設壓力值：固定為基礎機率 */
+export function defaultPressure() {
+  return DEFAULT_PRESSURE;
 }
 
 /** 已抽出的不重複號碼（只有 type='new' 才算首次抽中） */
@@ -33,13 +31,12 @@ export function invalidRate(pressure) {
   return lo + (hi - lo) * p;
 }
 
-/** 在 game 後面追加紀錄，回傳新的 game 欄位（history、paidDrawCount、invalidStreak） */
+/** 在 game 後面追加紀錄，回傳新的 game 欄位（history、invalidStreak） */
 export function appendRecords(game, records) {
   const history = [...game.history, ...records];
   return {
     ...game,
     history,
-    paidDrawCount: game.paidDrawCount + records.filter((r) => r.paid).length,
     invalidStreak: recomputeStreak(history),
   };
 }
@@ -47,11 +44,11 @@ export function appendRecords(game, records) {
 /**
  * 抽一個號碼。
  * 成功：{ ok:true, record, game }；失敗：{ ok:false, code, message }（75 號抽完為 'ALL_DRAWN'）
- * 選項：paid、batchId、rng（預設 Math.random）、getPressure(state)、now()
+ * 選項：batchId、rng（預設 Math.random）、getPressure(state)、now()
  */
 export function drawOne(
   state,
-  { paid = false, batchId = null, rng = Math.random, getPressure = defaultPressure, now = Date.now } = {}
+  { batchId = null, rng = Math.random, getPressure = defaultPressure, now = Date.now } = {}
 ) {
   const { settings, game } = state;
   const drawn = drawnNumbers(game.history);
@@ -83,6 +80,6 @@ export function drawOne(
   }
 
   const seq = game.history.length + 1;
-  const record = { id: `d${seq}`, seq, type, number, paid: !!paid, batchId, ts: now() };
+  const record = { id: `d${seq}`, seq, type, number, batchId, ts: now() };
   return { ok: true, record, game: appendRecords(game, [record]) };
 }

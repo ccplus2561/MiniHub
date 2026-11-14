@@ -44,13 +44,6 @@
   background: #efe9dc; color: #8a7a70; border-style: dashed; cursor: not-allowed;
 }
 
-/* 獎金比例 */
-.ratio-row { display: flex; align-items: center; gap: 8px; }
-.ratio-row .input { text-align: center; min-width: 0; }
-.ratio-colon { font-size: var(--fs-xl); font-weight: 700; color: var(--muted); }
-.ratio-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
-.ratio-sum { font-weight: 700; color: var(--ok); }
-.ratio-sum.is-bad { color: var(--red-500); }
 
 /* 開關 */
 .switch-row {
@@ -123,7 +116,7 @@
 .placeholder { text-align: center; padding: 48px 16px; }
 .ball-caption { font-weight: 700; color: var(--muted); }
 
-/* 獎金池（階段 3 簡易版） */
+/* 抽獎進度（簡易版） */
 .pool-amount { font-family: var(--font-brand); font-size: 2.5rem; font-weight: 900; color: var(--red-700); line-height: 1.3; }
 .sub-title { font-size: var(--fs-md); color: var(--muted); margin-top: 14px; }
 
@@ -221,7 +214,7 @@
   to { transform: none; opacity: 1; }
 }
 
-/* 獎金池（手機分頁與電腦左欄共用） */
+/* 抽獎進度（手機分頁與電腦左欄共用） */
 .prize-card { margin-bottom: 14px; }
 .pool-label { font-weight: 700; color: var(--muted); text-align: center; }
 .pool-main { text-align: center; padding: 4px 0 8px; }
@@ -367,7 +360,7 @@
 .boot.is-failed .boot-icon { animation: none; opacity: .6; }
 @keyframes boot-spin { 0%, 100% { transform: perspective(300px) rotateY(0); } 50% { transform: perspective(300px) rotateY(180deg); } }
 
-/* ===== 階段 7：結算收據、規則說明、列印 ===== */
+/* ===== 階段 7：本局結果、規則說明、列印 ===== */
 .receipt-overlay {
   position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column;
   background: var(--paper);
@@ -538,7 +531,6 @@ html[data-layout="desktop"] .draw-topbar .btn-tool { min-height: clamp(36px, 5vh
 
 /* 提示、收合區塊、更多選單 */
 .toast { animation: toast-in .25s cubic-bezier(.2,.9,.3,1.2) both; }
-.prize-fold[open] > :not(summary) { animation: fold-in .28s ease-out both; }
 .rule-edit { animation: fold-in .25s ease-out both; }
 .more-list .more-item { animation: rise-in .32s cubic-bezier(.2,.8,.2,1) both; }
 .more-list .more-item:nth-child(2) { animation-delay: .04s; }
