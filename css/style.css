@@ -2076,13 +2076,5 @@ body.no-anim #helpModal *, body.no-anim #helpModal *::before, body.no-anim #help
 .ci-bonus-head b { display: flex; align-items: center; gap: 6px; font-size: 24px; font-weight: 800; color: #fff; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ci-bonus-head b .mp-coin { font-size: .8em; }
 .ci-bonus-head b em { font-style: normal; font-size: 14px; font-weight: 600; color: var(--muted); margin-left: 4px; }
-.ci-bchips { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 0; margin: 0; }
-.ci-bchips li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 12px; font-size: 13px; font-weight: 700; color: var(--muted); border: 1.5px dashed rgba(214, 230, 245, .22); white-space: nowrap; }
-.ci-bchips li span { font-size: 20px; line-height: 1; filter: grayscale(1); opacity: .6; }
-.ci-bchips li.is-got { color: #d8f5b0; border: 1.5px solid rgba(120, 182, 40, .55); background: rgba(120, 182, 40, .16); }
-.ci-bchips li.is-got span { filter: none; opacity: 1; }
-.ci-bchips li.is-got::after { content: "+1"; position: absolute; top: -8px; right: -4px; padding: 0 6px; border-radius: 999px; font-size: 11px; font-weight: 800; color: #fff; background: linear-gradient(180deg, #78b628, #4f8a1c); }
 body[data-ci="guest"] .ci-bonus { opacity: .75; }
 .ci-note { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 0; }
-@media (max-width: 520px) { .ci-bchips { grid-template-columns: repeat(2, 1fr); } }
-body.m .ci-bchips { grid-template-columns: repeat(2, 1fr); }

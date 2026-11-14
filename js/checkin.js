@@ -61,7 +61,6 @@
     // 排行榜加碼：今天已領的款數與總額（每款 +1 M，最多 4 款）
     var got = bonusToday();
     fill("[data-ci-bonus]", fmt(got.length));
-    $$("#ciBonus li").forEach(function (li) { var on = got.indexOf(li.dataset.g) >= 0; li.classList.toggle("is-got", on); });
     schedule(); fitSoon();
   }
 
