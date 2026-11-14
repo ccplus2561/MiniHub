@@ -90,9 +90,9 @@ const DEFAULT_SETTINGS = {
   allowBlank: true,
   hostFeePercent: 10,
   locked: false,
-  prizeEnabled: true, // 關閉後：沒有獎金池、不收費、抽號不受任何金錢限制
-  spectatorShowPool: false, // 旁觀者是否看得到目前獎金池金額（預設不公開）
-  officialBingo: false, // BINGO 正式版：玩家電子卡每欄限定範圍（B 1～15、I 16～30、N 31～45、G 46～60、O 61～75）；預設關閉＝全部隨機。開局後鎖定
+  prizeEnabled: false, // 預設關閉。關閉時：沒有獎金池、不收費、抽號不受任何金錢限制
+  spectatorShowPool: false, // 旁觀者是否看得到目前獎金池金額（預設關閉；啟用獎金池時自動跟著開啟，獎金池關閉時強制關閉）
+  officialBingo: true, // BINGO 正式版：玩家電子卡每欄限定範圍（B 1～15、I 16～30、N 31～45、G 46～60、O 61～75）；預設開啟，關閉＝全部隨機。開局後鎖定
   bingoLines: 3, // 玩家要連成幾條線，才能按「我已賓果並上名次」（開局後鎖定）
   autoMark: false, // 自動對獎功能：開啟後玩家可選擇「自動對號」，主持人抽出的號碼會自動標在玩家卡上（預設關閉＝玩家自己點）
   rules: DEFAULT_RULES.map((r) => ({ ...r })),
@@ -538,7 +538,8 @@ function initSettings(root) {
       id: `f-${key}`,
       checked: settings[key],
       disabled: !editable,
-      onChange: () => setState({ settings: { [key]: input.checked } }),
+      // 貼心連動：啟用獎金池 → 旁觀者顯示獎金池預設開啟；關閉獎金池 → 旁觀者顯示獎金池強制關閉
+      onChange: () => setState({ settings: key === 'prizeEnabled' ? { prizeEnabled: input.checked, spectatorShowPool: input.checked } : { [key]: input.checked } }),
     });
     return el(
       'label',
@@ -2396,6 +2397,7 @@ function unpack(d) {
     settings[k] = ok ? v : def;
   }
   settings.locked = true;
+  if (!settings.prizeEnabled) settings.spectatorShowPool = false;   // 獎金池關閉時，旁觀者顯示獎金池一律關閉
   const batches = Array.isArray(d.b) ? d.b : [];
   const t0 = Number(d.t0) || 0;
   const history = [];
