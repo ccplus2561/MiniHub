@@ -200,6 +200,7 @@
   }
 
   const officialOn = () => !!(ROOM && hostData && hostData.ob === 1);   // 主持人是否開啟 BINGO 正式版（每欄限定範圍）
+  const needLines = () => { const n = hostData && Number(hostData.rl); return Number.isInteger(n) && n >= 1 && n <= 12 ? n : 1; };   // 主持人設定：要連成幾條線才能上名次
   const hostAuto = () => !!(ROOM && hostData && hostData.am === 1);   // 主持人是否開啟自動對獎功能
   const autoOn = () => hostAuto() && auto;                            // 這位玩家是否正在自動對號
 
@@ -336,10 +337,17 @@
   }
 
   /** 自動對號開關：只有主持人開啟「自動對獎功能」時才顯示 */
+  let tipsFolded = false;
+  try { tipsFolded = localStorage.getItem('bingoLobby.tipsFolded') === '1'; } catch (e) { /* 忽略 */ }
   function refreshAuto() {
     const row = $('auto-row'); if (!row) return;
     row.hidden = !hostAuto();
     $('auto-toggle').checked = auto;
+    // 提示收合：只有主持人開啟自動對獎、出現這個面板時才生效，收合後隱藏說明文字，讓出空間給電子卡
+    const folded = hostAuto() && tipsFolded;
+    document.body.dataset.tips = folded ? 'folded' : '';
+    $('auto-fold').setAttribute('aria-expanded', String(!folded));
+    $('auto-fold').textContent = folded ? '▸ 展開提示' : '▾ 收合提示';
   }
 
   /** BINGO 正式版提示：顯示欄位範圍說明；回傳這次是否剛切換（主持人開關改變） */
@@ -386,7 +394,7 @@
     }
     $('meter').hidden = false;
     $('meter-bar').style.width = `${(count / 25) * 100}%`;
-    progressEl.textContent = `已標記 ${count} / 25（含 FREE） ・ 連線 ${lines.length} 條`;
+    progressEl.textContent = `已標記 ${count} / 25（含 FREE） ・ 連線 ${lines.length} 條${ROOM ? `（需 ${needLines()} 條才能上名次）` : ''}`;
     // 「差一格」提示：哪些線只差一個
     const near = LINES.filter(l => l.filter(([r, c]) => !marked[r][c]).length === 1).length;
     hintEl.hidden = !near;
@@ -472,6 +480,11 @@
   btn.clear.addEventListener('click', async () => {
     if (grid.some(row => row.some(v => v !== '')) && !await ask('清空整張卡片？', '所有已填數字會被清除。', '清空')) return;
     setGrid(emptyGrid());
+  });
+  $('auto-fold').addEventListener('click', () => {
+    tipsFolded = !tipsFolded;
+    try { localStorage.setItem('bingoLobby.tipsFolded', tipsFolded ? '1' : '0'); } catch (e) { /* 忽略 */ }
+    refreshAuto();
   });
   $('auto-toggle').addEventListener('change', e => {
     auto = e.currentTarget.checked;
@@ -586,7 +599,7 @@
       const p = pos.get(n);
       if (!p) continue;
       m[p[0]][p[1]] = true;
-      if (findCompletedLines(m).length) return k;
+      if (findCompletedLines(m).length >= needLines()) return k;
     }
     return 0;
   }
@@ -596,22 +609,23 @@
     const me = myId();
     const mine = hostList('cl').find(x => x[0] === me);
     const rejected = hostList('rj').includes(me);
-    const lines = mode === 'play' ? findCompletedLines(marked).length : 0;
+    const lines = mode === 'play' ? findCompletedLines(marked).length : 0, need = needLines();
     if (mode !== 'play' || (!lines && !mine && !rejected)) { claimBox.hidden = true; return; }
     claimBox.hidden = false;
     claimBtn.hidden = true;
-    claimBox.dataset.s = rejected ? 'bad' : mine ? 'ok' : claimSent ? 'wait' : 'ready';
+    claimBox.dataset.s = rejected ? 'bad' : mine ? 'ok' : claimSent ? 'wait' : lines >= need ? 'ready' : 'wait';
     if (rejected) claimMsg.textContent = '主持人已撤銷你的賓果宣告，如有疑問請詢問主持人。';
     else if (mine) claimMsg.textContent = `🏆 你已排進第 ${mine[1]} 名！`;
     else if (claimSent) claimMsg.textContent = '已通知主持人，等待確認排名…';
     else if (ended) { claimMsg.textContent = '本局已結束。'; }
-    else { claimMsg.textContent = '連成線了！按下按鈕通知主持人，系統會依完成順序自動排名次。'; claimBtn.hidden = false; }
+    else if (lines < need) claimMsg.textContent = `目前連成 ${lines} 條，要連成 ${need} 條才能上名次。`;
+    else { claimMsg.textContent = `已連成 ${lines} 條（需 ${need} 條）！按下按鈕通知主持人，系統會依完成順序自動排名次。`; claimBtn.hidden = false; }
   }
 
   async function sendClaim() {
     if (!ROOM || mode !== 'play' || ended) return;
     const k = bingoK();
-    if (!k) { toast('目前還沒有連成線'); return; }
+    if (!k || findCompletedLines(marked).length < needLines()) { toast(`要連成 ${needLines()} 條線才能上名次`); return; }
     if (!await ask('完成賓果？', '會通知主持人並自動排進名次。請確認你的卡片真的有連成線。', '完成賓果')) return;
     const data = { uid: myId(), name: (MiniHub.player().displayName || MiniHub.player().name || '玩家').slice(0, 20), k };
     claimSent = true; refreshClaim();

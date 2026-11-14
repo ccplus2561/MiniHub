@@ -24,10 +24,16 @@
 
     <div id="banner" class="banner" role="status" hidden></div>
 
-    <label id="auto-row" class="auto-row" for="auto-toggle" hidden>
-      <span class="auto-row__text"><strong>🤖 自動對號</strong><small>開啟後，主持人抽出的號碼會自動標在卡片上；關閉則自己點擊號碼</small></span>
-      <input id="auto-toggle" type="checkbox" class="auto-row__switch">
-    </label>
+    <div id="auto-row" class="auto-row" hidden>
+      <div class="auto-row__top">
+        <label class="auto-row__main" for="auto-toggle">
+          <strong>🤖 自動對號</strong>
+          <input id="auto-toggle" type="checkbox" class="auto-row__switch">
+        </label>
+        <button id="auto-fold" type="button" class="auto-row__fold" aria-expanded="true">▾ 收合提示</button>
+      </div>
+      <small class="auto-row__desc">開啟後，主持人抽出的號碼會自動標在卡片上；關閉則自己點擊號碼</small>
+    </div>
 
     <section class="card" id="card" aria-label="賓果卡">
       <div id="official-note" class="official-note" role="status" hidden>🎯 <strong>BINGO 正式版</strong>：每欄數字範圍固定，B 欄 1～15、I 欄 16～30、N 欄 31～45、G 欄 46～60、O 欄 61～75。</div>
@@ -48,7 +54,7 @@
 
     <div id="claim" class="claim" hidden>
       <p id="claim-msg" class="claim__msg"></p>
-      <button id="btn-bingo" type="button" class="btn primary claim__btn"><span aria-hidden="true">🎉</span> 完成賓果！</button>
+      <button id="btn-bingo" type="button" class="btn primary claim__btn"><span aria-hidden="true">🎉</span> 我已賓果並上名次</button>
     </div>
 
     <div class="actions">
