@@ -192,7 +192,28 @@
   function ask(title, text, okLabel = '確定') {
     const dlg = $('dlg');
     $('dlg-title').textContent = title; $('dlg-text').textContent = text; $('dlg-ok').textContent = okLabel;
-    return new Promise(res => { dlg.addEventListener('close', () => res(dlg.returnValue === 'ok'), { once: true }); dlg.showModal(); });
+    $('dlg-cancel').hidden = false;
+    return new Promise(res => {
+      dlg.returnValue = '';
+      dlg.addEventListener('close', () => res(dlg.returnValue === 'ok'), { once: true });
+      if (dlg.open) dlg.close('cancel');
+      dlg.showModal();
+    });
+  }
+  // 對話框按鈕直接關閉（不用 <form method="dialog">：嵌在大廳的沙盒 iframe 沒開表單權限，會讓按鈕沒反應）
+  $('dlg-ok').addEventListener('click', () => $('dlg').close('ok'));
+  $('dlg-cancel').addEventListener('click', () => $('dlg').close('cancel'));
+  /** 只有「知道了」的提示 */
+  function tell(title, text, okLabel = '知道了') {
+    const dlg = $('dlg');
+    $('dlg-title').textContent = title; $('dlg-text').textContent = text; $('dlg-ok').textContent = okLabel;
+    $('dlg-cancel').hidden = true;
+    return new Promise(res => {
+      dlg.returnValue = '';
+      dlg.addEventListener('close', () => { $('dlg-cancel').hidden = false; res(); }, { once: true });
+      if (dlg.open) dlg.close('cancel');
+      dlg.showModal();
+    });
   }
   let toastTimer;
   function toast(msg) {
@@ -432,7 +453,7 @@
   const P = (() => { try { return parent !== window && parent.document ? parent : null; } catch (e) { return null; } })();
   const cloud = () => { try { const A = P && P.MiniHubAuth; return A && A.cards && A.rooms.on() ? A.cards : null; } catch (e) { return null; } };
   const uidNow = () => { try { return MiniHub.player().uid || ''; } catch (e) { return ''; } };
-  let syncStarted = false, syncReady = false, lastKey = '', saveTimer = 0, cloudPending = false;
+  let syncStarted = false, syncReady = false, lastKey = '', saveTimer = 0, cloudPending = false, roomClosed = false;
 
   const stateKey = () => JSON.stringify({ mode, grid, marked, ended });
   const snapshot = () => ({ v: 1, mode, grid, marked, ended, at: Date.now() });
@@ -455,13 +476,14 @@
   }
 
   async function pushCloud() {
+    if (roomClosed) return;
     const c = cloud();
     if (!c) { cloudPending = true; return; }
     try { await c.save(ROOM, snapshot()); cloudPending = false; } catch (e) { cloudPending = true; }
   }
   // 狀態有變才存；本機立即、雲端延遲 0.6 秒合併（雲端比對完成前只存本機）
   function queueSave() {
-    if (!ROOM || !syncStarted) return;
+    if (!ROOM || !syncStarted || roomClosed) return;
     const k = stateKey();
     if (k === lastKey) return;
     lastKey = k;
@@ -470,7 +492,7 @@
     clearTimeout(saveTimer);
     saveTimer = setTimeout(pushCloud, 600);
   }
-  function flushNow() { if (!ROOM || !syncReady) return; clearTimeout(saveTimer); writeLocal(snapshot()); pushCloud(); }
+  function flushNow() { if (!ROOM || !syncReady || roomClosed) return; clearTimeout(saveTimer); writeLocal(snapshot()); pushCloud(); }
   addEventListener('pagehide', flushNow);
   document.addEventListener('visibilitychange', () => { if (document.hidden) flushNow(); else if (cloudPending) pushCloud(); });
   addEventListener('online', () => { if (cloudPending) pushCloud(); });
@@ -607,10 +629,41 @@
     }
   }
   function receiveHost(d) {
-    if (!ROOM || !d || d.v !== 1 || d.room !== ROOM) return;
+    if (!ROOM || roomClosed || !d || d.v !== 1 || d.room !== ROOM) return;
     if (hostData && d.at < hostData.at) return; // 忽略較舊的資料
     hostData = d; reconcile();
   }
+  /* ---------- 主持人刪除房間：清除這個房間的卡片、宣告與抽號資料，回大廳 ---------- */
+  async function onRoomClosed() {
+    if (!ROOM || roomClosed) return;
+    roomClosed = true;
+    clearTimeout(saveTimer);
+    try { localStorage.removeItem(lsKey()); } catch (e) { /* 忽略 */ }
+    try {
+      const A = P && P.MiniHubAuth;
+      if (A && A.rooms && A.rooms.on()) {
+        if (A.cards) A.cards.remove(ROOM).catch(() => {});
+        if (A.rooms.claims) A.rooms.claims.remove(ROOM);
+      }
+    } catch (e) { /* 忽略 */ }
+    try { if (unwatchHost) unwatchHost(); if (unwatchRoom) unwatchRoom(); } catch (e) { /* 忽略 */ }
+    grid = emptyGrid(); marked = newMarked(); drawn = new Set(); hostData = null; ended = false; claimSent = false;
+    mode = 'edit'; notice = ''; animate = false; prevLines = 0;
+    buildGrid(); refresh();
+    await tell('房間已被刪除', '主持人已刪除這個房間，你的卡片與本局抽出的資料都已清除。', '回大廳');
+    location.href = $('lnk-lobby').getAttribute('href');
+  }
+  let unwatchRoom = null;
+  function attachRoom() {
+    if (unwatchRoom) return true;
+    try {
+      const A = P && P.MiniHubAuth;
+      if (!A || !A.rooms || !A.rooms.watch || !A.rooms.on()) return false;
+      unwatchRoom = A.rooms.watch(ROOM, ok => { if (!ok) onRoomClosed(); });
+      return !!unwatchRoom;
+    } catch (e) { return false; }
+  }
+  const attachAll = () => { const a = attachHost(), b = attachRoom(); return a && b; };
   let unwatchHost = null, roomConn = null;
   function attachHost() {
     if (unwatchHost) return true;
@@ -625,10 +678,10 @@
     if (!ROOM) return;
     try { // 同瀏覽器即時（BroadcastChannel）
       const R = window.BingoRoom;
-      if (R) { const conn = roomConn = R.connect({ code: ROOM, role: 'player' }); conn.on(m => { if (m.type === R.MSG.SNAPSHOT) receiveHost(m.data); }); conn.send(R.MSG.SNAPSHOT_REQ); addEventListener('pagehide', () => { try { conn.close(); } catch (e) { /* 忽略 */ } }); }
+      if (R) { const conn = roomConn = R.connect({ code: ROOM, role: 'player' }); conn.on(m => { if (m.type === R.MSG.SNAPSHOT) receiveHost(m.data); else if (m.type === R.MSG.CLOSED) onRoomClosed(); }); conn.send(R.MSG.SNAPSHOT_REQ); addEventListener('pagehide', () => { try { conn.close(); } catch (e) { /* 忽略 */ } }); }
     } catch (e) { /* 忽略 */ }
-    if (!attachHost()) { const t = setInterval(() => { if (attachHost()) clearInterval(t); }, 2000); }
-    try { MiniHub.onChange(attachHost); } catch (e) { /* 忽略 */ }
+    if (!attachAll()) { const t = setInterval(() => { if (attachAll()) clearInterval(t); }, 2000); }
+    try { MiniHub.onChange(attachAll); } catch (e) { /* 忽略 */ }
   })();
 
   // 大廳整合（SDK）

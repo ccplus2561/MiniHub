@@ -133,7 +133,8 @@
     if (showPool) $("poolAmt").textContent = money(d.pool);
 
     const nt = $("notice");
-    if (!d) { nt.hidden = false; nt.textContent = "尚未收到主持人的資料，主持人進入房間並開始後會自動顯示。"; }
+    if (closed) { nt.hidden = false; nt.textContent = "主持人已刪除這個房間，抽號資料已清除。"; }
+    else if (!d) { nt.hidden = false; nt.textContent = "尚未收到主持人的資料，主持人進入房間並開始後會自動顯示。"; }
     else if (d.status === "ended") { nt.hidden = false; nt.textContent = "本局已結束，等待主持人開新局。"; }
     else nt.hidden = true;
 
@@ -168,8 +169,27 @@
     const box = $("burst"); if (box) box.hidden = true;
   }
 
+  // 主持人刪除房間：清空畫面上的抽號資料
+  let closed = false, unwatchRoom = null;
+  function onClosed() {
+    if (closed) return;
+    closed = true;
+    try { if (unwatch) unwatch(); if (unwatchRoom) unwatchRoom(); } catch (e) { /* 忽略 */ }
+    data = null; prevN = null; closeBurst(); render();
+    $("badge").dataset.s = "ended"; $("badge").textContent = "房間已刪除";
+  }
+  function attachRoom() {
+    if (unwatchRoom) return true;
+    try {
+      const A = window.parent !== window && window.parent.MiniHubAuth;
+      if (!A || !A.rooms || !A.rooms.watch || !A.rooms.on()) return false;
+      unwatchRoom = A.rooms.watch(room, ok => { if (!ok) onClosed(); });
+      return !!unwatchRoom;
+    } catch (e) { return false; }
+  }
+
   function apply(d) {
-    if (!d || d.v !== 1 || d.room !== room) return;
+    if (closed || !d || d.v !== 1 || d.room !== room) return;
     if (data && d.at < data.at) return;   // 忽略比較舊的資料（同時收到本機與雲端兩份時）
     data = d;
     render();
@@ -178,6 +198,7 @@
   // ===== 資料來源 =====
   // 1) 同瀏覽器：BroadcastChannel（即時）　2) 跨裝置：Firestore live 文件（登入後自動連線）
   function attachCloud() {
+    attachRoom();
     if (unwatch) return true;
     try {
       const A = window.parent !== window && window.parent.MiniHubAuth;
@@ -204,7 +225,7 @@
     }).catch(() => { /* 取不到名稱就維持房號 */ });
 
     conn = Room.connect({ code: room, role: "spectator" });
-    conn.on(m => { if (m.type === Room.MSG.SNAPSHOT) apply(m.data); });
+    conn.on(m => { if (m.type === Room.MSG.SNAPSHOT) apply(m.data); else if (m.type === Room.MSG.CLOSED) onClosed(); });
     conn.send(Room.MSG.SNAPSHOT_REQ);
 
     if (!attachCloud()) cloudTimer = setInterval(() => { if (attachCloud()) clearInterval(cloudTimer); }, CLOUD_RETRY_MS);

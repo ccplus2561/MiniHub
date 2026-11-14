@@ -411,6 +411,11 @@ const rooms = {
   claims,
   on: roomsOn,
   uid: () => (roomsOn() ? F.auth.currentUser.uid : ""),
+  // 監聽房間是否還在：主持人刪除房間時 cb(false)；快取裡的「不存在」不算（離線時避免誤判）
+  watch(id, cb) {
+    if (!roomsOn()) return null;
+    return F.onSnapshot(roomRef(id), s => { if (s.exists()) cb(true); else if (!s.metadata.fromCache) cb(false); }, NOP);
+  },
   async list() {
     if (!roomsOn()) return null;
     bump(1, 0);

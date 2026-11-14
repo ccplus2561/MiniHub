@@ -14,7 +14,7 @@
   // 訊息類型：主持端是唯一真相來源，其他角色只送請求、收快照
   const MSG = {
     HELLO: "hello", SNAPSHOT_REQ: "snapshot?", SNAPSHOT: "snapshot",
-    DRAW: "draw", MARK: "mark", CLAIM: "claim", BYE: "bye",
+    DRAW: "draw", MARK: "mark", CLAIM: "claim", BYE: "bye", CLOSED: "closed",   // CLOSED：主持人刪除房間
   };
 
   // ===== 本機儲存 =====
@@ -163,6 +163,11 @@
       return { ok: true };
     },
     async remove(id) {
+      try {   // 通知同瀏覽器已開啟的玩家 / 旁觀頁：房間已刪除，請清除資料
+        const ch = new BroadcastChannel(CHANNEL_PREFIX + id);
+        ch.postMessage({ room: id, from: "lobby-" + Math.random().toString(36).slice(2, 8), role: "host", type: MSG.CLOSED, seq: 1, at: Date.now(), data: null });
+        setTimeout(() => ch.close(), 300);
+      } catch (e) { /* 忽略 */ }
       const me = ownerId(), c = cloud();
       if (c) { try { await c.remove(id); } catch (e) { /* 忽略 */ } }
       local.save(local._all().filter(r => !(r.id === id && r.hostUid === me)));
