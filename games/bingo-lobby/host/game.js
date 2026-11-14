@@ -2344,6 +2344,7 @@ function createDeskBrand({ back = false } = {}) {
       el('span', { class: 'status-badge', dataset: { status: 'setup' } }, '設定中')),
     createRoomChip(),
     el('div', { class: 'desk-actions' },
+      el('button', { type: 'button', class: 'btn btn-secondary desk-lobby', 'aria-label': '返回多人賓果大廳', onClick: () => { window.location.href = '../index.html'; } }, '🏠 返回大廳'),
       back ? el('button', { type: 'button', class: 'btn btn-gold desk-back', onClick: () => setState({ ui: { tab: 'draw' } }) }, '← 返回抽號') : null,
       el('button', { type: 'button', class: 'btn btn-primary desk-more', onClick: openMoreMenu, 'aria-haspopup': 'dialog' }, '☰ 更多')));
 }

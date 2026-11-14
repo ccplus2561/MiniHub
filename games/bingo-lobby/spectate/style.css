@@ -7,7 +7,9 @@ h1,h2,h3,p{margin:0}
 [hidden]{display:none!important}
 .spec{max-width:1180px;margin:0 auto;padding:max(12px,env(safe-area-inset-top)) 14px max(18px,env(safe-area-inset-bottom))}
 .spec__head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.spec__back{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:1.3rem}
+.spec__back{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border-radius:999px;background:var(--gold);border:2px solid #fff4dc;color:#5a1010;text-decoration:none;font-size:1rem;font-weight:800;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.35)}
+.spec__back:hover{filter:brightness(1.06)}
+.spec__back:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .spec__title{flex:1;min-width:0}
 .spec__title h1{font-size:1.25rem;letter-spacing:.06em;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .spec__meta{font-size:.85rem;color:var(--muted);white-space:nowrap}

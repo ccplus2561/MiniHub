@@ -619,7 +619,9 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 .desk-brand-main { display: flex; align-items: center; gap: 10px; flex: none; }
 .desk-brand-title { font-family: var(--font-brand); font-weight: 900; font-size: clamp(1.25rem, 3vh, 1.75rem); color: var(--red-700); letter-spacing: .03em; white-space: nowrap; }
 .desk-actions { display: flex; align-items: center; gap: 10px; flex: none; margin-left: auto; }
-.desk-more, .desk-back { flex: none; white-space: nowrap; min-height: clamp(40px, 5.4vh, 52px); padding: 0 18px; font-size: clamp(1rem, 2.1vh, 1.2rem); }
+/* 返回大廳：紅框白底實心按鈕，放在標題列最顯眼的位置 */
+.desk-lobby { border: 2px solid var(--red-700); font-weight: 800; box-shadow: 0 2px 0 rgba(168, 20, 42, .25); }
+.desk-more, .desk-back, .desk-lobby { flex: none; white-space: nowrap; min-height: clamp(40px, 5.4vh, 52px); padding: 0 18px; font-size: clamp(1rem, 2.1vh, 1.2rem); }
 .status-badge { font-size: var(--fs-sm); font-weight: 700; padding: 2px 12px; border-radius: 999px; white-space: nowrap; background: var(--gold-100); color: var(--red-900); border: 1px solid var(--line); }
 .status-badge[data-status="playing"] { background: var(--gold-500); border-color: #b57d10; }
 .status-badge[data-status="ended"] { background: #cdbfa8; }

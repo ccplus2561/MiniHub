@@ -163,3 +163,8 @@ body[data-tips="folded"] .auto-row { padding-top: 4px; padding-bottom: 4px; }
 .col-head b { font-size: 1.15rem; font-weight: 900; color: var(--head2); }
 .col-head small { font-size: .68rem; opacity: .7; }
 @media (max-width: 360px) { .col-head { gap: 4px; } }
+
+/* 返回大廳：醒目的膠囊按鈕（深色底＋金邊），固定在標題上方 */
+.lobby-btn { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0 0 10px; padding: 0 18px; border-radius: 999px; border: 2px solid var(--gold); background: var(--head); color: var(--head-ink); font-weight: 800; font-size: 1rem; text-decoration: none; box-shadow: var(--shadow); -webkit-tap-highlight-color: transparent; }
+.lobby-btn:active { transform: translateY(1px); }
+.lobby-btn:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }

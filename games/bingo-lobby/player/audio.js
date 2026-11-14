@@ -103,7 +103,7 @@
 
   // 每個按鈕的點擊音效（事件委派）。格子本身（.num）有自己的標記音，不重複發聲；加 data-nosfx 可略過單一按鈕。
   addEventListener("click", (e) => {
-    const t = e.target && e.target.closest ? e.target.closest("button, a.icon-btn, input[type=\"checkbox\"]") : null;
+    const t = e.target && e.target.closest ? e.target.closest("button, a.lobby-btn, input[type=\"checkbox\"]") : null;
     if (!t || t.disabled || t.closest("[data-nosfx]") || t.classList.contains("num")) return;
     let name = "tap";
     if (t.type === "checkbox") name = t.checked ? "toggleOn" : "toggleOff";
