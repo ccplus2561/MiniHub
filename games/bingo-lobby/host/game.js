@@ -92,6 +92,7 @@ const DEFAULT_SETTINGS = {
   locked: false,
   prizeEnabled: true, // 關閉後：沒有獎金池、不收費、抽號不受任何金錢限制
   spectatorShowPool: false, // 旁觀者是否看得到目前獎金池金額（預設不公開）
+  officialBingo: false, // BINGO 正式版：玩家電子卡每欄限定範圍（B 1～15、I 16～30、N 31～45、G 46～60、O 61～75）；預設關閉＝全部隨機。開局後鎖定
   autoMark: false, // 自動對獎功能：開啟後玩家可選擇「自動對號」，主持人抽出的號碼會自動標在玩家卡上（預設關閉＝玩家自己點）
   rules: DEFAULT_RULES.map((r) => ({ ...r })),
   rulesNote: DEFAULT_RULES_NOTE,
@@ -718,6 +719,7 @@ function initSettings(root) {
         { class: 'card mode-card' },
         toggleField('prizeEnabled', '啟用獎金功能', '關閉後沒有獎金池與費用，抽獎不受任何金錢限制，只記錄名次', status),
         prizeOn ? toggleField('spectatorShowPool', '旁觀者顯示獎金池', '開啟後旁觀畫面會顯示目前總彩池金額（只顯示總額，不含保底與各項明細）；關閉則完全不傳送金額', status) : null,
+        toggleField('officialBingo', 'BINGO 正式版功能', '開啟後玩家電子卡每欄限定範圍：B 1～15、I 16～30、N 31～45、G 46～60、O 61～75（隨機產生也會遵守），玩家畫面會顯示提示；關閉（預設）則號碼 1～75 全部隨機、不分欄。開始遊戲後無法修改', status),
         toggleField('autoMark', '自動對獎功能', '開啟後，玩家可在自己的卡片選擇「自動對號」，你抽出的號碼會自動標記，不用人去點；關閉（預設）則玩家要自己點擊號碼標記。遊戲中可隨時切換', status)
       ),
       prizeOn ? el(
@@ -2492,6 +2494,7 @@ function snapshot(room) {
   const showPool = !!(s.prizeEnabled && s.spectatorShowPool);
   return {
     v: 1, room, status: g.status, n: g.history.length,
+    ob: s.officialBingo ? 1 : 0,                                                   // BINGO 正式版（1＝玩家卡片每欄限定範圍）
     am: s.autoMark ? 1 : 0,                                                        // 自動對獎功能（1＝玩家可選擇自動對號）
     drawn, last: last ? row(last) : null, recent: g.history.slice(-5).map(row),
     ranks: g.ranks.map((r) => [r.rank, r.tieCount, r.atSeq]),

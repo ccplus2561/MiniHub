@@ -148,3 +148,12 @@ dialog h2 { margin: 0 0 6px; font-size: 1.25rem; } dialog p { margin: 0 0 18px; 
 .auto-row__switch:checked::after { transform: translateX(18px); }
 .auto-row__switch:focus-visible { outline: 3px solid var(--ok); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .auto-row__switch, .auto-row__switch::after { transition: none; } }
+
+/* BINGO 正式版：欄位範圍提示 */
+.official-note { margin: 0 0 10px; padding: 8px 12px; border-radius: 12px; border: 2px solid var(--gold); background: color-mix(in srgb, var(--gold) 22%, transparent); font-size: .88rem; line-height: 1.45; }
+.official-note[hidden], .col-head[hidden] { display: none; }
+.col-head { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; margin: 0 0 6px; text-align: center; }
+.col-head span { display: flex; flex-direction: column; line-height: 1.15; }
+.col-head b { font-size: 1.15rem; font-weight: 900; color: var(--head2); }
+.col-head small { font-size: .68rem; opacity: .7; }
+@media (max-width: 360px) { .col-head { gap: 4px; } }

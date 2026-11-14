@@ -7,6 +7,8 @@
   const MIN = 1, MAX = 75; // 可用號碼範圍（整張卡共用，不分欄）
   const FILLABLE = SIZE * SIZE - 1; // 24
   const isFree = (r, c) => r === CENTER && c === CENTER;
+  const COL_LETTERS = ['B', 'I', 'N', 'G', 'O'];
+  const colRange = c => [c * 15 + 1, c * 15 + 15]; // BINGO 正式版：B 1～15、I 16～30、N 31～45、G 46～60、O 61～75
 
   // ===== random =====
 
@@ -21,11 +23,18 @@
     const next = grid.map(row => [...row]);
     const used = new Set();
     for (const row of next) for (const v of row) if (/^\d{1,2}$/.test(v)) used.add(Number(v));
-    const pool = [];
-    for (let n = MIN; n <= MAX; n++) if (!used.has(n)) pool.push(n);
-    shuffle(pool);
+    const off = officialOn(), pools = {};   // 正式版：每欄各自一個號碼池；否則共用 1～75
+    const poolFor = c => {
+      const k = off ? c : 0;
+      if (!pools[k]) {
+        const [lo, hi] = off ? colRange(c) : [MIN, MAX], p = [];
+        for (let n = lo; n <= hi; n++) if (!used.has(n)) p.push(n);
+        pools[k] = shuffle(p);
+      }
+      return pools[k];
+    };
     for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++)
-      if (!isFree(r, c) && next[r][c] === '') next[r][c] = String(pool.pop());
+      if (!isFree(r, c) && next[r][c] === '') next[r][c] = String(poolFor(c).pop());
     return next;
   }
   const generateGrid = () => fillBlanks(emptyGrid());
@@ -51,11 +60,12 @@
   // ===== validation =====
 
   /** 單格檢查：空白回傳 null；不合法回傳錯誤訊息字串。 */
-  function checkCell(raw) {
+  function checkCell(raw, c) {
     if (raw === '') return null;
     if (!/^\d{1,2}$/.test(raw)) return '只能輸入數字';
     const n = Number(raw);
     if (n < MIN || n > MAX) return `需為 ${MIN}～${MAX}`;
+    if (officialOn() && c != null) { const [lo, hi] = colRange(c); if (n < lo || n > hi) return `${COL_LETTERS[c]} 欄需為 ${lo}～${hi}`; }
     return null;
   }
 
@@ -67,7 +77,7 @@
       if (isFree(r, c)) continue;
       const raw = grid[r][c];
       if (raw !== '') filled++;
-      const msg = checkCell(raw);
+      const msg = checkCell(raw, c);
       if (msg) { errors.set(`${r},${c}`, msg); continue; }
       if (raw === '') continue;
       const n = Number(raw);
@@ -189,6 +199,7 @@
     return m;
   }
 
+  const officialOn = () => !!(ROOM && hostData && hostData.ob === 1);   // 主持人是否開啟 BINGO 正式版（每欄限定範圍）
   const hostAuto = () => !!(ROOM && hostData && hostData.am === 1);   // 主持人是否開啟自動對獎功能
   const autoOn = () => hostAuto() && auto;                            // 這位玩家是否正在自動對號
 
@@ -310,7 +321,7 @@
     $('step-2').className = playing ? 'on' : '';
     document.body.dataset.mode = mode;
     introEl.textContent = ROOM
-      ? (!playing ? `填入 24 格數字（${MIN}～${MAX}，不可重複），或用「隨機產生」。主持人按下開始後，卡片會自動鎖定。`
+      ? (!playing ? `${officialOn() ? '依欄位範圍填入 24 格數字（不可重複）' : `填入 24 格數字（${MIN}～${MAX}，不可重複）`}，或用「隨機產生」。主持人按下開始後，卡片會自動鎖定。`
         : ended ? '本局已結束，等主持人開新局（卡片數字會保留）。'
         : autoOn() ? '卡片已鎖定，主持人抽出的號碼會自動標記。'
         : '卡片已鎖定。主持人抽出號碼後，請點擊卡片上的號碼來標記。')
@@ -320,6 +331,7 @@
     playing ? refreshPlay(poppedKey) : refreshEdit();
     refreshClaim();
     refreshAuto();
+    refreshOfficial();
     queueSave();
   }
 
@@ -328,6 +340,17 @@
     const row = $('auto-row'); if (!row) return;
     row.hidden = !hostAuto();
     $('auto-toggle').checked = auto;
+  }
+
+  /** BINGO 正式版提示：顯示欄位範圍說明；回傳這次是否剛切換（主持人開關改變） */
+  let lastOfficial = false;
+  function refreshOfficial() {
+    const on = officialOn();
+    $('official-note').hidden = $('col-head').hidden = !on;
+    if (on === lastOfficial) return false;
+    lastOfficial = on;
+    if (mode === 'edit') toast(on ? '本房為 BINGO 正式版：每欄數字有固定範圍，請依欄位填寫' : '主持人已關閉 BINGO 正式版：號碼 1～75 不分欄');
+    return true;
   }
 
   function refreshEdit() {
@@ -616,8 +639,8 @@
   // 鎖卡前整理：保留合法且不重複的數字，其餘清空後隨機補齊（晚進房或沒填完也能玩）
   function lockable(g) {
     const seen = new Set();
-    return fillBlanks(g.map(row => row.map(v => {
-      if (v === '' || checkCell(v)) return '';
+    return fillBlanks(g.map(row => row.map((v, c) => {
+      if (v === '' || checkCell(v, c)) return '';
       const n = Number(v);
       if (seen.has(n)) return '';
       seen.add(n); return v;
@@ -657,6 +680,7 @@
     if (!ROOM || roomClosed || !d || d.v !== 1 || d.room !== ROOM) return;
     if (hostData && d.at < hostData.at) return; // 忽略較舊的資料
     hostData = d; reconcile(); refreshAuto();
+    if (refreshOfficial()) refresh();   // 正式版開關改變：重新檢查卡片欄位範圍
   }
   /* ---------- 主持人刪除房間：清除這個房間的卡片、宣告與抽號資料，回大廳 ---------- */
   async function onRoomClosed() {
