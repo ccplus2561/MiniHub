@@ -2069,3 +2069,7 @@ body.no-anim #loginModal *, body.no-anim #loginModal *::before, body.no-anim #lo
 body.no-anim #acctModal *, body.no-anim #acctModal *::before, body.no-anim #acctModal *::after,
 body.no-anim #profileModal *, body.no-anim #profileModal *::before, body.no-anim #profileModal *::after,
 body.no-anim #helpModal *, body.no-anim #helpModal *::before, body.no-anim #helpModal *::after { animation: none !important; }
+
+/* 簽到：排行榜加碼說明 */
+.ci-note { display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.5; color: var(--muted); padding: 2px 4px; }
+.ci-note .mp-coin { flex: none; font-size: 20px; }

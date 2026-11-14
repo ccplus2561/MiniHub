@@ -187,24 +187,53 @@ async function setJoinRank(v) {
 // 每日簽到：以台灣時間（UTC+8）的日曆日為準，每天 00:00 換日。
 // 規則：每日簽到 +1 M；隔天接著簽 = streak + 1，中斷過 = 重設為 1；連續天數有額外點數 = 連續天數 × 0.5（保留小數）。
 //   獎勵 = 1 + streak × 0.5，例：第 1 天 +1.5、第 2 天 +2、第 3 天 +2.5、第 4 天 +3、第 10 天 +6。
+// 排行榜加碼：貪吃蛇 / 2048 / 方塊消消樂 / 水果忍者 的排行榜第 1 名，每款遊戲每天可多領 +1 M（與簽到同一次領取）。
+//   users/{uid}.rankBonus = { 遊戲id: 最後領取的台灣日編號 }；當天已領過的遊戲不會重複領。
+//   就算今天已簽到，之後才登上第 1 名，下次登入 / 再次領取時仍可補領加碼。
 // 用交易讀最新資料再寫入（多裝置不會算錯）；日期 / 數值是否正確由 Firestore 規則（以伺服器時間）強制檢查。
 const TW_DAY = t => Math.floor((t + 8 * 3600000) / 864e5);
+const RANK_BONUS_GAMES = ["snake", "puzzle", "block-blast", "fruit-slice"], RANK_BONUS = 1;
+// 目前自己是第 1 名的加碼遊戲（查詢失敗 / 沒加入排行榜的遊戲一律視為不是第 1 名）
+async function rankFirstGames(uid) {
+  const out = [];
+  await Promise.all(RANK_BONUS_GAMES.map(async g => {
+    try {
+      const c = ctx(g, "");
+      if (!c) return;
+      const s = await F.getDocs(F.query(colR(g, c.mode), F.orderBy("score", c.desc ? "desc" : "asc"), F.limit(1)));
+      bump(s.size || 1, 0);
+      if (!s.empty && s.docs[0].id === uid) out.push(g);
+    } catch (e) { /* 讀取失敗：略過這款遊戲的加碼 */ }
+  }));
+  return RANK_BONUS_GAMES.filter(g => out.includes(g));
+}
 async function checkin() {
   const user = F && F.auth.currentUser;
   if (!user) throw bad("not-signed-in");
   if (!SAVE_PROFILE) throw bad("save-disabled");
   const ref = F.doc(F.db, "users", user.uid);
+  const firsts = await rankFirstGames(user.uid);
   bump(1, 1);
   const out = await F.runTransaction(F.db, async tx => {
     const s = await tx.get(ref);
     if (!s.exists()) throw bad("no-profile");
     const d = s.data(), last = ms(d.lastCheckinAt), today = TW_DAY(Date.now());
-    if (last !== null && TW_DAY(last) >= today) throw bad("already-checked-in");
-    const streak = last !== null && TW_DAY(last) === today - 1 ? (Number(d.streak) || 0) + 1 : 1;
-    const reward = 1 + streak * 0.5;
-    const r = { mPoints: (Number(d.mPoints) || 0) + reward, streak, totalCheckins: (Number(d.totalCheckins) || 0) + 1 };
-    tx.update(ref, { ...r, lastCheckinAt: F.serverTimestamp() });
-    return { ...r, reward, lastCheckinAt: Date.now() };
+    const signed = last !== null && TW_DAY(last) >= today;
+    const claimed = d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {};
+    const wins = firsts.filter(g => claimed[g] !== today);
+    if (signed && !wins.length) throw bad("already-checked-in");
+    let streak = Number(d.streak) || 0, total = Number(d.totalCheckins) || 0, reward = 0;
+    if (!signed) {
+      streak = last !== null && TW_DAY(last) === today - 1 ? streak + 1 : 1;
+      total += 1; reward = 1 + streak * 0.5;
+    }
+    const bonus = wins.length * RANK_BONUS;
+    const r = { mPoints: (Number(d.mPoints) || 0) + reward + bonus, streak, totalCheckins: total };
+    const upd = { ...r };
+    if (!signed) upd.lastCheckinAt = F.serverTimestamp();
+    if (wins.length) { const nb = { ...claimed }; wins.forEach(g => { nb[g] = today; }); upd.rankBonus = nb; }
+    tx.update(ref, upd);
+    return { ...r, reward, bonus, bonusGames: wins, signed: !signed, lastCheckinAt: signed ? last : Date.now() };
   });
   return out;
 }
