@@ -1,6 +1,6 @@
 // ⚙️ 設定頁：抽號設定、規則內容、開始遊戲（鎖定）、重新開始
 import { getState, setState, reset, subscribe } from '../core/state.js';
-import { DEFAULT_RULES, DEFAULT_RULES_NOTE } from '../config/defaults.js';
+import { DEFAULT_RULES, DEFAULT_RULES_NOTE, DRAW_RULES, NUMBER_MIN, NUMBER_MAX, RANK_COUNT } from '../config/defaults.js';
 import { openRules } from './rules-view.js';
 import { el, toast, confirmDialog, nextOk } from '../utils/dom.js';
 
@@ -15,16 +15,10 @@ function isEditable(key, status) {
   return false;
 }
 
-// ---------- 畫面（電腦版：左側分類導覽＋右側設定列表＋底部操作） ----------
-
-const SECTIONS = [
-  { id: 'draw', icon: '🎲', title: '抽號設定', desc: '抽號規則：是否允許重複號碼與銘謝惠顧。' },
-  { id: 'rules', icon: '📜', title: '規則內容', desc: '開始抽獎前會先向所有人顯示。' },
-];
+// ---------- 畫面（電腦版：左欄＝狀態／開始、抽號設定、本局概覽；右欄＝規則內容編輯） ----------
 
 export function initSettings(root) {
   let signature = '';
-  let active = 'draw';
 
   const lockTag = (editable) => (editable ? null : el('span', { class: 'lock-tag' }, '🔒 已鎖定'));
 
@@ -118,77 +112,63 @@ export function initSettings(root) {
     if (!ok) return;
     if (!(await nextOk())) return;
     reset();
-    active = 'draw';
     setState({ ui: { tab: 'settings' } }); // 重新開始後停留在設定頁
     render();
     toast('已重新開始');
   }
 
-  // ---------- 分類切換（不重繪，輸入內容不會遺失） ----------
-  function showSection(id) {
-    active = id;
-    root.querySelectorAll('.set-nav-item').forEach((b) => {
-      const on = b.dataset.section === id;
-      b.classList.toggle('is-active', on);
-      if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
-    });
-    root.querySelectorAll('.set-section').forEach((sec) => { sec.hidden = sec.dataset.section !== id; });
-    const content = root.querySelector('.set-content');
-    if (content) content.scrollTop = 0;
+  /** 卡片：標題＋說明＋內容 */
+  function card(cls, icon, title, desc, ...body) {
+    return el('section', { class: `set-card ${cls}` },
+      el('header', { class: 'set-card-head' },
+        el('h2', { class: 'set-title' }, el('span', { 'aria-hidden': 'true' }, icon), title),
+        desc ? el('p', { class: 'set-desc' }, desc) : null),
+      ...body.filter(Boolean));
   }
 
-  function section(def, ...rows) {
-    return el('section', { class: 'set-section', dataset: { section: def.id }, hidden: def.id !== active },
-      el('header', { class: 'set-head' },
-        el('h2', { class: 'set-title' }, el('span', { 'aria-hidden': 'true' }, def.icon), def.title),
-        el('p', { class: 'set-desc' }, def.desc)),
-      el('div', { class: 'set-group' }, ...rows.filter(Boolean)));
-  }
+  const kv = (label, value) =>
+    el('div', { class: 'kv-row' }, el('span', { class: 'kv-label' }, label), el('strong', { class: 'kv-value' }, value));
 
   function render() {
     const { settings, game } = getState();
     const status = game.status;
-    signature = `${status}|${settings.locked}`;
-    const defs = SECTIONS;
-    if (!defs.some((d) => d.id === active)) active = 'draw';
-    const by = (id) => SECTIONS.find((d) => d.id === id);
+    signature = `${status}|${settings.locked}|${settings.allowRepeat}|${settings.allowBlank}`;
+    const heroText = {
+      setup: ['🎰', '準備開始', '先確認抽號設定與規則，再開始抽獎。'],
+      playing: ['🎲', '遊戲進行中', '抽號設定已鎖定；仍可修改規則內容。'],
+      ended: ['🏁', '本局已結束', '所有設定已鎖定，請按「重新開始」開新局。'],
+    }[status];
+    const hero = el('section', { class: `set-card set-hero is-${status}` },
+      el('div', { class: 'hero-state' },
+        el('span', { class: 'hero-icon', 'aria-hidden': 'true' }, heroText[0]),
+        el('div', {}, el('strong', { class: 'hero-title' }, heroText[1]), el('p', { class: 'field-hint' }, heroText[2]))),
+      status === 'setup' ? el('button', { type: 'button', class: 'btn btn-primary btn-block hero-start', onClick: onStart }, '🎰 開始抽獎') : null,
+      el('button', { type: 'button', class: 'btn btn-danger-outline btn-block', onClick: onReset }, '🔄 重新開始'));
 
-    // ---- 左側：導覽＋操作 ----
-    const nav = el('nav', { class: 'set-nav', 'aria-label': '設定分類' },
-      ...defs.map((d) => el('button', {
-        type: 'button', class: `set-nav-item${d.id === active ? ' is-active' : ''}`, dataset: { section: d.id },
-        'aria-current': d.id === active ? 'page' : null, onClick: () => showSection(d.id),
-      }, el('span', { class: 'set-nav-icon', 'aria-hidden': 'true' }, d.icon), d.title)));
-
-    const statusBox = status === 'setup'
-      ? el('div', { class: 'set-start' },
-          el('button', { type: 'button', class: 'btn btn-primary btn-block', onClick: onStart }, '🎰 開始抽獎'),
-          el('p', { class: 'field-hint' }, '先顯示規則，再開始抽獎。'))
-      : el('div', { class: 'set-start is-note' },
-          el('strong', {}, status === 'playing' ? '遊戲進行中' : '本局已結束'),
-          el('p', { class: 'field-hint' }, status === 'playing'
-            ? '抽號設定已鎖定；仍可修改規則內容。'
-            : '所有設定已鎖定，請按「重新開始」開新局。'));
-
-    const side = el('aside', { class: 'set-side' },
-      nav,
-      el('div', { class: 'set-actions' },
-        statusBox,
-        el('button', { type: 'button', class: 'btn btn-danger-outline btn-block', onClick: onReset }, '🔄 重新開始')));
-
-    // ---- 右側：各分類內容 ----
-    const content = el('div', { class: 'set-content' },
-      section(by('draw'),
+    const drawCard = card('set-draw', '🎲', '抽號設定', '決定抽號時會不會出現無效號。', 
+      el('div', { class: 'set-group' },
         toggleRow('allowRepeat', '允許重複數字', '可能抽到已出現過的號碼', status),
-        toggleRow('allowBlank', '允許銘謝惠顧', '可能抽到無號碼的空籤', status)),
-      section(by('rules'), rulesEditor(status)));
+        toggleRow('allowBlank', '允許銘謝惠顧', '可能抽到無號碼的空籤', status)));
 
-    root.replaceChildren(side, content);
+    const summaryCard = card('set-summary', '📋', '本局概覽', '目前生效的抽號條件。',
+      el('div', { class: 'kv-list' },
+        kv('號碼範圍', `${NUMBER_MIN}～${NUMBER_MAX}`),
+        kv('連抽上限', `${settings.maxBatchDraws} 次`),
+        kv('連續無效上限', `${DRAW_RULES.maxInvalidStreak} 次，第 ${DRAW_RULES.maxInvalidStreak + 1} 次必為新號`),
+        kv('名次數', `前 ${RANK_COUNT} 名`),
+        kv('重複號碼', settings.allowRepeat ? '會出現' : '不會出現'),
+        kv('銘謝惠顧', settings.allowBlank ? '會出現' : '不會出現')));
+
+    const rulesCard = card('set-rules', '📜', '規則內容', '開始抽獎前會先向所有人顯示。', rulesEditor(status));
+
+    root.replaceChildren(
+      el('div', { class: 'set-col set-col-left' }, hero, drawCard, summaryCard),
+      el('div', { class: 'set-col set-col-right' }, rulesCard));
   }
 
   render();
   // 只有開局狀態改變時才整頁重繪，避免輸入中失去焦點
   subscribe((s) => {
-    if (`${s.game.status}|${s.settings.locked}` !== signature) render();
+    if (`${s.game.status}|${s.settings.locked}|${s.settings.allowRepeat}|${s.settings.allowBlank}` !== signature) render();
   });
 }

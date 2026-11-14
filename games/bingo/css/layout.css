@@ -80,65 +80,63 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 .desk-back { margin-left: auto; flex: none; white-space: nowrap; min-height: clamp(40px, 5.4vh, 52px); padding: 0 18px; font-size: clamp(1rem, 2.1vh, 1.2rem); }
 .desk-back + .desk-more { margin-left: 0; }
 
-/* ===== 設定頁（電腦版）：左側分類導覽＋右側設定列表 ===== */
+/* ===== 設定頁（電腦版）：左欄＝狀態／開始、抽號設定、本局概覽；右欄＝規則內容編輯 ===== */
 .panel-settings .desk-slot { max-width: none; }
-#settings-root { flex: 1; min-height: 0; display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: var(--gap); }
+#settings-root { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(360px, 30%) minmax(0, 1fr); gap: var(--gap); }
+.set-col { min-height: 0; display: flex; flex-direction: column; gap: var(--gap); }
+.set-col-left { overflow-y: auto; padding-bottom: 4px; }
+.set-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 14px 20px; }
+.set-summary .set-desc { display: none; }
+.set-row { padding: 10px 0; }
+.set-card-head { margin-bottom: 8px; }
+.set-title { display: flex; align-items: center; gap: 10px; font-family: var(--font-brand); font-size: 1.4rem; font-weight: 900; color: var(--red-700); }
+.set-desc { color: var(--muted); margin-top: 2px; font-size: var(--fs-sm); }
 
-/* 左側：導覽＋操作 */
-.set-side { display: flex; flex-direction: column; gap: 14px; min-height: 0; padding: 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); }
-.set-nav { display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
-.set-nav-item { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 0 14px; background: transparent; border: 0; border-left: 4px solid transparent; border-radius: var(--radius-md); font-size: 1.05rem; font-weight: 600; color: var(--ink); text-align: left; }
-.set-nav-item:hover { background: var(--gold-100); }
-.set-nav-item.is-active { background: var(--gold-100); border-left-color: var(--red-700); color: var(--red-700); font-weight: 800; }
-.set-nav-icon { width: 1.6em; text-align: center; font-size: 1.2rem; }
-.set-actions { display: flex; flex-direction: column; gap: 10px; padding-top: 12px; border-top: 1px solid var(--line); }
-.set-actions .btn { min-height: 48px; font-size: 1.05rem; }
-.set-start .field-hint { margin-top: 6px; text-align: center; }
-.set-start.is-note { background: var(--gold-100); border-radius: var(--radius-md); padding: 10px 12px; }
-.set-start.is-note .field-hint { text-align: left; }
-
-/* 右側：內容區（只在這裡捲動） */
-.set-content { min-height: 0; overflow-y: auto; padding: 0 4px 8px 0; }
-.set-section { max-width: 1240px; }
-.set-head { margin-bottom: 14px; }
-.set-title { display: flex; align-items: center; gap: 10px; font-family: var(--font-brand); font-size: 1.7rem; font-weight: 900; color: var(--red-700); }
-.set-desc { color: var(--muted); margin-top: 2px; }
-.set-group { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 4px 22px; }
+/* 狀態／開始 */
+.set-hero { display: flex; flex-direction: column; gap: 12px; background: var(--gold-100); border-color: var(--gold-500); }
+.hero-state { display: flex; align-items: center; gap: 14px; }
+.hero-icon { font-size: 2.4rem; line-height: 1; }
+.hero-title { font-family: var(--font-brand); font-size: 1.5rem; color: var(--red-900); }
+.set-hero .field-hint { margin-top: 2px; }
+.set-hero .btn { min-height: 52px; font-size: 1.1rem; }
+.set-hero.is-playing .hero-title { color: var(--red-700); }
 
 /* 一列設定：左 名稱＋說明，右 控制項 */
-.set-row { display: grid; grid-template-columns: minmax(0, 1fr) 260px; align-items: center; column-gap: 28px; padding: 16px 0; border-bottom: 1px dashed var(--line); }
-.set-row:last-child { border-bottom: 0; }
-.set-row.is-wide { grid-template-columns: minmax(0, 1fr) 380px; }
+.set-group { padding: 0; }
+.set-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 20px; padding: 10px 0; border-bottom: 1px dashed var(--line); }
+.set-row:last-child { border-bottom: 0; padding-bottom: 4px; }
 .set-label { display: flex; align-items: center; gap: 8px; font-size: 1.1rem; font-weight: 700; }
 .set-info .field-hint { margin-top: 2px; }
 .set-control { display: flex; justify-content: flex-end; }
-.set-control .input { min-height: 42px; padding: 4px 12px; font-size: 1.1rem; text-align: right; }
-.unit-input { display: flex; align-items: center; gap: 8px; width: 100%; }
-.unit { flex: none; width: 1.8em; color: var(--muted); font-weight: 600; }
-.unit-input:not(:has(.unit)) .input { text-align: right; }
 .set-row .switch-row, .set-row .switch { margin: 0; }
-.set-row.is-wide .set-control { display: block; }
 
-/* 規則內容編輯 */
+/* 本局概覽 */
+.kv-list { display: flex; flex-direction: column; }
+.kv-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.kv-row:last-child { border-bottom: 0; }
+.kv-label { color: var(--muted); font-weight: 600; }
+.kv-value { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 右欄：規則內容（卡片填滿高度，只在清單區捲動） */
+.set-col-right { overflow: hidden; }
+.set-rules { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.set-rules .rules-edit-body { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 6px 6px 0; }
+.set-rules .rules-edit-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .rules-edit-body { padding: 12px 0 6px; }
 .rules-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
-.rules-edit-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rules-edit-list { display: grid; gap: 12px; }
 .rule-edit { display: flex; flex-direction: column; gap: 6px; padding: 10px; background: #fff; border: 1px solid var(--line); border-radius: var(--radius-md); }
 .rule-edit-head { display: flex; align-items: center; gap: 6px; }
 .rule-edit-head .input { flex: 1; min-width: 0; font-weight: 700; text-align: left; }
 .rule-ico { min-width: 40px; min-height: 40px; padding: 0 8px; }
 .rule-textarea { font-size: var(--fs-md); line-height: 1.5; resize: vertical; font-variant-numeric: normal; text-align: left !important; }
 .rules-edit-body > .set-row { margin-top: 8px; border-bottom: 0; }
-.rule-money { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--muted); font-weight: 600; cursor: pointer; }
-.rule-money input { width: 18px; height: 18px; accent-color: var(--red-700); }
 
-/* 視窗較窄時：導覽移到上方 */
+/* 視窗較窄時：改為單欄 */
 @media (max-width: 960px) {
-  #settings-root { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
-  .set-side { flex-direction: row; align-items: center; padding: 8px; }
-  .set-nav { flex-direction: row; flex-wrap: wrap; overflow: visible; }
-  .set-actions { flex-direction: row; border-top: 0; padding-top: 0; }
-  .set-start .field-hint { display: none; }
-  .set-row, .set-row.is-wide { grid-template-columns: 1fr; row-gap: 8px; }
-  .rules-edit-list { grid-template-columns: 1fr; }
+  #settings-root { grid-template-columns: 1fr; overflow-y: auto; align-content: start; }
+  .set-col-left { overflow: visible; }
+  .set-col-right { overflow: visible; }
+  .set-rules .rules-edit-body { overflow: visible; }
+  .set-rules .rules-edit-list { grid-template-columns: 1fr; }
 }
