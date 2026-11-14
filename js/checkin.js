@@ -4,7 +4,7 @@
    連續天數最多 7 天：第 7 天之後的隔天（第 8 天）重新從第 1 天計算。
    註冊帳號首次登入 +10 M 在 firebase.js 的 createProfile()。
    實際寫入與規則檢查在 firebase.js 的 MiniHubAuth.checkin() 與 Firestore 規則；這裡只負責畫面。
-   排行榜加碼：貪吃蛇 / 2048 / 方塊消消樂 / 水果忍者 排行榜第 1 名，每款每天可多領 +1 M，與簽到同一次領取（資料 users/{uid}.rankBonus，邏輯在 firebase.js checkin()）。
+   排行榜加碼：貪吃蛇 / 2048 / 方塊消消樂 / 水果忍者 排行榜第 1 名，每款每天可多領 +0.5 M，與簽到同一次領取（資料 users/{uid}.rankBonus，邏輯在 firebase.js checkin()）。
    登入後自動簽到：帳號資料載入完成後自動呼叫領取（簽到＋排行榜加碼；今天已簽到時只補領加碼），每個帳號每次開啟網頁只自動嘗試一次；手動按鈕仍保留作為備援。
    body[data-ci]：guest 未登入 / todo 今天還沒簽到 / done 今天已簽到 */
 (function () {
@@ -16,7 +16,7 @@
   var toast = function (m) { if (window.MiniHubToast) MiniHubToast(m); };
   var modal = $("#checkinModal");
   var st = { signedIn: false, mPoints: 0, streak: 0, total: 0, last: null, rb: {} };
-  var CYCLE = 7, BONUS_GAMES = ["snake", "puzzle", "block-blast", "fruit-slice"];
+  var CYCLE = 7, BONUS = 0.5, BONUS_GAMES = ["snake", "puzzle", "block-blast", "fruit-slice"];
   var busy = false, timer = 0, autoUid = null;
 
   var rewardOf = function (n) { return 1 + n * 0.5; };   // n = 簽到後的連續天數；1 + 連續天數×0.5（保留小數）
@@ -60,7 +60,7 @@
     });
     // 排行榜加碼：今天已領的款數與總額（每款 +1 M，最多 4 款）
     var got = bonusToday();
-    fill("[data-ci-bonus]", fmt(got.length));
+    fill("[data-ci-bonus]", fmt(got.length * BONUS));
     schedule(); fitSoon();
   }
 
