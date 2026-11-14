@@ -982,6 +982,8 @@ function restore(uid) {
 }
 const rejectedList = () => [...rejected].map(([uid, name]) => ({ uid, name }));
 const rejectedUids = () => [...rejected.keys()];
+/** 某名次的玩家名稱（玩家自行宣告者），多人以「、」相連；沒有則回傳空字串 */
+const namesOf = (rank) => { const e = getState().game.ranks.find((r) => r.rank === rank); return e && e.claimers ? e.claimers.map((c) => c.name || '玩家').join('、') : ''; };
 
 function init(room) {
   if (started || !room) return;
@@ -1009,7 +1011,7 @@ function init(room) {
   // 結束／開新局：清掉本局的宣告與撤銷名單
   subscribe((st) => { if (st.game.status !== 'playing' && (pool.size || rejected.size)) { pool.clear(); rejected.clear(); } });
 }
-return { init, revoke, restore, rejectedList, rejectedUids };
+return { init, revoke, restore, rejectedList, rejectedUids, namesOf };
 })();
 
 // ===== core/finance.js =====
@@ -1960,7 +1962,8 @@ const row = (label, value, cls = '') =>
 function slotRow(slot) {
   if (slot.status === 'declared') {
     const tie = slot.winners > 1 ? `（同時 ${slot.winners} 人）` : '';
-    return row(`🎉 第 ${slot.position} 名已出爐${tie}`, `${slot.winners > 1 ? '各 ' : ''}${formatMoney(slot.perPerson)}`, 'is-declared');
+    const who = M['core/claims'].namesOf(slot.position);
+    return row(`🎉 第 ${slot.position} 名${who ? `・${who}` : '已出爐'}${tie}`, `${slot.winners > 1 ? '各 ' : ''}${formatMoney(slot.perPerson)}`, 'is-declared');
   }
   if (slot.status === 'merged') {
     return row(`第 ${slot.position} 名`, `併入第 ${slot.mergedInto} 名平分`, 'is-merged');
@@ -1975,7 +1978,7 @@ function initPrizeView(root) {
     const rows = [];
     let pos = 1;
     for (const r of game.ranks) {
-      rows.push(row(`🎉 第 ${r.rank} 名已出爐`, r.tieCount > 1 ? `同時 ${r.tieCount} 人` : '已登錄', 'is-declared'));
+      { const who = M['core/claims'].namesOf(r.rank); rows.push(row(`🎉 第 ${r.rank} 名${who ? `・${who}` : '已出爐'}`, r.tieCount > 1 ? `同時 ${r.tieCount} 人` : '已登錄', 'is-declared')); }
       pos = r.rank + r.tieCount;
     }
     for (; pos <= 3; pos++) rows.push(row(`第 ${pos} 名`, '尚未出爐'));
@@ -2202,7 +2205,7 @@ function initEffects({ soundBtn }) {
         break;
       case 'rank':
         sound.play('bingo');
-        celebrate(e.rank, e.tieCount);
+        celebrate(e.rank, e.tieCount, M['core/claims'].namesOf(e.rank));
         break;
     }
   }
@@ -2214,13 +2217,14 @@ function initEffects({ soundBtn }) {
 // ---- 賓果慶祝：CSS 紅包與彩帶 ----
 let celebrateTimer = null;
 
-function celebrate(rank, tieCount = 1) {
+function celebrate(rank, tieCount = 1, names = '') {
   document.querySelector('.celebrate')?.remove();
   clearTimeout(celebrateTimer);
 
   const reduce = prefersReducedMotion();
   const banner = el('div', { class: 'celebrate-banner', role: 'status' },
     el('strong', {}, `🎉 第 ${rank} 名賓果！`),
+    names ? el('small', {}, names) : null,
     tieCount > 1 ? el('small', {}, `同時 ${tieCount} 人`) : null
   );
   const layer = el('div', { class: `celebrate${reduce ? ' is-static' : ''}` }, banner);
@@ -2489,6 +2493,7 @@ function snapshot(room) {
     drawn, last: last ? row(last) : null, recent: g.history.slice(-5).map(row),
     ranks: g.ranks.map((r) => [r.rank, r.tieCount, r.atSeq]),
     cl: g.ranks.flatMap((r) => (r.claimers || []).map((c) => [c.uid, r.rank])),   // 玩家自己宣告賓果的名次（讓玩家看到自己排第幾）
+    nm: g.ranks.filter((r) => r.claimers && r.claimers.length).map((r) => [r.rank, r.claimers.map((c) => c.name || '玩家').join('、').slice(0, 60)]),   // 名次對應的玩家名稱（旁觀顯示）
     rj: M['core/claims'].rejectedUids(),                                          // 被主持人撤銷的玩家
     pool: showPool ? calcTotalPool(state) : null,
     at: Date.now(),

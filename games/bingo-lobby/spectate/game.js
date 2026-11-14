@@ -74,9 +74,11 @@
     });
   }
 
-  function renderRanks(ranks) {
+  function renderRanks(ranks, names) {
     const box = $("ranks");
     box.textContent = "";
+    const who = {};
+    (names || []).forEach(([r, n]) => { who[r] = n; });
     const owner = {};   // 名次 → 登錄資料（同時賓果會佔用後面的名次）
     (ranks || []).forEach(([rank, tie, seq]) => {
       for (let p = rank; p < rank + tie && p <= RANK_COUNT; p++) owner[p] = { rank, tie, seq };
@@ -89,7 +91,7 @@
       else if (o.rank !== p) { row.classList.add("is-merged"); row.appendChild(el("span", "", "併入第 " + o.rank + " 名")); }
       else {
         row.classList.add("is-done");
-        row.appendChild(el("span", "", "🎉 已出爐" + (o.tie > 1 ? "（同時 " + o.tie + " 人）" : "") + (o.seq ? " · 第 " + o.seq + " 次" : "")));
+        row.appendChild(el("span", "", "🎉 " + (who[p] || "已出爐") + (o.tie > 1 ? "（同時 " + o.tie + " 人）" : "") + (o.seq ? " · 第 " + o.seq + " 次" : "")));
       }
       box.appendChild(row);
     }
@@ -116,7 +118,7 @@
     $("count").textContent = d ? "已抽出 " + drawn.length + " / " + MAX + "　·　共抽 " + n + " 次" : "";
     $("boardCount").textContent = d ? drawn.length + " / " + MAX : "";
     renderRecent(d ? d.recent : []);
-    renderRanks(d ? d.ranks : []);
+    renderRanks(d ? d.ranks : [], d ? d.nm : []);
 
     const drawnSet = new Set(drawn);
     const nowNum = last && last[0] === 0 ? last[1] : null;
