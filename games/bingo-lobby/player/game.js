@@ -287,6 +287,7 @@
       ? (ended ? '遊戲已結束。' : '點擊被叫出的號碼來標記，連成線後可繼續玩，準備好再按「結束遊戲」。')
       : `填入 24 格數字（${MIN}～${MAX}，不可重複），或使用「隨機產生」。`;
     playing ? refreshPlay(poppedKey) : refreshEdit();
+    refreshClaim();
     queueSave();
   }
 
@@ -500,6 +501,66 @@
     if (!applied && (mode === 'play' || grid.some(r => r.some(v => v !== '')))) pushCloud();
   }
 
+  /* ---------- 完成賓果：玩家自行宣告 → 主持人端自動排進名次 ---------- */
+  let claimSent = false;   // 本局已送出宣告（等主持人確認；主持人公開的名次會寫回 cl）
+  const claimBox = $('claim'), claimBtn = $('btn-bingo'), claimMsg = $('claim-msg');
+  const myId = () => uidNow() || (window.BingoRoom ? window.BingoRoom.getUid() : '');
+  const hostList = key => (hostData && Array.isArray(hostData[key]) ? hostData[key] : []);
+
+  /** 依主持人抽出的順序重播，回傳「第幾個新號碼時完成第一條線」（尚未完成回傳 0）。同一個 k = 同時賓果 */
+  function bingoK() {
+    const pos = new Map();
+    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) if (!isFree(r, c) && grid[r][c] !== '') pos.set(Number(grid[r][c]), [r, c]);
+    const m = newMarked();
+    let k = 0;
+    for (const n of drawn) {
+      k++;
+      const p = pos.get(n);
+      if (!p) continue;
+      m[p[0]][p[1]] = true;
+      if (findCompletedLines(m).length) return k;
+    }
+    return 0;
+  }
+
+  function refreshClaim() {
+    if (!ROOM) { claimBox.hidden = true; return; }
+    const me = myId();
+    const mine = hostList('cl').find(x => x[0] === me);
+    const rejected = hostList('rj').includes(me);
+    const lines = mode === 'play' ? findCompletedLines(marked).length : 0;
+    if (mode !== 'play' || (!lines && !mine && !rejected)) { claimBox.hidden = true; return; }
+    claimBox.hidden = false;
+    claimBtn.hidden = true;
+    claimBox.dataset.s = rejected ? 'bad' : mine ? 'ok' : claimSent ? 'wait' : 'ready';
+    if (rejected) claimMsg.textContent = '主持人已撤銷你的賓果宣告，如有疑問請詢問主持人。';
+    else if (mine) claimMsg.textContent = `🏆 你已排進第 ${mine[1]} 名！`;
+    else if (claimSent) claimMsg.textContent = '已通知主持人，等待確認排名…';
+    else if (ended) { claimMsg.textContent = '本局已結束。'; }
+    else { claimMsg.textContent = '連成線了！按下按鈕通知主持人，系統會依完成順序自動排名次。'; claimBtn.hidden = false; }
+  }
+
+  async function sendClaim() {
+    if (!ROOM || mode !== 'play' || ended) return;
+    const k = bingoK();
+    if (!k) { toast('目前還沒有連成線'); return; }
+    if (!await ask('完成賓果？', '會通知主持人並自動排進名次。請確認你的卡片真的有連成線。', '完成賓果')) return;
+    const data = { uid: myId(), name: (MiniHub.player().displayName || MiniHub.player().name || '玩家').slice(0, 20), k };
+    claimSent = true; refreshClaim();
+    try { if (roomConn) roomConn.send(window.BingoRoom.MSG.CLAIM, data); } catch (e) { /* 忽略 */ }
+    try {
+      const A = P && P.MiniHubAuth, c = A && A.rooms && A.rooms.claims;
+      if (c && A.rooms.on()) await c.send(ROOM, data);
+    } catch (e) { toast('網路不穩，宣告可能未送出，請再試一次'); claimSent = false; refreshClaim(); return; }
+    toast('已通知主持人');
+  }
+  claimBtn.addEventListener('click', sendClaim);
+  function resetClaim() {
+    if (!claimSent) return;
+    claimSent = false;
+    try { const A = P && P.MiniHubAuth, c = A && A.rooms && A.rooms.claims; if (c && A.rooms.on()) c.remove(ROOM); } catch (e) { /* 忽略 */ }
+  }
+
   /* ---------- 主持人同步：開始 → 鎖卡、抽號 → 自動對號、開新局 → 保留數字並解鎖 ---------- */
   const marksFromDrawn = () => {
     const m = newMarked();
@@ -540,6 +601,7 @@
       if (popped) { sound.beep(740, .07); buzz(12); }
       refresh(popped || undefined);
     } else if (mode === 'play') { // 主持人開新局：數字保留，清除連線與標記，重新開放修改
+      resetClaim();
       mode = 'edit'; ended = false; marked = newMarked(); prevLines = 0; notice = ''; animate = true;
       buildGrid(); refresh(); toast('主持人開新局：數字已保留，可重新修改');
     }
@@ -549,7 +611,7 @@
     if (hostData && d.at < hostData.at) return; // 忽略較舊的資料
     hostData = d; reconcile();
   }
-  let unwatchHost = null;
+  let unwatchHost = null, roomConn = null;
   function attachHost() {
     if (unwatchHost) return true;
     try {
@@ -563,7 +625,7 @@
     if (!ROOM) return;
     try { // 同瀏覽器即時（BroadcastChannel）
       const R = window.BingoRoom;
-      if (R) { const conn = R.connect({ code: ROOM, role: 'player' }); conn.on(m => { if (m.type === R.MSG.SNAPSHOT) receiveHost(m.data); }); conn.send(R.MSG.SNAPSHOT_REQ); addEventListener('pagehide', () => { try { conn.close(); } catch (e) { /* 忽略 */ } }); }
+      if (R) { const conn = roomConn = R.connect({ code: ROOM, role: 'player' }); conn.on(m => { if (m.type === R.MSG.SNAPSHOT) receiveHost(m.data); }); conn.send(R.MSG.SNAPSHOT_REQ); addEventListener('pagehide', () => { try { conn.close(); } catch (e) { /* 忽略 */ } }); }
     } catch (e) { /* 忽略 */ }
     if (!attachHost()) { const t = setInterval(() => { if (attachHost()) clearInterval(t); }, 2000); }
     try { MiniHub.onChange(attachHost); } catch (e) { /* 忽略 */ }

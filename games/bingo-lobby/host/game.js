@@ -887,6 +887,131 @@ function rankSlots(state, settlement) {
 return { coveredPositions, nextRank, winnerCount, canDeclareRank, declareRank, retractLastRank, isConsolationVisible, calcPayouts, calcPayoutTotal, rankSlots };
 })();
 
+// ===== core/claims.js =====
+M['core/claims'] = (() => {
+const { FINANCE } = M['config/defaults'];
+const { getState, setState, subscribe } = M['core/state'];
+const { toast } = M['utils/dom'];
+// 玩家按「完成賓果」→ 依完成時的號碼順序自動排進名次；同一個號碼完成的視為同時賓果。
+// 主持人可撤銷個別玩家（撤銷後該玩家不可再宣告，可「恢復」）。名次資料沿用 game.ranks，並多一個 claimers 欄位。
+const MIN_K = 4;             // 有 FREE 時，一條線最少需要 4 個號碼
+const pool = new Map();      // uid → { uid, name, k, t }
+const rejected = new Map();  // uid → name
+let started = false;
+
+/** 依號碼順序（atSeq）排序、重新編號，超出前三名的丟掉 */
+function normalize(ranks) {
+  const sorted = ranks.map((r, i) => ({ r, i })).sort((a, b) => a.r.atSeq - b.r.atSeq || a.i - b.i).map((x) => x.r);
+  const out = [];
+  let pos = 1;
+  for (const r of sorted) {
+    if (pos > FINANCE.prizeRankCount) break;
+    out.push({ ...r, rank: pos });
+    pos += r.tieCount;
+  }
+  return out;
+}
+
+const seqOfK = (history, k) => {
+  let c = 0;
+  for (let i = 0; i < history.length; i++) if (history[i].type === 'new' && ++c === k) return i + 1;
+  return 0;
+};
+const cloneRanks = (ranks) => ranks.map((r) => ({ ...r, ...(r.claimers ? { claimers: r.claimers.map((c) => ({ ...c })) } : {}) }));
+const claimerRank = (ranks, uid) => ranks.find((r) => (r.claimers || []).some((c) => c.uid === uid));
+
+function process() {
+  const st = getState();
+  if (st.game.status !== 'playing') return;
+  const hist = st.game.history;
+  const t0 = hist.length ? hist[0].ts : 0;
+  let ranks = cloneRanks(st.game.ranks);
+  const before = JSON.stringify(ranks);
+  const list = [...pool.values()].sort((a, b) => a.k - b.k || a.t - b.t);
+  const placed = [];
+  for (const c of list) {
+    if (rejected.has(c.uid) || claimerRank(ranks, c.uid)) continue;
+    if (c.t && t0 && c.t < t0 - 10000) continue;   // 上一局留下的舊通知
+    const atSeq = seqOfK(hist, c.k);
+    if (!atSeq) continue;
+    const e = ranks.find((r) => r.atSeq === atSeq);
+    if (e) { e.tieCount += 1; e.claimers = [...(e.claimers || []), { uid: c.uid, name: c.name }]; }
+    else ranks.push({ rank: 0, tieCount: 1, atSeq, claimers: [{ uid: c.uid, name: c.name }] });
+    ranks = normalize(ranks);
+    if (claimerRank(ranks, c.uid)) placed.push(c);
+  }
+  if (JSON.stringify(ranks) === before) return;
+  setState({ game: { ranks } });
+  for (const c of placed) {
+    const r = claimerRank(getState().game.ranks, c.uid);
+    if (r) toast(`🎉 ${c.name || '玩家'} 完成賓果：第 ${r.rank} 名`);
+  }
+}
+
+function addClaim(d) {
+  if (!d || typeof d.uid !== 'string' || !d.uid || d.uid.length > 64) return;
+  const k = Number(d.k);
+  if (!Number.isInteger(k) || k < MIN_K || k > 75) return;
+  const name = String(d.name || '').slice(0, 20);
+  const old = pool.get(d.uid);
+  if (old && old.k === k) return;
+  pool.set(d.uid, { uid: d.uid, name, k, t: Number(d.t) || Date.now() });
+  process();
+}
+
+/** 撤銷：從名次移除該玩家，並讓被擠出前三名的人遞補 */
+function revoke(uid) {
+  const st = getState();
+  const e = claimerRank(st.game.ranks, uid);
+  if (!e) return false;
+  const who = e.claimers.find((c) => c.uid === uid);
+  rejected.set(uid, who ? who.name : '');
+  const ranks = cloneRanks(st.game.ranks).map((r) => {
+    if (!(r.claimers || []).some((c) => c.uid === uid)) return r;
+    return { ...r, tieCount: r.tieCount - 1, claimers: r.claimers.filter((c) => c.uid !== uid) };
+  }).filter((r) => r.tieCount >= 1);
+  setState({ game: { ranks: normalize(ranks) } });
+  process();
+  return true;
+}
+/** 恢復被撤銷的玩家（重新依號碼順序排入） */
+function restore(uid) {
+  if (!rejected.delete(uid)) return false;
+  process();
+  return true;
+}
+const rejectedList = () => [...rejected].map(([uid, name]) => ({ uid, name }));
+const rejectedUids = () => [...rejected.keys()];
+
+function init(room) {
+  if (started || !room) return;
+  started = true;
+  const R = window.BingoRoom;
+  try {   // 同瀏覽器（BroadcastChannel）
+    if (R) {
+      const conn = R.connect({ code: room, role: 'host-claims' });
+      conn.on((m) => { if (m.type === R.MSG.CLAIM) addClaim(m.data); });
+      addEventListener('pagehide', () => { try { conn.close(); } catch (e) { /* 忽略 */ } });
+    }
+  } catch (e) { /* 忽略 */ }
+  let unwatch = null;   // 跨裝置（Firestore）
+  const attach = () => {
+    if (unwatch) return true;
+    try {
+      const A = window.parent !== window && window.parent.MiniHubAuth;
+      if (!A || !A.rooms || !A.rooms.claims || !A.rooms.on()) return false;
+      unwatch = A.rooms.claims.watch(room, (list) => list.forEach(addClaim));
+      return !!unwatch;
+    } catch (e) { return false; }
+  };
+  if (!attach()) { const t = setInterval(() => { if (attach()) clearInterval(t); }, 2000); }
+  try { MiniHub.onChange(attach); } catch (e) { /* 忽略 */ }
+  // 結束／開新局：清掉本局的宣告與撤銷名單
+  subscribe((st) => { if (st.game.status !== 'playing' && (pool.size || rejected.size)) { pool.clear(); rejected.clear(); } });
+}
+return { init, revoke, restore, rejectedList, rejectedUids };
+})();
+
 // ===== core/finance.js =====
 M['core/finance'] = (() => {
 const { FINANCE } = M['config/defaults'];
@@ -1445,6 +1570,7 @@ const { getState, setState, subscribe } = M['core/state'];
 const { drawnNumbers, appendRecords } = M['core/draw-engine'];
 const { paidDraw, maxBatchCount, maxBatchAmount } = M['core/batch-draw'];
 const { canDeclareRank, declareRank, nextRank, retractLastRank, coveredPositions } = M['core/ranks'];
+const claimsApi = M['core/claims'];
 const { NUMBER_MAX, FINANCE, BATCH_PLAY_INTERVAL_MS } = M['config/defaults'];
 const { el, toast, confirmDialog, showModal } = M['utils/dom'];
 const { formatMoney } = M['utils/format'];
@@ -1518,10 +1644,11 @@ function initDrawView(root) {
 
   // ---- 其他操作 ----
   const rankBtn = el('button', { type: 'button', class: 'btn btn-primary btn-tool', onClick: onRankBtn });
+  const manageBtn = el('button', { type: 'button', class: 'btn btn-secondary btn-tool', onClick: () => openRankDialog() }, '👥 名次管理');
 
   root.replaceChildren(
     el('div', { class: 'draw-panel' },
-      el('div', { class: 'draw-topbar' }, rankBtn),
+      el('div', { class: 'draw-topbar' }, manageBtn, rankBtn),
       stage,
       caption,
       gotoSettings,
@@ -1653,18 +1780,35 @@ function initDrawView(root) {
     const content = el('div', { class: 'rank-dialog' },
       registered.length
         ? el('ul', { class: 'rank-registered' }, ...registered.map((r) =>
-            el('li', {}, `第 ${r.rank} 名已登錄${r.tieCount > 1 ? `（同時 ${r.tieCount} 人）` : ''}・第 ${r.atSeq} 次抽號`)))
+            el('li', {},
+              el('div', {}, `第 ${r.rank} 名已登錄${r.tieCount > 1 ? `（同時 ${r.tieCount} 人）` : ''}・第 ${r.atSeq} 次抽號`),
+              ...(r.claimers || []).map((c) => el('div', { class: 'rank-claimer' },
+                el('span', {}, `🙋 ${c.name || '玩家'}（玩家自行宣告）`),
+                el('button', { type: 'button', class: 'btn btn-danger-outline btn-small',
+                  onClick: async () => {
+                    modal.close();
+                    const ok = await confirmDialog({ title: '撤銷這位玩家的賓果？', message: `將撤銷「${c.name || '玩家'}」的第 ${r.rank} 名，後面的名次會自動遞補。`, confirmText: '撤銷', danger: true });
+                    if (ok) { claimsApi.revoke(c.uid); toast('已撤銷'); }
+                  } }, '撤銷'))))))
+        : null,
+      claimsApi.rejectedList().length
+        ? el('div', { class: 'rank-rejected' }, el('p', { class: 'field-label' }, '已撤銷的玩家'),
+            ...claimsApi.rejectedList().map((c) => el('div', { class: 'rank-claimer' },
+              el('span', {}, c.name || '玩家'),
+              el('button', { type: 'button', class: 'btn btn-secondary btn-small', onClick: () => { claimsApi.restore(c.uid); modal.close(); toast('已恢復，依賓果順序重新排入'); } }, '恢復'))))
         : null,
       canDeclare
-        ? el('div', {}, el('p', { class: 'field-label' }, `第 ${rank} 名・同時賓果人數`), tie.node, note)
-        : el('p', { class: 'field-error' }, declareRank(state).message ?? '目前無法登錄名次'),
+        ? el('div', {}, el('p', { class: 'field-label' }, `第 ${rank} 名・同時賓果人數（主持人手動登錄）`), tie.node, note)
+        : (registered.length ? null : el('p', { class: 'field-error' }, declareRank(state).message ?? '目前無法登錄名次')),
       registered.length
         ? el('button', { type: 'button', class: 'btn btn-danger-outline btn-block', style: 'margin-top:12px',
             onClick: async () => {
               modal.close();
               const last = getState().game.ranks.at(-1);
               const ok = await confirmDialog({ title: '取消名次登錄？', message: `將取消第 ${last.rank} 名的登錄。`, confirmText: '取消登錄', danger: true });
-              if (ok) apply(retractLastRank(getState()));
+              if (!ok) return;
+              if (last.claimers && last.claimers.length) last.claimers.forEach((c) => claimsApi.revoke(c.uid));
+              else apply(retractLastRank(getState()));
             } }, `取消上一個名次登錄（第 ${registered.at(-1).rank} 名）`)
         : null
     );
@@ -1736,6 +1880,8 @@ function initDrawView(root) {
     const rankFull = coveredPositions(game.ranks) >= FINANCE.prizeRankCount;
     rankBtn.textContent = rankFull && playing ? '🏁 結束遊戲' : rankFull ? '🎉 名次已登錄完' : `🎉 第 ${nextRank(state)} 名賓果`;
     rankBtn.disabled = !playing || busy || (game.ranks.length === 0 && !canDeclareRank(state));
+    manageBtn.hidden = !game.ranks.length && !claimsApi.rejectedList().length;
+    manageBtn.disabled = busy;
     const ended = game.status === 'ended';
 
     hint.textContent = ended ? '本局已結束，可查看結算收據或到設定頁開新局' : !playing ? MESSAGES.NOT_PLAYING : busy ? '連抽播放中，請稍候…' : allDrawn ? MESSAGES.ALL_DRAWN : '';
@@ -2342,6 +2488,8 @@ function snapshot(room) {
     v: 1, room, status: g.status, n: g.history.length,
     drawn, last: last ? row(last) : null, recent: g.history.slice(-5).map(row),
     ranks: g.ranks.map((r) => [r.rank, r.tieCount, r.atSeq]),
+    cl: g.ranks.flatMap((r) => (r.claimers || []).map((c) => [c.uid, r.rank])),   // 玩家自己宣告賓果的名次（讓玩家看到自己排第幾）
+    rj: M['core/claims'].rejectedUids(),                                          // 被主持人撤銷的玩家
     pool: showPool ? calcTotalPool(state) : null,
     at: Date.now(),
   };
@@ -2465,6 +2613,7 @@ function start() {
   try {
     const p = window.BingoRoom && window.BingoRoom.readParams();
     if (p && p.role === 'host' && p.room) initCloudSave(p.room);
+    if (p && p.role === 'host' && p.room) M['core/claims'].init(p.room);   // 玩家按「完成賓果」自動排名次
     if (p && p.role === 'host' && p.room) initSpectatePublish(p.room);   // 旁觀：公開抽號資料給旁觀頁
   } catch (e) { console.warn('[cloud-save / spectate]', e); }
 

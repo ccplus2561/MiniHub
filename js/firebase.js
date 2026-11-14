@@ -382,8 +382,33 @@ const live = {
     }, err => cb(null, err));
   }
 };
+// 玩家「完成賓果」通知：games/bingo-lobby/claims/{房號}_{玩家uid}：{ room, uid, name, k, t, at }
+// k = 玩家卡片在第幾個「新號碼」時完成第一條線；只有本人寫入，主持人讀取該房間全部。
+const claimRef = (room, uid) => F.doc(F.db, "games", "bingo-lobby", "claims", String(room) + "_" + uid);
+const claims = {
+  async send(room, { name, k }) {
+    if (!roomsOn()) return false;
+    const uid = F.auth.currentUser.uid;
+    bump(0, 1);
+    await F.setDoc(claimRef(room, uid), { room: String(room), uid, name: String(name || "").slice(0, 20), k: Number(k) | 0, t: Date.now(), at: F.serverTimestamp() });
+    return true;
+  },
+  async remove(room) {
+    if (!roomsOn()) return;
+    try { bump(0, 1); await F.deleteDoc(claimRef(room, F.auth.currentUser.uid)); } catch (e) { /* 沒有就略過 */ }
+  },
+  // 主持人監聽：cb(陣列 [{uid,name,k,t}])；回傳取消監聽函式
+  watch(room, cb) {
+    if (!roomsOn()) return null;
+    return F.onSnapshot(F.query(F.collection(F.db, "games", "bingo-lobby", "claims"), F.where("room", "==", String(room))), s => {
+      bump(s.size || 1, 0);
+      cb(s.docs.map(d => { const x = d.data(); return { uid: String(x.uid || ""), name: String(x.name || ""), k: Number(x.k) || 0, t: Number(x.t) || 0 }; }));
+    }, NOP);
+  }
+};
 const rooms = {
   live,
+  claims,
   on: roomsOn,
   uid: () => (roomsOn() ? F.auth.currentUser.uid : ""),
   async list() {

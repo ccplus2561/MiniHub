@@ -124,3 +124,15 @@ dialog h2 { margin: 0 0 6px; font-size: 1.25rem; } dialog p { margin: 0 0 18px; 
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .cell .num:disabled { cursor: default; }
 [data-mode="play"] .actions { grid-template-columns: repeat(2, 1fr); }
+
+/* 多人：完成賓果宣告 */
+.claim { margin: 14px 0 4px; padding: 14px; border-radius: 16px; text-align: center; background: var(--card); border: 2px solid var(--line); box-shadow: var(--shadow); }
+.claim[hidden] { display: none; }
+.claim__msg { margin: 0; font-weight: 700; }
+.claim__btn { width: 100%; min-height: 56px; margin-top: 12px; font-size: 1.25rem; white-space: nowrap; }
+.claim[data-s="ready"] { border-color: var(--gold2); }
+.claim[data-s="ready"] .claim__btn { animation: claimPulse 1.6s ease-in-out infinite; }
+.claim[data-s="ok"] { border-color: var(--ok); color: var(--ok); font-size: 1.1rem; }
+.claim[data-s="bad"] { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+@keyframes claimPulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--gold2) 40%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .claim[data-s="ready"] .claim__btn { animation: none; } }
