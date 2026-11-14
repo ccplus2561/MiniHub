@@ -175,6 +175,7 @@
   let animate = true; // 只在整張重建時播放入場動畫
   let drawn = new Set(); // 多人模式：主持人已抽出的號碼（卡片依此自動對號）
   let hostData = null;   // 多人模式：主持人公開的最新資料
+  let auto = false;      // 多人模式：玩家自己選擇「自動對號」（主持人開啟自動對獎功能時才有效）
 
   const $ = id => document.getElementById(id);
   const gridEl = $('grid'), progressEl = $('progress'), messagesEl = $('messages');
@@ -187,6 +188,9 @@
     m[CENTER][CENTER] = true;
     return m;
   }
+
+  const hostAuto = () => !!(ROOM && hostData && hostData.am === 1);   // 主持人是否開啟自動對獎功能
+  const autoOn = () => hostAuto() && auto;                            // 這位玩家是否正在自動對號
 
   /* ---------- 小工具：對話框、提示、震動 ---------- */
   function ask(title, text, okLabel = '確定') {
@@ -262,10 +266,14 @@
           cells[key] = { wrap, el: input };
         } else {
           const b = document.createElement('button');
-          b.type = 'button'; b.className = 'num'; b.disabled = ended || !!ROOM; b.textContent = grid[r][c];
+          b.type = 'button'; b.className = 'num'; b.disabled = ended; b.textContent = grid[r][c];
           b.setAttribute('aria-label', `號碼 ${grid[r][c]}`);
           b.addEventListener('click', () => {
-            if (ended || ROOM) return; // 多人模式由主持人抽號自動對號，不可手動標記
+            if (ended) return;
+            if (ROOM) { // 多人模式：自動對號開啟時不用點；否則只能標記主持人已抽出的號碼
+              if (autoOn()) { toast('自動對號已開啟，不需要手動標記'); return; }
+              if (!drawn.has(Number(grid[r][c]))) { toast('主持人還沒有抽出這個號碼'); sound.beep(300, .07); buzz([30, 30]); return; }
+            }
             marked[r][c] = !marked[r][c];
             sound.beep(marked[r][c] ? 740 : 420, .07); buzz(12);
             refresh(key);
@@ -303,13 +311,23 @@
     document.body.dataset.mode = mode;
     introEl.textContent = ROOM
       ? (!playing ? `填入 24 格數字（${MIN}～${MAX}，不可重複），或用「隨機產生」。主持人按下開始後，卡片會自動鎖定。`
-        : ended ? '本局已結束，等主持人開新局（卡片數字會保留）。' : '卡片已鎖定，主持人抽出的號碼會自動標記。')
+        : ended ? '本局已結束，等主持人開新局（卡片數字會保留）。'
+        : autoOn() ? '卡片已鎖定，主持人抽出的號碼會自動標記。'
+        : '卡片已鎖定。主持人抽出號碼後，請點擊卡片上的號碼來標記。')
       : playing
       ? (ended ? '遊戲已結束。' : '點擊被叫出的號碼來標記，連成線後可繼續玩，準備好再按「結束遊戲」。')
       : `填入 24 格數字（${MIN}～${MAX}，不可重複），或使用「隨機產生」。`;
     playing ? refreshPlay(poppedKey) : refreshEdit();
     refreshClaim();
+    refreshAuto();
     queueSave();
+  }
+
+  /** 自動對號開關：只有主持人開啟「自動對獎功能」時才顯示 */
+  function refreshAuto() {
+    const row = $('auto-row'); if (!row) return;
+    row.hidden = !hostAuto();
+    $('auto-toggle').checked = auto;
   }
 
   function refreshEdit() {
@@ -432,6 +450,11 @@
     if (grid.some(row => row.some(v => v !== '')) && !await ask('清空整張卡片？', '所有已填數字會被清除。', '清空')) return;
     setGrid(emptyGrid());
   });
+  $('auto-toggle').addEventListener('change', e => {
+    auto = e.currentTarget.checked;
+    if (hostData) reconcile(); else refresh();
+    toast(auto ? '自動對號已開啟' : '自動對號已關閉，請自己點擊號碼標記');
+  });
   btn.done.addEventListener('click', complete);
   btn.end.addEventListener('click', endGame);
   btn.unmark.addEventListener('click', unmarkAll);
@@ -455,8 +478,8 @@
   const uidNow = () => { try { return MiniHub.player().uid || ''; } catch (e) { return ''; } };
   let syncStarted = false, syncReady = false, lastKey = '', saveTimer = 0, cloudPending = false, roomClosed = false;
 
-  const stateKey = () => JSON.stringify({ mode, grid, marked, ended });
-  const snapshot = () => ({ v: 1, mode, grid, marked, ended, at: Date.now() });
+  const stateKey = () => JSON.stringify({ mode, grid, marked, ended, auto });
+  const snapshot = () => ({ v: 1, mode, grid, marked, ended, auto, at: Date.now() });
   const lsKey = () => `bingoLobby.card.${ROOM}.${uidNow()}`;
 
   function sane(d) {
@@ -469,7 +492,7 @@
 
   function applySaved(d) {
     mode = d.mode; grid = d.grid.map(r => [...r]); marked = d.marked.map(r => [...r]); ended = !!d.ended;
-    marked[CENTER][CENTER] = true; notice = ''; animate = false;
+    marked[CENTER][CENTER] = true; notice = ''; animate = false; auto = d.auto === true;
     prevLines = mode === 'play' ? findCompletedLines(marked).length : 0; // 恢復時不重播紙花
     lastKey = stateKey();
     buildGrid(); refresh();
@@ -609,18 +632,20 @@
         const dlg = $('dlg'); if (dlg.open) dlg.close('cancel');
         const before = JSON.stringify(grid), next = lockable(grid);
         grid = next; mode = 'play'; notice = ''; animate = true; prevLines = 0;
-        marked = marksFromDrawn(); ended = st === 'ended'; prevLines = findCompletedLines(marked).length;
+        marked = autoOn() ? marksFromDrawn() : newMarked(); ended = st === 'ended'; prevLines = findCompletedLines(marked).length;
         buildGrid(); refresh();
         toast(before === JSON.stringify(grid) ? '主持人已開始，卡片已鎖定' : '主持人已開始，空格已自動補齊並鎖定');
         return;
       }
-      const next = marksFromDrawn();
+      // 自動對號：依已抽出號碼全部標記；手動：保留玩家自己點的，但主持人撤回的號碼要取消
+      const valid = marksFromDrawn();
+      const next = autoOn() ? valid : marked.map((row, r) => row.map((v, c) => v && valid[r][c]));
       let popped = null;
       for (let r = 0; r < SIZE && !popped; r++) for (let c = 0; c < SIZE; c++) if (next[r][c] && !marked[r][c]) { popped = `${r},${c}`; break; }
       const endedChanged = ended !== (st === 'ended');
       marked = next; ended = st === 'ended';
       if (endedChanged) buildGrid();
-      if (popped) { sound.beep(740, .07); buzz(12); }
+      if (popped && autoOn()) { sound.beep(740, .07); buzz(12); }
       refresh(popped || undefined);
     } else if (mode === 'play') { // 主持人開新局：數字保留，清除連線與標記，重新開放修改
       resetClaim();
@@ -631,7 +656,7 @@
   function receiveHost(d) {
     if (!ROOM || roomClosed || !d || d.v !== 1 || d.room !== ROOM) return;
     if (hostData && d.at < hostData.at) return; // 忽略較舊的資料
-    hostData = d; reconcile();
+    hostData = d; reconcile(); refreshAuto();
   }
   /* ---------- 主持人刪除房間：清除這個房間的卡片、宣告與抽號資料，回大廳 ---------- */
   async function onRoomClosed() {
