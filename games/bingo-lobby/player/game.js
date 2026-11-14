@@ -406,7 +406,7 @@
     drawLines(lines);
     if (lines.length > prevLines) {
       bannerEl.classList.remove('pop'); void bannerEl.offsetWidth; bannerEl.classList.add('pop');
-      launchConfetti(); sound.fanfare(); buzz([60, 40, 120]);
+      launchConfetti(); sound.line(lines.length); buzz([60, 40, 120]);
     }
     prevLines = lines.length;
   }
@@ -495,11 +495,6 @@
   btn.end.addEventListener('click', endGame);
   btn.unmark.addEventListener('click', unmarkAll);
   btn.restart.addEventListener('click', restart);
-  $('btn-sound').addEventListener('click', e => {
-    const on = !sound.isSfxOn(); sound.setSfx(on);
-    e.currentTarget.textContent = on ? '🔊' : '🔇'; e.currentTarget.setAttribute('aria-pressed', String(on));
-    if (on) sound.beep(660); toast(on ? '音效已開啟' : '音效已關閉');
-  });
 
   /* ---------- 房間同步：卡片數值依「房號 + 玩家」分開保存，意外退出可即時恢復 ---------- */
   // 只有多人模式（mode=multi 且有 6 碼房號）才同步；單人練習不存。
