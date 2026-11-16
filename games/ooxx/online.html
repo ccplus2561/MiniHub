@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="theme-color" content="#10130f">
+  <title>OOXX 雙人連線 — Neon Grid</title>
+  <link rel="stylesheet" href="lobby.css">
+  <link rel="stylesheet" href="online.css">
+  <script src="../../js/minihub-sdk.js"></script>
+</head>
+<body class="hall">
+  <main class="lobby">
+    <header class="lobby-head">
+      <button class="back-link" id="back" type="button">‹ 大廳</button>
+      <h1>雙人連線<span>.</span></h1>
+      <p>建立房間，或加入好友的房間</p>
+    </header>
+
+    <section class="my-room" aria-labelledby="my-title">
+      <div class="sec-title" id="my-title">我的房間</div>
+
+      <!-- 尚未建立 -->
+      <form class="create-box" id="create-box" autocomplete="off">
+        <input id="room-name" class="text-input" type="text" maxlength="20" placeholder="房間名稱（選填，最多 20 字）" spellcheck="false" aria-label="房間名稱">
+        <button class="btn btn-primary" id="create-btn" type="submit">＋ 建立房間</button>
+      </form>
+
+      <!-- 已建立 -->
+      <div class="owned-box" id="owned-box" hidden>
+        <div class="owned-info">
+          <span class="room-code" id="owned-code">000000</span>
+          <div class="owned-copy"><strong id="owned-name">未命名房間</strong><span id="owned-status">等待對手加入</span></div>
+        </div>
+        <div class="owned-actions">
+          <button class="btn btn-danger" id="del-btn" type="button">刪除</button>
+          <button class="btn btn-primary" id="enter-btn" type="button">進入房間</button>
+        </div>
+      </div>
+      <p class="hint-line" id="my-note">每個帳號同時只能有一間房間；需先刪除才能再建立。</p>
+      <p class="err-line" id="my-err" role="alert" hidden></p>
+    </section>
+
+    <section class="room-section" aria-labelledby="list-title">
+      <div class="sec-row">
+        <div class="sec-title" id="list-title">目前的房間 <b id="room-count">0</b></div>
+        <input id="search" class="text-input small" type="search" inputmode="numeric" maxlength="6" placeholder="搜尋房號" aria-label="搜尋房號" spellcheck="false">
+      </div>
+      <div class="room-list" id="room-list" aria-live="polite"></div>
+      <p class="hint-line center" id="list-empty" hidden></p>
+    </section>
+  </main>
+
+  <div class="confirm-overlay" id="confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+    <div class="confirm-card">
+      <h2 id="confirm-title">刪除房間？</h2>
+      <p id="confirm-desc"></p>
+      <div class="confirm-actions">
+        <button class="btn" id="confirm-no" type="button">取消</button>
+        <button class="btn btn-danger solid" id="confirm-yes" type="button">確定刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="online-store.js"></script>
+  <script src="online.js"></script>
+</body>
+</html>

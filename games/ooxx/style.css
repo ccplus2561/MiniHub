@@ -552,3 +552,12 @@ h1 { font-size: clamp(26px, calc(var(--vh) * 4.6), 42px); }
 /* 棋盤下方三顆按鈕：重新開始 / 換符號先後 / 返回大廳 */
 .board-actions { grid-template-columns: 1.2fr 1fr 1fr; }
 .board-actions .secondary-button { white-space: nowrap; }
+
+/* ===== 雙人連線：房間列 ===== */
+.room-bar { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 2px auto 0; padding: 0 12px; }
+.room-bar[hidden] { display: none; }
+.room-chip { padding: 5px 10px; border-radius: 9px; background: rgba(0,0,0,.35); color: var(--green); font: 800 15px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace; letter-spacing: 2px; }
+.room-title { max-width: 40vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 13px; }
+.room-mini { min-height: 32px !important; padding: 0 12px !important; font-size: 13px !important; }
+.room-danger { color: #ff6b5e; border-color: rgba(255,107,94,.45); }
+.board-actions [hidden], #notice-cancel[hidden] { display: none !important; }

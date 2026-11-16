@@ -4,7 +4,10 @@
   // 設定常數
   const GAME_ID = "ooxx";
   const MH = window.MiniHub;                       // 大廳共用 SDK（單獨開啟時也有安全預設值）
-  const SOLO = new URLSearchParams(location.search).get("mode") === "solo";   // 由 OOXX 大廳決定：?mode=solo 單人，其餘雙人
+  const QS = new URLSearchParams(location.search);
+  const SOLO = QS.get("mode") === "solo";          // 由 OOXX 大廳決定：?mode=solo 單人，?mode=online 雙人連線，其餘同機雙人
+  const ONLINE = QS.get("mode") === "online" && !!window.OOXXOnline;
+  const ROOM_ID = ONLINE ? window.OOXXOnline.normalizeId(QS.get("room")) : "";
   const storeKey = () => (SOLO ? `${GAME_ID}:solo:v1` : `${GAME_ID}:v1`);
   const AI_DELAY = 550;
   const LINES = [
@@ -16,7 +19,13 @@
   const other = p => (p === "X" ? "O" : "X");
   const num = s => (s === state.p1 ? 1 : 2);
   const isAI = s => SOLO && s === other(state.p1);
-  const nameOf = s => (SOLO ? (isAI(s) ? "電腦" : "你") : `玩家 ${num(s)}`);
+  let room = null;                                  // 連線模式：目前房間資料（由 OOXXOnline 同步）
+  const mySym = () => (!room ? "" : room.hostUid === window.OOXXOnline.me().uid ? "X" : room.guestUid === window.OOXXOnline.me().uid ? "O" : "");
+  const onlineName = s => {
+    const n = s === "X" ? (room && room.hostName) : (room && room.guestUid ? room.guestName : "");
+    return (n || (s === "O" ? "等待加入…" : "玩家 1")) + (mySym() === s ? "（你）" : "");
+  };
+  const nameOf = s => (ONLINE ? onlineName(s) : SOLO ? (isAI(s) ? "電腦" : "你") : `玩家 ${num(s)}`);
   const labelOf = s => (SOLO ? (isAI(s) ? "AI" : "YOU") : `PLAYER 0${num(s)}`);
 
   // DOM
@@ -43,7 +52,11 @@
     soloStart: $("solo-start"),
     soloScore: $("solo-score"),
     sc: { win: $("sc-win"), draw: $("sc-draw"), loss: $("sc-loss") },
-    pickTitle: $("pick-title")
+    pickTitle: $("pick-title"),
+    roomBar: $("room-bar"), roomCode: $("room-code"), roomTitle: $("room-title"),
+    roomCopy: $("room-copy"), roomExit: $("room-exit"),
+    notice: $("notice"), noticeTitle: $("notice-title"), noticeDesc: $("notice-desc"),
+    noticeOk: $("notice-ok"), noticeCancel: $("notice-cancel")
   };
   const IS_TOUCH = window.matchMedia && window.matchMedia("(hover: none)").matches;
   // 提示文字依大廳的「鍵盤」設定顯示
@@ -116,6 +129,7 @@
   }
 
   function play(i, fromAI) {
+    if (ONLINE) { onlineMove(i); return; }
     if (state.picking) return;
     if (SOLO && isAI(state.turn) && !fromAI) return;
     if (state.over || state.board[i]) {
@@ -193,6 +207,7 @@
   }
 
   async function newRound() {
+    if (ONLINE) { onlineRematch(); return; }
     if (state.picking) return;
     clearTimeout(aiTimer);
     if (!(await askNext())) { scheduleAI(); return; }
@@ -261,7 +276,8 @@
       const active = state.over ? p === winner : p === state.turn;
       els.card[p].classList.toggle("active-player", active);
       els.status[p].className = active ? "player-status" : "waiting-status";
-      if (!state.over) els.status[p].textContent = active ? (isAI(p) ? "思考中…" : "你的回合") : "等待中";
+      if (ONLINE && room && !room.guestUid) els.status[p].textContent = p === "X" ? "已就緒" : "等待中";
+      else if (!state.over) els.status[p].textContent = active ? (ONLINE ? (p === mySym() ? "你的回合" : "對手回合") : isAI(p) ? "思考中…" : "你的回合") : "等待中";
       else if (draw) els.status[p].textContent = "平手";
       else els.status[p].textContent = p === winner ? "獲勝！" : "落敗";
     });
@@ -269,14 +285,19 @@
     els.banner.classList.toggle("is-over", state.over);
     els.turnIcon.classList.toggle("is-o", (state.over ? winner : state.turn) === "O");
     els.turnIcon.classList.toggle("is-draw", draw);
-    if (draw) {
+    if (ONLINE && room && !room.guestUid) {
+      els.turnIcon.textContent = "…";
+      els.turnIcon.classList.remove("is-o", "is-draw");
+      els.turnLabel.textContent = "房間狀態";
+      els.turnName.textContent = "等待對手加入";
+    } else if (draw) {
       els.turnIcon.textContent = "＝";
       els.turnLabel.textContent = "對局結果";
       els.turnName.textContent = "平手！";
     } else if (winner) {
       els.turnIcon.textContent = SYMBOL[winner];
       els.turnLabel.textContent = "對局結果";
-      els.turnName.textContent = SOLO ? (isAI(winner) ? "電腦獲勝" : "你贏了！") : `玩家 ${num(winner)} 獲勝！`;
+      els.turnName.textContent = ONLINE ? (winner === mySym() ? "你贏了！" : "對手獲勝") : SOLO ? (isAI(winner) ? "電腦獲勝" : "你贏了！") : `玩家 ${num(winner)} 獲勝！`;
     } else {
       els.turnIcon.textContent = SYMBOL[state.turn];
       els.turnLabel.textContent = "現在輪到";
@@ -289,6 +310,7 @@
       els.sc.loss.textContent = state.scores[other(human)];
     }
     els.restart.lastChild.textContent = state.over ? " 再來一局" : " 重新開始";
+    if (ONLINE) { els.restart.hidden = !state.over; els.repick.hidden = true; }
   }
 
   function choose(sym, first) {
@@ -326,8 +348,8 @@
     flashHint(`${SOLO ? "你" : "玩家 1"}是 ${SYMBOL[p1]}，${who}先手。`);
   }
   function applyModeUI() {
-    els.modeTag.textContent = SOLO ? "單人對戰" : "雙人對戰";
-    document.title = SOLO ? "OOXX — 單人" : "OOXX — 雙人";
+    els.modeTag.textContent = SOLO ? "單人對戰" : ONLINE ? "雙人連線" : "雙人對戰";
+    document.title = SOLO ? "OOXX — 單人" : ONLINE ? "OOXX — 雙人連線" : "OOXX — 雙人";
     els.soloScore.hidden = !SOLO;
     els.pickTitle.textContent = SOLO ? "挑戰電腦" : "雙人對戰";
     $("pick-desc").textContent = SOLO ? "電腦會使用另一個符號，先選符號與先後手。" : "玩家 2 會使用另一個符號，先選符號與先後手。";
@@ -335,7 +357,7 @@
     $("first-me").textContent = SOLO ? "我先" : "玩家 1 先";
     $("first-ai").textContent = SOLO ? "電腦先" : "玩家 2 先";
   }
-  function backToLobby() { location.href = "index.html"; }
+  function backToLobby() { location.href = ONLINE ? "online.html" : "index.html"; }
   function setupPickUI() {
     applyModeUI();
     els.soloOpts.querySelectorAll(".seg").forEach(seg => {
@@ -348,6 +370,102 @@
     $("lobby-btn").addEventListener("click", backToLobby);
     els.soloStart.addEventListener("click", startGame);
     els.repick.addEventListener("click", openPick);
+  }
+
+  // ===== 雙人連線 =====
+  // 房間資料與規則在 online-store.js；這裡只負責「把房間資料畫出來」與「把操作送出去」。
+  let noticeOnOk = null;
+  function showNotice(title, desc, okText, onOk, cancelable) {
+    els.noticeTitle.textContent = title;
+    els.noticeDesc.textContent = desc;
+    els.noticeOk.textContent = okText;
+    els.noticeCancel.hidden = !cancelable;
+    noticeOnOk = onOk;
+    els.notice.hidden = false;
+    els.noticeOk.focus();
+  }
+  function hideNotice() { els.notice.hidden = true; noticeOnOk = null; }
+
+  let lastRev = -1, lastOver = false, joined = false, leaving = false;
+  function applyRoom(r) {
+    if (!r) {   // 房間被房主刪除（或已過期）
+      room = null;
+      if (leaving) return;
+      showNotice("房間已關閉", "房主已刪除這間房間。", "回到房間列表", backToLobby, false);
+      return;
+    }
+    const prev = room;
+    room = r;
+    const g = r.game;
+    state.board = g.board.slice();
+    state.turn = g.turn;
+    state.starter = g.starter;
+    state.round = g.round;
+    state.scores = { X: g.scores.X, O: g.scores.O, draw: g.scores.draw };
+    state.over = g.over;
+    state.winLine = g.winLine;
+    state.p1 = "X";
+    state.picking = false;
+    if (joined && g.rev !== lastRev) {
+      const N = window.NeonAudio;
+      if (N) {
+        if (g.over) N.play(g.winLine ? (state.board[g.winLine[0]] === mySym() ? "win" : "draw") : "draw");
+        else if (g.rev === 0) N.play("reset");
+        else N.play(g.turn === "X" ? "o" : "x");
+      }
+    }
+    if (prev && !prev.guestUid && r.guestUid) flashHint(`${r.guestName || "對手"} 已加入，開始對戰！`);
+    if (prev && prev.guestUid && !r.guestUid) flashHint("對手已離開房間。");
+    lastRev = g.rev; lastOver = g.over; joined = true;
+    renderRoomBar();
+    render();
+  }
+  function renderRoomBar() {
+    els.roomBar.hidden = false;
+    els.roomCode.textContent = room.id;
+    els.roomTitle.textContent = room.name || "";
+    els.roomExit.textContent = room.hostUid === window.OOXXOnline.me().uid ? "刪除房間" : "離開房間";
+  }
+  async function onlineMove(i) {
+    if (!room) return;
+    if (!room.guestUid) { flashHint("還在等待對手加入。"); return; }
+    if (state.over || state.board[i]) { if (!state.over) window.NeonAudio && window.NeonAudio.play("invalid"); return; }
+    if (state.turn !== mySym()) { flashHint("還沒輪到你。"); return; }
+    const res = await window.OOXXOnline.move(ROOM_ID, i);
+    if (res && res.error === "gone") applyRoom(null);
+  }
+  async function onlineRematch() {
+    if (!room || !state.over) return;
+    await window.OOXXOnline.rematch(ROOM_ID);
+  }
+  function exitRoom() {
+    const O = window.OOXXOnline;
+    if (!room) { backToLobby(); return; }
+    if (room.hostUid === O.me().uid) {
+      showNotice("刪除房間？", room.guestUid ? "目前正在對戰，刪除後對手會被請出房間。" : "房間將被刪除。", "確定刪除",
+        async () => { hideNotice(); leaving = true; await O.deleteRoom(ROOM_ID); backToLobby(); }, true);
+    } else {
+      O.leaveRoom(ROOM_ID).then(backToLobby, backToLobby);
+    }
+  }
+  async function startOnline() {
+    const O = window.OOXXOnline;
+    els.pick.hidden = true;
+    state.picking = false;
+    $("lobby-btn").lastChild.textContent = " 房間列表";
+    els.roomCopy.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText(ROOM_ID); flashHint("已複製房號。"); } catch (e) { flashHint(`房號：${ROOM_ID}`); }
+    });
+    els.roomExit.addEventListener("click", exitRoom);
+    els.noticeOk.addEventListener("click", () => { const f = noticeOnOk; hideNotice(); if (f) f(); });
+    els.noticeCancel.addEventListener("click", hideNotice);
+    if (!O.isId(ROOM_ID)) { showNotice("找不到房間", "房號不正確。", "回到房間列表", backToLobby, false); return; }
+    const res = await O.joinRoom(ROOM_ID);   // 房主 / 已在房內：直接進入；其他人：佔用空位
+    if (!res.ok) {
+      showNotice(res.error === "gone" ? "房間不存在" : "房間已滿", res.error === "gone" ? "這間房間已被刪除或已過期。" : "這間房間已經有兩位玩家。", "回到房間列表", backToLobby, false);
+      return;
+    }
+    O.subscribe(ROOM_ID, applyRoom);
   }
 
   function render() {
@@ -391,6 +509,7 @@
   state.scores = { X: 0, O: 0, draw: 0 };
   setupPickUI();
   render();
+  if (ONLINE) startOnline();
 
   // 暫停：大廳要求暫停時（點左側導覽）停止電腦思考，玩家下一次操作（點一下或按鍵）時繼續
   MH.onPause(() => { paused = true; clearTimeout(aiTimer); });
