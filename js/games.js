@@ -45,6 +45,13 @@ window.GAMES = [
     tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: true, cloud: true }
   },
   {
+    id: "ooxx", title: "OOXX 圈叉", category: "益智", emoji: "⭕", icon: "icons/ooxx.svg",
+    colors: ["#4a8f1c", "#17240f"], path: "games/ooxx/index.html",
+    desc: "經典圈圈叉叉，單人挑戰無敵電腦，或與朋友同機對戰！\n規則：3 × 3 棋盤，先連成一線（橫、直、斜）者獲勝，下滿平手；單人模式的電腦不會輸，可選符號與先後手。\n操作：點擊格子落子，或按 1–9 鍵、R 重新開始。",
+    how: "", featured: false, music: false,
+    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: false, cloud: false }
+  },
+  {
     id: "fruit-slice", title: "水果忍者", category: "動作", emoji: "🍉", icon: "icons/fruit-slice.svg",
     colors: ["#0f766e", "#073b4c"], path: "games/fruit-slice/index.html",
     desc: "揮動刀刃切開飛出的水果，連擊越多分數越高！\n規則：60 秒內盡量得分，漏接水果會扣生命，切到炸彈直接結束。\n操作：滑鼠拖曳或手指滑動切水果。",

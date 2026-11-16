@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="theme-color" content="#10130f">
+  <meta name="description" content="Neon Grid — 電子風格 OOXX 棋盤介面">
+  <title>OOXX</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="../../js/minihub-sdk.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="topbar-right">
+        <span class="preview-tag"><span class="live-dot"></span> <span id="mode-tag">雙人對戰</span></span>
+      </div>
+    </header>
+
+    <section class="intro">
+      <h1>圈叉對決<span>.</span></h1>
+    </section>
+
+    <section class="game-layout" aria-label="OOXX 遊戲介面">
+      <aside class="side-panel player-panel">
+        <div class="panel-heading"><span class="heading-line"></span> 對戰玩家</div>
+        <article class="player-card active-player" id="card-x">
+          <div class="player-symbol symbol-x">×</div>
+          <div class="player-info">
+            <span class="player-label" id="label-x">PLAYER 01</span>
+            <strong id="name-x">玩家 1</strong>
+          </div>
+          <span class="player-status" id="status-x">你的回合</span>
+        </article>
+        <article class="player-card" id="card-o">
+          <div class="player-symbol symbol-o">○</div>
+          <div class="player-info">
+            <span class="player-label" id="label-o">PLAYER 02</span>
+            <strong id="name-o">玩家 2</strong>
+          </div>
+          <span class="waiting-status" id="status-o">等待中</span>
+        </article>
+        <div class="solo-score" id="solo-score" hidden>
+          <div><b id="sc-win">0</b><span>勝</span></div>
+          <div><b id="sc-draw">0</b><span>和</span></div>
+          <div><b id="sc-loss">0</b><span>敗</span></div>
+        </div>
+      </aside>
+
+      <section class="board-section">
+        <div class="board-topline">
+          <div>
+            <h2>對戰棋盤</h2>
+          </div>
+        </div>
+
+        <div class="turn-banner" id="turn-banner" aria-live="polite">
+          <div class="turn-icon" id="turn-icon">×</div>
+          <div class="turn-copy"><span id="turn-label">現在輪到</span><strong id="turn-name">玩家 1</strong></div>
+          <div class="turn-pulse"></div>
+        </div>
+
+        <div class="board-frame">
+          <div class="board-glow"></div>
+          <div class="tic-board" id="board" role="group" aria-label="OOXX 九宮格棋盤" data-turn="x" data-over="false">
+            <div class="cell is-empty" role="button" tabindex="0" data-index="0" aria-label="空格 1"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="1" aria-label="空格 2"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="2" aria-label="空格 3"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="3" aria-label="空格 4"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="4" aria-label="空格 5"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="5" aria-label="空格 6"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="6" aria-label="空格 7"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="7" aria-label="空格 8"></div>
+            <div class="cell is-empty" role="button" tabindex="0" data-index="8" aria-label="空格 9"></div>
+          </div>
+        </div>
+
+        <div class="board-actions">
+          <button class="primary-button" id="restart-btn" type="button"><span>↻</span> 重新開始</button>
+          <button class="secondary-button" id="repick-btn" type="button"><span>⇄</span> 換符號/先後</button>
+        </div>
+        <p class="demo-note" id="hint" aria-live="polite">點擊棋盤落子，也可按 1–9 鍵；按 R 重新開始。</p>
+      </section>
+    </section>
+  </main>
+  <div class="pick-overlay" id="pick" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+    <div class="pick-card">
+      <h2 id="pick-title"></h2>
+      <p id="pick-desc"></p>
+      <div class="solo-opts" id="solo-opts">
+        <div class="opt-title">對戰模式</div>
+        <div class="seg" data-group="mode">
+          <button type="button" class="seg-btn is-on" data-val="solo">🤖 單人</button>
+          <button type="button" class="seg-btn" data-val="duo">👥 雙人</button>
+        </div>
+        <div class="opt-title" id="opt-sym-title"></div>
+        <div class="seg" data-group="sym">
+          <button type="button" class="seg-btn is-on" data-val="X"><span class="symbol-x">×</span> 叉</button>
+          <button type="button" class="seg-btn" data-val="O"><span class="symbol-o">○</span> 圈</button>
+        </div>
+        <div class="opt-title">誰先開始</div>
+        <div class="seg" data-group="first">
+          <button type="button" class="seg-btn is-on" data-val="me" id="first-me"></button>
+          <button type="button" class="seg-btn" data-val="ai" id="first-ai"></button>
+          <button type="button" class="seg-btn" data-val="rand">隨機</button>
+        </div>
+        <button class="primary-button solo-start" id="solo-start" type="button">開始對戰</button>
+      </div>
+    </div>
+  </div>
+  <script src="audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
