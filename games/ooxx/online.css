@@ -29,6 +29,10 @@ body.hall .lobby { height: auto; min-height: 100dvh; justify-content: flex-start
 .btn.sm { min-height: 38px; padding: 0 14px; font-size: 14px; }
 
 .create-box { display: flex; gap: 10px; }
+.create-box .text-input + .text-input { flex: 0 1 220px; }
+.pass-card .text-input { width: 100%; margin-bottom: 10px; }
+.pass-card .err-line { margin: 0 0 10px; }
+.lock { margin-left: 4px; }
 .create-box .text-input { flex: 1; }
 .owned-box { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .owned-info { display: flex; align-items: center; gap: 14px; min-width: 0; }

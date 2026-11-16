@@ -16,7 +16,7 @@
  *   }
  *
  * room = {
- *   id, name, hostUid, hostName, guestUid, guestName, at,
+ *   id, name, passSalt, passHash（無密碼時為空字串）, hostUid, hostName, guestUid, guestName, at,
  *   status: "waiting" | "playing" | "over",
  *   game: { board[9], turn:"X"|"O", starter, round, scores:{X,O,draw}, over, winLine, rev }
  * }
@@ -36,6 +36,23 @@
   const isId = id => /^\d{6}$/.test(String(id));
   const normalizeId = raw => String(raw == null ? "" : raw).replace(/\D/g, "").slice(0, ID_LEN);
   const normalizeName = raw => Array.from(String(raw == null ? "" : raw).replace(/[\r\n\t]+/g, " ").trim()).slice(0, NAME_MAX).join("");
+  // 房間名稱：不限制任何符號或文字，只做前後空白修剪與長度上限
+  const normalizeRoomName = raw => Array.from(String(raw == null ? "" : raw).trim()).slice(0, NAME_MAX).join("");
+  const PASS_MAX = 32;
+  const normalizePass = raw => String(raw == null ? "" : raw).slice(0, PASS_MAX);
+  // 密碼只存「加鹽雜湊」，不存明文（房間資料所有人可讀，故不要放明文）
+  async function hashPass(pass, salt) {
+    const text = "ooxx|" + salt + "|" + pass;
+    try {
+      if (window.crypto && crypto.subtle) {
+        const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+        return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, "0")).join("");
+      }
+    } catch (e) { /* 改用備援 */ }
+    let h1 = 5381, h2 = 52711;   // 非 https 環境無 crypto.subtle 時的備援雜湊
+    for (let i = 0; i < text.length; i++) { const c = text.charCodeAt(i); h1 = ((h1 * 33) ^ c) >>> 0; h2 = ((h2 * 31) + c) >>> 0; }
+    return "f" + h1.toString(16) + h2.toString(16);
+  }
   const clone = o => JSON.parse(JSON.stringify(o));
   function randomDigits(n) {
     const buf = new Uint32Array(n);
@@ -151,14 +168,16 @@
   }
 
   // 建立房間：一個帳號只能有一間
-  async function createRoom(name) {
+  async function createRoom(name, pass) {
     const m = me();
     if (!m.loggedIn) return NEED_LOGIN;
     if (await myRoom()) return { ok: false, error: "owned" };
     for (let i = 0; i < 5; i++) {
       const id = await newRoomId();
+      const pw = normalizePass(pass);
+      const salt = pw ? randomDigits(12) : "";
       const room = {
-        id, name: normalizeName(name), hostUid: m.uid, hostName: m.name, guestUid: "", guestName: "",
+        id, name: normalizeRoomName(name), passSalt: salt, passHash: pw ? await hashPass(pw, salt) : "", hostUid: m.uid, hostName: m.name, guestUid: "", guestName: "",
         at: Date.now(), status: "waiting", game: newGame("X", 1),
       };
       const res = await be().create(room);
@@ -169,11 +188,20 @@
   }
 
   // 加入房間（房主 / 已在房內的人直接進入）
-  async function joinRoom(id) {
+  async function joinRoom(id, pass) {
     const m = me();
     if (!m.loggedIn) return NEED_LOGIN;
+    const cur = await be().get(id);
+    if (!cur) return { ok: false, error: "gone" };
+    const member = cur.hostUid === m.uid || cur.guestUid === m.uid;
+    let h = "";
+    if (cur.passHash && !member) {   // 有密碼的房間：房主 / 已在房內的人免輸入
+      h = await hashPass(normalizePass(pass), cur.passSalt || "");
+      if (h !== cur.passHash) return { ok: false, error: "pass" };
+    }
     const res = await be().update(id, room => {
       if (room.hostUid === m.uid || room.guestUid === m.uid) return room;
+      if (room.passHash && room.passHash !== h) return null;
       if (room.guestUid) return null;
       room.guestUid = m.uid;
       room.guestName = m.name;
@@ -182,7 +210,7 @@
       return room;
     });
     if (res.ok) return res;
-    return { ok: false, error: res.error === "gone" ? "gone" : "full" };
+    return { ok: false, error: res.error === "gone" ? "gone" : (res.room && res.room.passHash && res.room.passHash !== h ? "pass" : "full") };
   }
 
   // 加入者離開：釋出座位、對局重置
@@ -236,7 +264,7 @@
   }
 
   window.OOXXOnline = {
-    ID_LEN, NAME_MAX, isId, normalizeId, normalizeName, findWin, other, me,
+    ID_LEN, NAME_MAX, PASS_MAX, isId, normalizeId, normalizeName, normalizeRoomName, findWin, other, me,
     list: () => be().list(),
     get: id => be().get(id),
     subscribe: (id, cb) => be().subscribe(id, cb),

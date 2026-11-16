@@ -473,9 +473,10 @@
       const off = MH.onChange(() => { if (O.me().loggedIn) { off(); startOnlineJoin(); } });
       return;
     }
-    const res = await O.joinRoom(ROOM_ID);   // 房主 / 已在房內：直接進入；其他人：佔用空位
+    const res = await O.joinRoom(ROOM_ID, "");   // 房主 / 已在房內：直接進入；其他人：佔用空位
     if (!res.ok) {
-      showNotice(res.error === "gone" ? "房間不存在" : "房間已滿", res.error === "gone" ? "這間房間已被刪除或已過期。" : "這間房間已經有兩位玩家。", "回到房間列表", backToLobby, false);
+      const T = { gone: ["房間不存在", "這間房間已被刪除或已過期。"], pass: ["🔒 需要密碼", "這間房間有設定密碼，請從房間列表輸入密碼加入。"] }[res.error] || ["房間已滿", "這間房間已經有兩位玩家。"];
+      showNotice(T[0], T[1], "回到房間列表", backToLobby, false);
       return;
     }
     O.subscribe(ROOM_ID, applyRoom);

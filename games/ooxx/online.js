@@ -3,10 +3,11 @@
   const S = window.OOXXOnline;
   const $ = id => document.getElementById(id);
   const el = {
-    createBox: $("create-box"), name: $("room-name"), createBtn: $("create-btn"),
+    createBox: $("create-box"), name: $("room-name"), pass: $("room-pass"), createBtn: $("create-btn"),
     owned: $("owned-box"), code: $("owned-code"), ownedName: $("owned-name"), ownedStatus: $("owned-status"),
     del: $("del-btn"), enter: $("enter-btn"), note: $("my-note"), err: $("my-err"),
     list: $("room-list"), count: $("room-count"), empty: $("list-empty"), search: $("search"),
+    pd: $("pass-dlg"), pdDesc: $("pass-desc"), pdIn: $("pass-input"), pdErr: $("pass-err"), pdYes: $("pass-yes"), pdNo: $("pass-no"),
     confirm: $("confirm"), confirmDesc: $("confirm-desc"), yes: $("confirm-yes"), no: $("confirm-no"),
   };
   let rooms = [];
@@ -16,7 +17,7 @@
   const statusText = r => (r.guestUid ? "對戰中" : "等待對手加入");
   const ERR = {
     owned: "你已經有一間房間，請先刪除後再建立。",
-    login: "請先登入帳號才能使用雙人連線。", gone: "房間已不存在。", full: "房間已滿。", id: "無法產生房號，請稍後再試。",
+    login: "請先登入帳號才能使用雙人連線。", pass: "密碼錯誤。", gone: "房間已不存在。", full: "房間已滿。", id: "無法產生房號，請稍後再試。",
   };
   function showErr(msg) { el.err.textContent = msg || ""; el.err.hidden = !msg; }
 
@@ -36,7 +37,7 @@
     el.note.hidden = false;
     if (mine) {
       el.code.textContent = mine.id;
-      el.ownedName.textContent = mine.name || "未命名房間";
+      el.ownedName.textContent = (mine.passHash ? "🔒 " : "") + (mine.name || "未命名房間");
       el.ownedStatus.textContent = statusText(mine) + (mine.guestUid ? `：${mine.guestName || "對手"}` : "");
     }
 
@@ -51,14 +52,14 @@
       const card = mk("div", "room-card" + (isMine ? " is-mine" : ""));
       card.appendChild(mk("span", "room-code", r.id));
       const meta = mk("div", "room-meta");
-      meta.appendChild(mk("strong", "", r.name || "未命名房間"));
+      meta.appendChild(mk("strong", "", (r.passHash ? "🔒 " : "") + (r.name || "未命名房間")));
       meta.appendChild(mk("span", "", `房主：${r.hostName || "玩家"}`));
       card.appendChild(meta);
       card.appendChild(mk("span", "pill " + (full ? "busy" : "open"), `${full ? 2 : 1}/2 ${full ? "對戰中" : "等待中"}`));
       const btn = mk("button", "btn sm" + (!full || inRoom ? " btn-primary" : ""), isMine ? "進入" : inRoom ? "回到房間" : full ? "已滿" : "加入");
       btn.type = "button";
       btn.disabled = full && !inRoom;
-      btn.addEventListener("click", () => join(r.id));
+      btn.addEventListener("click", () => join(r.id, r.passHash && !inRoom));
       card.appendChild(btn);
       el.list.appendChild(card);
     });
@@ -66,14 +67,36 @@
     if (!shown.length) el.empty.textContent = q ? "找不到這個房號" : "目前沒有房間，建立一間吧！";
   }
 
-  async function join(id) {
+  async function join(id, needPass) {
     if (busy) return;
-    busy = true; showErr("");
+    showErr("");
+    const pass = needPass ? await askPass(id) : "";
+    if (pass === null) return;   // 取消輸入
+    busy = true;
     try {
-      const res = await S.joinRoom(id);
+      const res = await S.joinRoom(id, pass);
       if (res.ok) goRoom(id);
+      else if (res.error === "pass") { showErr(ERR.pass); }
       else showErr(ERR[res.error] || "無法加入房間。");
     } finally { busy = false; }
+  }
+
+  // 密碼輸入視窗：回傳密碼字串；取消回傳 null
+  function askPass(id) {
+    return new Promise(resolve => {
+      el.pdDesc.textContent = `房間 ${id} 需要密碼才能加入。`;
+      el.pdIn.value = ""; el.pdErr.hidden = true; el.pd.hidden = false; el.pdIn.focus();
+      const done = v => {
+        el.pd.hidden = true;
+        el.pdYes.removeEventListener("click", ok); el.pdNo.removeEventListener("click", no);
+        el.pdIn.removeEventListener("keydown", key);
+        resolve(v);
+      };
+      const ok = () => done(el.pdIn.value);
+      const no = () => done(null);
+      const key = e => { if (e.key === "Enter") { e.preventDefault(); ok(); } else if (e.key === "Escape") no(); };
+      el.pdYes.addEventListener("click", ok); el.pdNo.addEventListener("click", no); el.pdIn.addEventListener("keydown", key);
+    });
   }
 
   el.createBox.addEventListener("submit", async e => {
@@ -81,8 +104,8 @@
     if (busy) return;
     busy = true; showErr(""); el.createBtn.disabled = true;
     try {
-      const res = await S.createRoom(el.name.value);
-      if (res.ok) goRoom(res.room.id);
+      const res = await S.createRoom(el.name.value, el.pass.value);
+      if (res.ok) { el.pass.value = ""; goRoom(res.room.id); }
       else showErr(ERR[res.error] || "建立失敗，請稍後再試。");
     } finally { busy = false; el.createBtn.disabled = false; }
   });

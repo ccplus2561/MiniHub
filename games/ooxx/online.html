@@ -23,7 +23,8 @@
 
       <!-- 尚未建立 -->
       <form class="create-box" id="create-box" autocomplete="off">
-        <input id="room-name" class="text-input" type="text" maxlength="20" placeholder="房間名稱（選填，最多 20 字）" spellcheck="false" aria-label="房間名稱">
+        <input id="room-name" class="text-input" type="text" maxlength="20" placeholder="房間名稱（選填，最多 20 字，可用任何文字符號）" spellcheck="false" aria-label="房間名稱">
+        <input id="room-pass" class="text-input" type="text" maxlength="32" placeholder="房間密碼（選填，留空＝公開房間）" autocomplete="off" spellcheck="false" aria-label="房間密碼">
         <button class="btn btn-primary" id="create-btn" type="submit">＋ 建立房間</button>
       </form>
 
@@ -59,6 +60,19 @@
       <div class="confirm-actions">
         <button class="btn" id="confirm-no" type="button">取消</button>
         <button class="btn btn-danger solid" id="confirm-yes" type="button">確定刪除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" id="pass-dlg" role="dialog" aria-modal="true" aria-labelledby="pass-title" hidden>
+    <div class="confirm-card pass-card">
+      <h2 id="pass-title">🔒 輸入房間密碼</h2>
+      <p id="pass-desc"></p>
+      <input id="pass-input" class="text-input" type="text" maxlength="32" placeholder="房間密碼" autocomplete="off" spellcheck="false" aria-label="房間密碼">
+      <p class="err-line" id="pass-err" role="alert" hidden></p>
+      <div class="confirm-actions">
+        <button class="btn" id="pass-no" type="button">取消</button>
+        <button class="btn btn-primary" id="pass-yes" type="button">加入</button>
       </div>
     </div>
   </div>
