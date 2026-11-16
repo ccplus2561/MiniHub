@@ -561,3 +561,7 @@ h1 { font-size: clamp(26px, calc(var(--vh) * 4.6), 42px); }
 .room-mini { min-height: 32px !important; padding: 0 12px !important; font-size: 13px !important; }
 .room-danger { color: #ff6b5e; border-color: rgba(255,107,94,.45); }
 .board-actions [hidden], #notice-cancel[hidden] { display: none !important; }
+
+/* 雙人連線：等待玩家 2 加入時棋盤變暗、禁止落子 */
+.tic-board.is-waiting { opacity: .4; filter: grayscale(.4); cursor: not-allowed; }
+.tic-board.is-waiting .cell { cursor: not-allowed; }

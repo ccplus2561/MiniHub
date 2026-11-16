@@ -38,7 +38,7 @@
   const normalizeName = raw => Array.from(String(raw == null ? "" : raw).replace(/[\r\n\t]+/g, " ").trim()).slice(0, NAME_MAX).join("");
   // 房間名稱：不限制任何符號或文字，只做前後空白修剪與長度上限
   const normalizeRoomName = raw => Array.from(String(raw == null ? "" : raw).trim()).slice(0, NAME_MAX).join("");
-  const PASS_MAX = 32;
+  const PASS_MAX = 5;   // 密碼最多 5 碼
   const normalizePass = raw => String(raw == null ? "" : raw).slice(0, PASS_MAX);
   // 密碼只存「加鹽雜湊」，不存明文（房間資料所有人可讀，故不要放明文）
   async function hashPass(pass, salt) {

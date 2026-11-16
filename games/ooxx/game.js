@@ -256,6 +256,7 @@
       cell.classList.toggle("win", inWin);
       cell.classList.toggle("dim", !!state.winLine && !inWin);
     });
+    els.board.classList.toggle("is-waiting", ONLINE && (!room || !room.guestUid));   // 連線模式：玩家 2 未到齊禁止開始
     els.board.dataset.turn = state.turn.toLowerCase();
     els.board.dataset.over = String(state.over);
   }
@@ -276,7 +277,7 @@
       const active = state.over ? p === winner : p === state.turn;
       els.card[p].classList.toggle("active-player", active);
       els.status[p].className = active ? "player-status" : "waiting-status";
-      if (ONLINE && room && !room.guestUid) els.status[p].textContent = p === "X" ? "已就緒" : "等待中";
+      if (ONLINE && room && !room.guestUid) els.status[p].textContent = p === "X" ? "已就緒" : "等待好友進入中…";
       else if (!state.over) els.status[p].textContent = active ? (ONLINE ? (p === mySym() ? "你的回合" : "對手回合") : isAI(p) ? "思考中…" : "你的回合") : "等待中";
       else if (draw) els.status[p].textContent = "平手";
       else els.status[p].textContent = p === winner ? "獲勝！" : "落敗";
@@ -289,7 +290,7 @@
       els.turnIcon.textContent = "…";
       els.turnIcon.classList.remove("is-o", "is-draw");
       els.turnLabel.textContent = "房間狀態";
-      els.turnName.textContent = "等待對手加入";
+      els.turnName.textContent = "等待好友進入中…";
     } else if (draw) {
       els.turnIcon.textContent = "＝";
       els.turnLabel.textContent = "對局結果";
@@ -428,7 +429,7 @@
   }
   async function onlineMove(i) {
     if (!room) return;
-    if (!room.guestUid) { flashHint("還在等待對手加入。"); return; }
+    if (!room.guestUid) { flashHint("等待好友進入中…，玩家 2 加入後才能開始。"); return; }
     if (state.over || state.board[i]) { if (!state.over) window.NeonAudio && window.NeonAudio.play("invalid"); return; }
     if (state.turn !== mySym()) { flashHint("還沒輪到你。"); return; }
     const res = await window.OOXXOnline.move(ROOM_ID, i);
