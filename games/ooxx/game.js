@@ -4,7 +4,7 @@
   // 設定常數
   const GAME_ID = "ooxx";
   const MH = window.MiniHub;                       // 大廳共用 SDK（單獨開啟時也有安全預設值）
-  let SOLO = new URLSearchParams(location.search).get("mode") !== "duo";   // 預設單人，可在開局畫面切換
+  const SOLO = new URLSearchParams(location.search).get("mode") === "solo";   // 由 OOXX 大廳決定：?mode=solo 單人，其餘雙人
   const storeKey = () => (SOLO ? `${GAME_ID}:solo:v1` : `${GAME_ID}:v1`);
   const AI_DELAY = 550;
   const LINES = [
@@ -335,18 +335,17 @@
     $("first-me").textContent = SOLO ? "我先" : "玩家 1 先";
     $("first-ai").textContent = SOLO ? "電腦先" : "玩家 2 先";
   }
+  function backToLobby() { location.href = "index.html"; }
   function setupPickUI() {
     applyModeUI();
     els.soloOpts.querySelectorAll(".seg").forEach(seg => {
-      if (seg.dataset.group === "mode") {
-        seg.querySelectorAll(".seg-btn").forEach(x => x.classList.toggle("is-on", (x.dataset.val === "solo") === SOLO));
-      }
       seg.querySelectorAll(".seg-btn").forEach(b => b.addEventListener("click", () => {
         seg.querySelectorAll(".seg-btn").forEach(x => x.classList.toggle("is-on", x === b));
-        if (seg.dataset.group === "mode") { SOLO = b.dataset.val === "solo"; applyModeUI(); render(); }
-        else sel[seg.dataset.group] = b.dataset.val;
+        sel[seg.dataset.group] = b.dataset.val;
       }));
     });
+    $("pick-back").addEventListener("click", backToLobby);
+    $("lobby-btn").addEventListener("click", backToLobby);
     els.soloStart.addEventListener("click", startGame);
     els.repick.addEventListener("click", openPick);
   }
