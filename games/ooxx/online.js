@@ -16,7 +16,7 @@
   const statusText = r => (r.guestUid ? "對戰中" : "等待對手加入");
   const ERR = {
     owned: "你已經有一間房間，請先刪除後再建立。",
-    gone: "房間已不存在。", full: "房間已滿。", id: "無法產生房號，請稍後再試。",
+    login: "請先登入帳號才能使用雙人連線。", gone: "房間已不存在。", full: "房間已滿。", id: "無法產生房號，請稍後再試。",
   };
   function showErr(msg) { el.err.textContent = msg || ""; el.err.hidden = !msg; }
 

@@ -448,10 +448,16 @@
       O.leaveRoom(ROOM_ID).then(backToLobby, backToLobby);
     }
   }
+  let onlineBound = false;
   async function startOnline() {
     const O = window.OOXXOnline;
     els.pick.hidden = true;
     state.picking = false;
+    if (!onlineBound) { onlineBound = true; bindOnline(); }
+    startOnlineJoin();
+  }
+  function bindOnline() {
+    const O = window.OOXXOnline;
     $("lobby-btn").lastChild.textContent = " 房間列表";
     els.roomCopy.addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(ROOM_ID); flashHint("已複製房號。"); } catch (e) { flashHint(`房號：${ROOM_ID}`); }
@@ -459,7 +465,14 @@
     els.roomExit.addEventListener("click", exitRoom);
     els.noticeOk.addEventListener("click", () => { const f = noticeOnOk; hideNotice(); if (f) f(); });
     els.noticeCancel.addEventListener("click", hideNotice);
+  }
+  async function startOnlineJoin() {
+    const O = window.OOXXOnline;
     if (!O.isId(ROOM_ID)) { showNotice("找不到房間", "房號不正確。", "回到房間列表", backToLobby, false); return; }
+    if (!O.me().loggedIn) {   // 未登入：等待登入（登入遮罩由 gate.js 顯示），登入後再進房
+      const off = MH.onChange(() => { if (O.me().loggedIn) { off(); startOnlineJoin(); } });
+      return;
+    }
     const res = await O.joinRoom(ROOM_ID);   // 房主 / 已在房內：直接進入；其他人：佔用空位
     if (!res.ok) {
       showNotice(res.error === "gone" ? "房間不存在" : "房間已滿", res.error === "gone" ? "這間房間已被刪除或已過期。" : "這間房間已經有兩位玩家。", "回到房間列表", backToLobby, false);

@@ -26,7 +26,6 @@
   "use strict";
 
   const ROOMS_KEY = "ooxx.online.rooms";
-  const GUEST_KEY = "ooxx.online.guest";
   const ROOM_TTL_MS = 12 * 60 * 60 * 1000;
   const ID_LEN = 6;
   const NAME_MAX = 20;
@@ -56,19 +55,14 @@
     scores: scores || { X: 0, O: 0, draw: 0 }, over: false, winLine: null, rev: 0,
   });
 
-  // ===== 身份：已登入用帳號 uid；未登入用「分頁」訪客碼（方便同一瀏覽器開兩個分頁測試）=====
+  // ===== 身份：雙人連線必須登入帳號（未登入 uid 為空字串，所有寫入操作會被拒絕）=====
   function me() {
     let p = {};
     try { p = (window.MiniHub && MiniHub.player()) || {}; } catch (e) { /* 忽略 */ }
     if (p.loggedIn && p.uid) return { uid: p.uid, name: normalizeName(p.name || p.displayName) || "玩家", loggedIn: true };
-    let g = "";
-    try { g = sessionStorage.getItem(GUEST_KEY) || ""; } catch (e) { /* 忽略 */ }
-    if (!/^G\d{6}$/.test(g)) {
-      g = "G" + randomDigits(6);
-      try { sessionStorage.setItem(GUEST_KEY, g); } catch (e) { /* 忽略 */ }
-    }
-    return { uid: g, name: "訪客 " + g.slice(-4), loggedIn: false };
+    return { uid: "", name: "", loggedIn: false };
   }
+  const NEED_LOGIN = { ok: false, error: "login" };
 
   // ===== 本機 backend =====
   const local = (() => {
@@ -152,12 +146,14 @@
 
   async function myRoom() {
     const u = me().uid;
+    if (!u) return null;
     return (await be().list()).find(r => r.hostUid === u) || null;
   }
 
   // 建立房間：一個帳號只能有一間
   async function createRoom(name) {
     const m = me();
+    if (!m.loggedIn) return NEED_LOGIN;
     if (await myRoom()) return { ok: false, error: "owned" };
     for (let i = 0; i < 5; i++) {
       const id = await newRoomId();
@@ -175,6 +171,7 @@
   // 加入房間（房主 / 已在房內的人直接進入）
   async function joinRoom(id) {
     const m = me();
+    if (!m.loggedIn) return NEED_LOGIN;
     const res = await be().update(id, room => {
       if (room.hostUid === m.uid || room.guestUid === m.uid) return room;
       if (room.guestUid) return null;
@@ -191,6 +188,7 @@
   // 加入者離開：釋出座位、對局重置
   async function leaveRoom(id) {
     const m = me();
+    if (!m.loggedIn) return NEED_LOGIN;
     return be().update(id, room => {
       if (room.guestUid !== m.uid) return null;
       room.guestUid = ""; room.guestName = "";
@@ -200,11 +198,12 @@
     });
   }
 
-  async function deleteRoom(id) { return be().remove(id, me().uid); }
+  async function deleteRoom(id) { const m = me(); if (!m.loggedIn) return; return be().remove(id, m.uid); }
 
   // 落子：只有輪到自己、該格為空才成立（房主 = X、加入者 = O）
   async function move(id, i) {
     const m = me();
+    if (!m.loggedIn) return NEED_LOGIN;
     return be().update(id, room => {
       const g = room.game;
       if (room.status !== "playing" || g.over || g.board[i]) return null;
@@ -223,6 +222,7 @@
   // 再來一局：結束後任一方可開始，先手輪流
   async function rematch(id) {
     const m = me();
+    if (!m.loggedIn) return NEED_LOGIN;
     return be().update(id, room => {
       if (room.hostUid !== m.uid && room.guestUid !== m.uid) return null;
       if (!room.game.over || !room.guestUid) return null;
