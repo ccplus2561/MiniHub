@@ -54,7 +54,7 @@
     sc: { win: $("sc-win"), draw: $("sc-draw"), loss: $("sc-loss") },
     pickTitle: $("pick-title"),
     roomBar: $("room-bar"), roomCode: $("room-code"), roomTitle: $("room-title"),
-    roomCopy: $("room-copy"), roomExit: $("room-exit"),
+    roomExit: $("room-exit"),
     notice: $("notice"), noticeTitle: $("notice-title"), noticeDesc: $("notice-desc"),
     noticeOk: $("notice-ok"), noticeCancel: $("notice-cancel")
   };
@@ -461,9 +461,6 @@
   function bindOnline() {
     const O = window.OOXXOnline;
     $("lobby-btn").lastChild.textContent = " 房間列表";
-    els.roomCopy.addEventListener("click", async () => {
-      try { await navigator.clipboard.writeText(ROOM_ID); flashHint("已複製房號。"); } catch (e) { flashHint(`房號：${ROOM_ID}`); }
-    });
     els.roomExit.addEventListener("click", exitRoom);
     els.noticeOk.addEventListener("click", () => { const f = noticeOnOk; hideNotice(); if (f) f(); });
     els.noticeCancel.addEventListener("click", hideNotice);
