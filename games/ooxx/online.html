@@ -22,11 +22,19 @@
       <div class="sec-title" id="my-title">我的房間</div>
 
       <!-- 尚未建立 -->
-      <form class="create-box" id="create-box" autocomplete="off">
-        <input id="room-name" class="text-input" type="text" maxlength="20" placeholder="房間名稱（選填，最多 20 字，可用任何文字符號）" spellcheck="false" aria-label="房間名稱">
-        <input id="room-pass" class="text-input" type="text" maxlength="5" placeholder="房間密碼（選填，最多 5 碼，留空＝公開房間）" autocomplete="off" spellcheck="false" aria-label="房間密碼">
-        <button class="btn btn-primary" id="create-btn" type="submit">＋ 建立房間</button>
-      </form>
+      <div class="create-box" id="create-box">
+        <label class="field" for="room-name">
+          <span class="field-label">房間名稱<em>選填</em></span>
+          <input id="room-name" class="text-input" type="text" maxlength="20" placeholder="例如：週末對戰" autocomplete="off" spellcheck="false">
+          <span class="field-hint">最多 20 字，可用任何文字符號；留空顯示「未命名房間」</span>
+        </label>
+        <label class="field" for="room-pass">
+          <span class="field-label">房間密碼<em>選填</em></span>
+          <input id="room-pass" class="text-input" type="text" maxlength="5" placeholder="最多 5 碼" autocomplete="off" spellcheck="false">
+          <span class="field-hint">留空＝公開房間；設定後加入者需輸入密碼</span>
+        </label>
+        <button class="btn btn-primary create-btn" id="create-btn" type="button">＋ 建立房間</button>
+      </div>
 
       <!-- 已建立 -->
       <div class="owned-box" id="owned-box" hidden>

@@ -99,16 +99,23 @@
     });
   }
 
-  el.createBox.addEventListener("submit", async e => {
-    e.preventDefault();
+  // 注意：MiniHub 的 iframe sandbox 沒有 allow-forms，<form> 送出會被瀏覽器直接擋掉，
+  // 所以建立房間改用按鈕 click ＋ Enter 鍵，不使用 form submit。
+  async function doCreate() {
     if (busy) return;
     busy = true; showErr(""); el.createBtn.disabled = true;
+    const label = el.createBtn.textContent;
+    el.createBtn.textContent = "建立中…";
     try {
       const res = await S.createRoom(el.name.value, el.pass.value);
       if (res.ok) { el.pass.value = ""; goRoom(res.room.id); }
       else showErr(ERR[res.error] || "建立失敗，請稍後再試。");
-    } finally { busy = false; el.createBtn.disabled = false; }
-  });
+    } catch (e) {
+      showErr(ERR.network);
+    } finally { busy = false; el.createBtn.disabled = false; el.createBtn.textContent = label; }
+  }
+  el.createBtn.addEventListener("click", doCreate);
+  [el.name, el.pass].forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); doCreate(); } }));
 
   el.enter.addEventListener("click", () => {
     const mine = rooms.find(r => r.hostUid === S.me().uid);
