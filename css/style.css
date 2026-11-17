@@ -202,7 +202,24 @@ body:not([data-view="library"]) .backdrop { opacity: 0; }   /* 只有遊戲庫�
 .hero-board .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .hero-board em { font-style: normal; font-weight: 800; color: #fff; }
 .hero-board em small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+/* 手機版：排行榜按鈕（只顯示圖示，寬度不超過 1/3）＋懸浮視窗 */
+.play-row { display: contents; }
+.rank-btn, .rank-mask, .rank-x { display: none; }
+body.m .play-row { display: flex; gap: 10px; width: 100%; }
+body.m .play-row #playBtn { flex: 1 1 0; min-width: 0; width: auto; }
+body.m .rank-btn { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 30%; max-width: 33.33%; height: 56px; padding: 0; border-radius: 10px; cursor: pointer;
+  color: #ffd34d; background: rgba(14, 20, 27, .72); border: 1.5px solid var(--accent-2); }
+body.m .rank-btn[hidden] { display: none; }
+body.m .rank-btn svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+body.m .rank-btn:active { transform: scale(.94); }
+body.m .rank-mask { display: block; position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, .55); }
+body.m .rank-mask[hidden] { display: none; }
 body.m .hero-board { display: none; }
+body.m .hero-board.open:not([hidden]) { display: block; position: fixed; z-index: 91; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100vw - 32px)); min-width: 0; max-height: calc(100dvh - 48px); overflow-y: auto;
+  padding: 16px; background: rgba(20, 28, 40, .96); box-shadow: 0 20px 50px rgba(0, 0, 0, .6); }
+body.m .hero-board h3 { font-size: 19px; }
+body.m .hero-board li { font-size: 16px; padding: 8px 10px; }
+body.m .rank-x { display: inline-flex; margin-left: auto; width: 30px; height: 30px; align-items: center; justify-content: center; border-radius: 8px; font-size: 16px; color: var(--text-2); background: rgba(255, 255, 255, .08); border: 0; cursor: pointer; }
 .hero { margin-top: auto; padding: 8px 8px 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
 .hero { min-height: min(320px, 42vh); }
 .hero-text { min-width: 0; align-self: flex-start; }
@@ -798,7 +815,7 @@ body.m .badge { top: 8px; left: 8px; padding: 2px 9px; font-size: 11px; }
 body.m .hero { flex-direction: column; align-items: stretch; gap: 14px; padding: 8px 2px 4px; }
 body.m .hero h1 { font-size: 30px; }
 body.m .hero p { font-size: 15px; margin-top: 4px; }
-body.m .hero-actions .btn-primary { width: 100%; justify-content: center; height: 52px; font-size: 18px; }
+body.m .hero-actions .btn-primary { width: auto; justify-content: center; height: 52px; font-size: 18px; }
 /* 設定：單欄，分類改成橫向捲動 */
 body.m .set-layout { display: block; }
 body.m .set-list { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 14px; padding: 2px 16px 6px; scrollbar-width: none; }
@@ -881,7 +898,7 @@ body.m .view > * { flex-shrink: 0; }
 body.m .hero { min-height: 0; margin-top: 8px; }
 body.m .hero-text { align-self: stretch; }
 body.m .game-tags { grid-template-columns: 1fr 1fr; width: 100%; }
-body.m #playBtn { min-width: 0; width: 100%; height: 56px; font-size: 20px; }
+body.m #playBtn { min-width: 0; width: auto; flex: 1 1 0; height: 56px; font-size: 20px; }
 
 /* ---------- 跨裝置穩定性與效能修正（不更動原有功能） ---------- */
 html { min-height: 100%; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }

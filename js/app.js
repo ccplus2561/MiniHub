@@ -68,18 +68,30 @@
     if (boardOff) { try { boardOff(); } catch (e) {} boardOff = null; }
     const g = selected >= 0 ? shown[selected] : null;
     const A = window.MiniHubAuth && MiniHubAuth.scores;
-    if (!g || !g.board || !g.path || !signedIn || !A || !A.watchTop) { box.hidden = true; box.innerHTML = ""; return; }
+    if (!g || !g.board || !g.path || !signedIn || !A || !A.watchTop) { box.hidden = true; box.innerHTML = ""; setRankOpen(false); $("#rankBtn").hidden = true; return; }
+    $("#rankBtn").hidden = false;
     const seq = ++boardSeq, me = A.uid ? A.uid() : "", unit = esc(g.board.unit || "");
     const draw = rows => {
       if (seq !== boardSeq) return;
       const list = rows.length ? rows.map((r, i) =>
         `<li class="${r.uid === me ? "me" : ""}"><b class="rk r${i + 1}">${i + 1}</b><span class="nm">${esc(r.name || "玩家")}</span><em>${esc(r.score)}<small>${unit}</small></em></li>`).join("")
         : `<li class="empty">還沒有人上榜，來搶第一名！</li>`;
-      box.innerHTML = `<h3>排行榜<small>${esc(g.title)}</small></h3><ol>${list}</ol>`;
+      box.innerHTML = `<h3>排行榜<small>${esc(g.title)}</small><button class="rank-x" type="button" aria-label="關閉">✕</button></h3><ol>${list}</ol>`;
     };
     box.hidden = false; draw([]);
     try { boardOff = A.watchTop(g.id, 5, draw, g.board.modes && g.board.modes[0]); } catch (e) {}
   }
+
+  // 手機版：排行榜以懸浮視窗顯示（電腦版仍固定顯示在畫面上）
+  function setRankOpen(on) {
+    $("#heroBoard").classList.toggle("open", !!on);
+    $("#rankMask").hidden = !on;
+    $("#rankBtn").setAttribute("aria-expanded", on ? "true" : "false");
+  }
+  $("#rankBtn").addEventListener("click", () => setRankOpen(!$("#heroBoard").classList.contains("open")));
+  $("#rankMask").addEventListener("click", () => setRankOpen(false));
+  $("#heroBoard").addEventListener("click", e => { if (e.target.closest(".rank-x")) setRankOpen(false); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") setRankOpen(false); });
 
   function select(i, quiet) {
     const hero = $("#hero");
