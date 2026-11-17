@@ -84,9 +84,19 @@
   }
 
   // 手機版：排行榜以懸浮視窗顯示（電腦版仍固定顯示在畫面上）
+  // 視窗開啟時把排行榜與遮罩搬到 body（避免被 hero 的動畫 transform 限制定位），關閉後搬回原位
+  const rankHome = document.createComment("rank-home");
   function setRankOpen(on) {
-    $("#heroBoard").classList.toggle("open", !!on);
-    $("#rankMask").hidden = !on;
+    const box = $("#heroBoard"), mask = $("#rankMask");
+    on = !!on && document.body.classList.contains("m") && !box.hidden;
+    if (on) {
+      if (!rankHome.parentNode) box.parentNode.insertBefore(rankHome, box);
+      document.body.appendChild(mask); document.body.appendChild(box);
+    } else if (rankHome.parentNode) {
+      rankHome.parentNode.insertBefore(box, rankHome); rankHome.parentNode.insertBefore(mask, rankHome); rankHome.remove();
+    }
+    box.classList.toggle("open", on);
+    mask.hidden = !on;
     $("#rankBtn").setAttribute("aria-expanded", on ? "true" : "false");
   }
   $("#rankBtn").addEventListener("click", () => setRankOpen(!$("#heroBoard").classList.contains("open")));

@@ -207,15 +207,15 @@ body:not([data-view="library"]) .backdrop { opacity: 0; }   /* 只有遊戲庫�
 .rank-btn, .rank-mask, .rank-x { display: none; }
 body.m .play-row { display: flex; gap: 10px; width: 100%; }
 body.m .play-row #playBtn { flex: 1 1 0; min-width: 0; width: auto; }
-body.m .rank-btn { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 30%; max-width: 33.33%; height: 56px; padding: 0; border-radius: 10px; cursor: pointer;
+body.m .rank-btn { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 18%; min-width: 56px; max-width: 33.33%; height: 56px; padding: 0; border-radius: 10px; cursor: pointer;
   color: #ffd34d; background: rgba(14, 20, 27, .72); border: 1.5px solid var(--accent-2); }
 body.m .rank-btn[hidden] { display: none; }
 body.m .rank-btn svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 body.m .rank-btn:active { transform: scale(.94); }
-body.m .rank-mask { display: block; position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, .55); }
+body.m .rank-mask { display: block; position: fixed; inset: 0; z-index: 900; background: rgba(0, 0, 0, .55); }
 body.m .rank-mask[hidden] { display: none; }
 body.m .hero-board { display: none; }
-body.m .hero-board.open:not([hidden]) { display: block; position: fixed; z-index: 91; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100vw - 32px)); min-width: 0; max-height: calc(100dvh - 48px); overflow-y: auto;
+body.m .hero-board.open:not([hidden]) { display: block; position: fixed; z-index: 901; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(360px, calc(100vw - 32px)); min-width: 0; max-height: calc(100dvh - 48px); overflow-y: auto;
   padding: 16px; background: rgba(20, 28, 40, .96); box-shadow: 0 20px 50px rgba(0, 0, 0, .6); }
 body.m .hero-board h3 { font-size: 19px; }
 body.m .hero-board li { font-size: 16px; padding: 8px 10px; }
