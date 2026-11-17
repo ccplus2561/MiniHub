@@ -63,15 +63,23 @@ const FINANCE = {
   comfortRatio: 1.5, // 壓力值：可分配彩池達「最低需求」的 1.5 倍以上視為寬裕（壓力 0）
 };
 
-// 預設規則內容（可在設定頁編輯）：每段 { title, body, money? }，body 每一行為一條說明；money 為 true 的段落只在啟用獎金時顯示
+// 預設規則內容（可在設定頁編輯）：每段 { title, body, plainBody?, money? }，body 每一行為一條說明；plainBody 為「未啟用獎金」時顯示的內容（沒有則沿用 body）；money 為 true 的段落只在啟用獎金時顯示
 const DEFAULT_RULES = [
   { title: '號碼範圍', body: '本局使用 1～75 號。' },
   { title: '獎金機制', body: '設有前三名獎金與安慰獎。總彩池 = 新卡收入 + 續卡收入 + 付費抽號收入。\n前三名依設定比例分配獎金；未得名的玩家每人可領安慰獎。\n玩家使用紙卡，賓果時由主持人在畫面登錄名次；第 2 名出爐後會顯示安慰獎資訊。', money: true },
-  { title: '抽號類型', body: '新號：尚未出現過的號碼，正常有效。\n重複號碼：已經抽過的號碼，無效。\n銘謝惠顧：沒有號碼，無效。\n連續最多 4 次無效，第 5 次必定是新號碼。' },
+  { title: '抽號類型', body: '新號：尚未出現過的號碼，正常有效。\n重複號碼：已經抽過的號碼，無效。\n銘謝惠顧：沒有號碼，無效。\n連續最多 4 次無效，第 5 次必定是新號碼。', plainBody: '每次抽出的都是尚未出現過的新號碼。\n若主持人開啟「允許重複數字」或「允許銘謝惠顧」，則可能抽到無效號碼（已抽過的號碼、或沒有號碼的空籤）。' },
   { title: '連抽', body: '抽號統一使用「連抽」：選擇 1～5 次後按下連抽。\n連抽 2 次以上時，結果會以視窗一次顯示本次所有抽出內容。' },
-  { title: '同時賓果', body: '若同一輪抽號有多人同時賓果，依現場規定平分該名次與後續名次的獎金，下一個名次順延。' },
+  { title: '同時賓果', body: '若同一輪抽號有多人同時賓果，依現場規定平分該名次與後續名次的獎金，下一個名次順延。', plainBody: '若同一輪抽號有多人同時賓果，依現場規定並列該名次，下一個名次順延。' },
   { title: '結算', body: '主持人按「結束遊戲」後會產生本局結算收據，列出總收入、前三名實領、安慰獎、主持人辛苦費與零頭。', money: true },
 ];
+
+/** 依是否啟用獎金，取得規則段落要顯示／編輯的內容（舊存檔沒有 plainBody 時，內容仍是預設者自動套用預設的無獎金版本） */
+function ruleBodyOf(r, prizeOn) {
+  if (prizeOn) return r.body;
+  if (r.plainBody !== undefined) return r.plainBody;
+  const d = DEFAULT_RULES.find((x) => x.title === r.title && x.body === r.body);
+  return d && d.plainBody !== undefined ? d.plainBody : r.body;
+}
 
 const DEFAULT_RULES_NOTE = '主持人保留依現場情況調整抽號機率與結算比例之權利。';
 
@@ -337,7 +345,7 @@ const { getState } = M['core/state'];
 
 /** 一段規則 → 卡片（編號徽章＋標題＋逐行說明） */
 function ruleCard(rule, index) {
-  const lines = String(rule.body).split('\n').map((l) => l.trim()).filter(Boolean);
+  const lines = String(ruleBodyOf(rule, getState().settings.prizeEnabled)).split('\n').map((l) => l.trim()).filter(Boolean);
   const card = el('section', { class: 'rule-card' },
     el('div', { class: 'rule-head' },
       el('span', { class: 'rule-no', 'aria-hidden': 'true' }, String(index + 1)),
@@ -595,25 +603,27 @@ function initSettings(root) {
     const commit = () => setState({ settings: { rules: list.map((r) => ({ ...r })), rulesNote: note } });
 
     function paint() {
+      const prizeOn = getState().settings.prizeEnabled;
       holder.replaceChildren(...list.map((r, i) => {
+        if (!prizeOn && r.money) return null; // 未啟用獎金：獎金相關段落不顯示、不編輯
         const title = el('input', { class: 'input', value: r.title, disabled: !editable, 'aria-label': `第 ${i + 1} 段標題`, placeholder: '標題',
           onChange: () => { r.title = title.value.trim(); commit(); } });
         const body = el('textarea', { class: 'input rule-textarea', rows: 4, disabled: !editable, 'aria-label': `第 ${i + 1} 段內容`, placeholder: '每一行為一條說明',
-          onChange: () => { r.body = body.value; commit(); } });
-        body.value = r.body;
+          onChange: () => { if (prizeOn) r.body = body.value; else { r.plainBody = body.value; if (!r.body) r.body = body.value; } commit(); } });
+        body.value = ruleBodyOf(r, prizeOn);
         const money = el('label', { class: 'rule-money', title: '關閉獎金功能時隱藏這一段' },
           el('input', { type: 'checkbox', checked: !!r.money, disabled: !editable, onChange: (e) => { if (e.target.checked) r.money = true; else delete r.money; commit(); } }),
           '獎金相關');
         const move = (d) => { const j = i + d; if (j < 0 || j >= list.length) return; [list[i], list[j]] = [list[j], list[i]]; commit(); paint(); };
         return el('div', { class: 'rule-edit' },
           el('div', { class: 'rule-edit-head' },
-            el('span', { class: 'rule-no', 'aria-hidden': 'true' }, String(i + 1)),
+            el('span', { class: 'rule-no', 'aria-hidden': 'true' }, String(list.slice(0, i).filter((x) => prizeOn || !x.money).length + 1)),
             title,
             el('button', { type: 'button', class: 'btn btn-small btn-secondary rule-ico', disabled: !editable || i === 0, 'aria-label': '上移', onClick: () => move(-1) }, '↑'),
             el('button', { type: 'button', class: 'btn btn-small btn-secondary rule-ico', disabled: !editable || i === list.length - 1, 'aria-label': '下移', onClick: () => move(1) }, '↓'),
             el('button', { type: 'button', class: 'btn btn-small btn-danger-outline rule-ico', disabled: !editable, 'aria-label': '刪除此段', onClick: () => { list.splice(i, 1); commit(); paint(); } }, '✕')),
           body, money);
-      }));
+      }).filter(Boolean));
     }
     paint();
 
