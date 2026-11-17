@@ -229,7 +229,14 @@
   async function deleteRoom(id) { const m = me(); if (!m.loggedIn) return; try { return await be().remove(id, m.uid); } catch (e) { /* 離線時略過 */ } }
 
   // 對外的寫入操作：backend 丟出錯誤（斷線 / 逾時 / 權限）時統一回傳 network
-  const safe = fn => async (...a) => { try { return await fn(...a); } catch (e) { return { ok: false, error: "network" }; } };
+  // 權限被拒（Firestore 規則沒開放）另外回報 perm，方便判斷；其餘仍視為 network
+  const safe = fn => async (...a) => {
+    try { return await fn(...a); } catch (e) {
+      try { console.error("[OOXX online]", e && e.code, e && e.message); } catch (x) { /* 忽略 */ }
+      const code = String((e && e.code) || "");
+      return { ok: false, error: /permission-denied|unauthenticated/.test(code) ? "perm" : "network" };
+    }
+  };
 
   // 落子：只有輪到自己、該格為空才成立（房主 = X、加入者 = O）
   async function move(id, i) {

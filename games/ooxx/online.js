@@ -17,7 +17,7 @@
   const statusText = r => (r.guestUid ? "對戰中" : "等待對手加入");
   const ERR = {
     owned: "你已有一間房，請先刪除。",
-    login: "請先登入再使用。", pass: "密碼錯誤。", gone: "房間已不存在。", full: "房間已滿。", id: "房號產生失敗，請再試一次。", network: "連線失敗，請檢查網路。",
+    login: "請先登入再使用。", pass: "密碼錯誤。", gone: "房間已不存在。", full: "房間已滿。", id: "房號產生失敗，請再試一次。", network: "連線失敗，請檢查網路。", perm: "沒有權限：請先在 Firebase 開放 OOXX 房間規則。",
   };
   function showErr(msg) { el.err.textContent = msg || ""; el.err.hidden = !msg; }
 
