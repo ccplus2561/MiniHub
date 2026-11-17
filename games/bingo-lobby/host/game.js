@@ -129,7 +129,7 @@ function createDefaultState() {
     ui: { ...DEFAULT_UI },
   };
 }
-return { NUMBER_MIN, NUMBER_MAX, LIMITS, BATCH_PLAY_INTERVAL_MS, TICKER_SIZE, BOARD_COLUMNS, DRAW_RULES, FINANCE, DEFAULT_RULES, DEFAULT_RULES_NOTE, DEFAULT_SETTINGS, DEFAULT_GAME, DEFAULT_UI, createDefaultState };
+return { NUMBER_MIN, NUMBER_MAX, LIMITS, BATCH_PLAY_INTERVAL_MS, TICKER_SIZE, BOARD_COLUMNS, DRAW_RULES, FINANCE, DEFAULT_RULES, ruleBodyOf, DEFAULT_RULES_NOTE, DEFAULT_SETTINGS, DEFAULT_GAME, DEFAULT_UI, createDefaultState };
 })();
 
 // ===== core/state.js =====
@@ -340,6 +340,7 @@ return { el, toast, confirmDialog, showModal };
 M['ui/rules-view'] = (() => {
 const { el, showModal } = M['utils/dom'];
 const { getState } = M['core/state'];
+const { ruleBodyOf } = M['config/defaults'];
 // ❓ 規則說明（全螢幕卡片式）。內容來自 settings.rules（可在設定頁編輯）。
 // openRules({ onStart })：開始抽獎前先顯示規則，按「開始抽獎」才執行 onStart。
 
@@ -407,7 +408,7 @@ return { formatMoney, formatNumber, floorTo10 };
 // ===== ui/settings-view.js =====
 M['ui/settings-view'] = (() => {
 const { getState, setState, reset, resetKeepSettings, subscribe } = M['core/state'];
-const { DEFAULT_SETTINGS, DEFAULT_RULES, DEFAULT_RULES_NOTE, LIMITS } = M['config/defaults'];
+const { DEFAULT_SETTINGS, DEFAULT_RULES, ruleBodyOf, DEFAULT_RULES_NOTE, LIMITS } = M['config/defaults'];
 const { openRules } = M['ui/rules-view'];
 const { el, toast, confirmDialog } = M['utils/dom'];
 const { formatMoney } = M['utils/format'];
