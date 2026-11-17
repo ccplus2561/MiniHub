@@ -16,8 +16,8 @@
   const goRoom = id => { location.href = `play.html?mode=online&room=${id}`; };
   const statusText = r => (r.guestUid ? "對戰中" : "等待對手加入");
   const ERR = {
-    owned: "你已經有一間房間，請先刪除後再建立。",
-    login: "請先登入帳號才能使用雙人連線。", pass: "密碼錯誤。", gone: "房間已不存在。", full: "房間已滿。", id: "無法產生房號，請稍後再試。", network: "連線失敗，請檢查網路後再試。",
+    owned: "你已有一間房，請先刪除。",
+    login: "請先登入再使用。", pass: "密碼錯誤。", gone: "房間已不存在。", full: "房間已滿。", id: "房號產生失敗，請再試一次。", network: "連線失敗，請檢查網路。",
   };
   function showErr(msg) { el.err.textContent = msg || ""; el.err.hidden = !msg; }
 
@@ -64,7 +64,7 @@
       el.list.appendChild(card);
     });
     el.empty.hidden = shown.length > 0;
-    if (!shown.length) el.empty.textContent = q ? "找不到這個房號" : "目前沒有房間，建立一間吧！";
+    if (!shown.length) el.empty.textContent = q ? "找不到這個房號" : "還沒有房間，建立一間吧！";
   }
 
   async function join(id, needPass) {
@@ -77,14 +77,14 @@
       const res = await S.joinRoom(id, pass);
       if (res.ok) goRoom(id);
       else if (res.error === "pass") { showErr(ERR.pass); }
-      else showErr(ERR[res.error] || "無法加入房間。");
+      else showErr(ERR[res.error] || "無法加入。");
     } finally { busy = false; }
   }
 
   // 密碼輸入視窗：回傳密碼字串；取消回傳 null
   function askPass(id) {
     return new Promise(resolve => {
-      el.pdDesc.textContent = `房間 ${id} 需要密碼才能加入。`;
+      el.pdDesc.textContent = `房間 ${id} 需要密碼。`;
       el.pdIn.value = ""; el.pdErr.hidden = true; el.pd.hidden = false; el.pdIn.focus();
       const done = v => {
         el.pd.hidden = true;
@@ -109,7 +109,7 @@
     try {
       const res = await S.createRoom(el.name.value, el.pass.value);
       if (res.ok) { el.pass.value = ""; goRoom(res.room.id); }
-      else showErr(ERR[res.error] || "建立失敗，請稍後再試。");
+      else showErr(ERR[res.error] || "建立失敗，請再試一次。");
     } catch (e) {
       showErr(ERR.network);
     } finally { busy = false; el.createBtn.disabled = false; el.createBtn.textContent = label; }
@@ -127,7 +127,7 @@
     const mine = rooms.find(r => r.hostUid === S.me().uid);
     if (!mine) return;
     el.confirmDesc.textContent = mine.guestUid
-      ? `房間 ${mine.id} 正在對戰，刪除後對手會被請出房間。`
+      ? `房間 ${mine.id} 對戰中，刪除後對手會被請出。`
       : `房間 ${mine.id} 將被刪除。`;
     el.confirm.hidden = false;
     el.yes.focus();

@@ -15,7 +15,7 @@
     <header class="lobby-head">
       <button class="back-link" id="back" type="button">‹ 大廳</button>
       <h1>雙人連線<span>.</span></h1>
-      <p>建立房間，或加入好友的房間</p>
+      <p>建立或加入房間，和好友對戰</p>
     </header>
 
     <section class="my-room" aria-labelledby="my-title">
@@ -25,13 +25,13 @@
       <div class="create-box" id="create-box">
         <label class="field" for="room-name">
           <span class="field-label">房間名稱<em>選填</em></span>
-          <input id="room-name" class="text-input" type="text" maxlength="20" placeholder="例如：週末對戰" autocomplete="off" spellcheck="false">
-          <span class="field-hint">最多 20 字，可用任何文字符號；留空顯示「未命名房間」</span>
+          <input id="room-name" class="text-input" type="text" maxlength="20" placeholder="例：週末對戰" autocomplete="off" spellcheck="false">
+          <span class="field-hint">最多 20 字，留空＝未命名房間</span>
         </label>
         <label class="field" for="room-pass">
           <span class="field-label">房間密碼<em>選填</em></span>
-          <input id="room-pass" class="text-input" type="text" maxlength="5" placeholder="最多 5 碼" autocomplete="off" spellcheck="false">
-          <span class="field-hint">留空＝公開房間；設定後加入者需輸入密碼</span>
+          <input id="room-pass" class="text-input" type="text" maxlength="5" placeholder="留空＝公開" autocomplete="off" spellcheck="false">
+          <span class="field-hint">最多 5 碼，有密碼才能加入</span>
         </label>
         <button class="btn btn-primary create-btn" id="create-btn" type="button">＋ 建立房間</button>
       </div>
@@ -47,7 +47,7 @@
           <button class="btn btn-primary" id="enter-btn" type="button">進入房間</button>
         </div>
       </div>
-      <p class="hint-line" id="my-note">每個帳號同時只能有一間房間；需先刪除才能再建立。</p>
+      <p class="hint-line" id="my-note">每人限一間房，刪除後才能再建。</p>
       <p class="err-line" id="my-err" role="alert" hidden></p>
     </section>
 
