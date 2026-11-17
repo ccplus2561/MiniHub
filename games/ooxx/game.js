@@ -434,6 +434,7 @@
     if (state.turn !== mySym()) { flashHint("還沒輪到你。"); return; }
     const res = await window.OOXXOnline.move(ROOM_ID, i);
     if (res && res.error === "gone") applyRoom(null);
+    else if (res && res.error === "network") flashHint("連線不穩，這一步沒有送出，請再試一次。");
   }
   async function onlineRematch() {
     if (!room || !state.over) return;
@@ -476,7 +477,7 @@
     }
     const res = await O.joinRoom(ROOM_ID, "");   // 房主 / 已在房內：直接進入；其他人：佔用空位
     if (!res.ok) {
-      const T = { gone: ["房間不存在", "這間房間已被刪除或已過期。"], pass: ["🔒 需要密碼", "這間房間有設定密碼，請從房間列表輸入密碼加入。"] }[res.error] || ["房間已滿", "這間房間已經有兩位玩家。"];
+      const T = { network: ["連線失敗", "無法連線到伺服器，請檢查網路後再試。"], gone: ["房間不存在", "這間房間已被刪除或已過期。"], pass: ["🔒 需要密碼", "這間房間有設定密碼，請從房間列表輸入密碼加入。"] }[res.error] || ["房間已滿", "這間房間已經有兩位玩家。"];
       showNotice(T[0], T[1], "回到房間列表", backToLobby, false);
       return;
     }

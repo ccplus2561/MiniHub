@@ -509,8 +509,94 @@ const cards = {
   }
 };
 
+/* ---------- OOXX 雙人連線：房間 + 對局同步（Firestore） ----------
+   games/ooxx/rooms/{房號}：整份房間文件（房間資訊、雙方 uid、對局 game：棋盤 / 輪到誰 / 比分 / rev）。
+   所有寫入（加入、落子、再來一局、離開）都用交易，雙方即時監聽同一份文件，所以兩邊畫面一定一致。 */
+const OOXX_TTL = 12 * 3600000, OOXX_MAX = 100;
+const ooxxCol = () => F.collection(F.db, "games", "ooxx", "rooms");
+const ooxxRef = id => F.doc(F.db, "games", "ooxx", "rooms", String(id));
+const ooxxRoom = (id, x) => (x ? { ...x, id: String(id), at: Number(x.at) || 0 } : null);
+const ooxxLive = r => !!r && Date.now() - r.at < OOXX_TTL;
+const ooxxClone = o => JSON.parse(JSON.stringify(o));
+const ooxx = {
+  on: roomsOn,
+  async list() {
+    if (!roomsOn()) return [];
+    const s = await F.getDocs(F.query(ooxxCol(), F.orderBy("at", "desc"), F.limit(OOXX_MAX)));
+    bump(s.size || 1, 0);
+    return s.docs.map(d => ooxxRoom(d.id, d.data())).filter(r => /^\d{6}$/.test(r.id) && ooxxLive(r));
+  },
+  async get(id) {
+    if (!roomsOn()) return null;
+    bump(1, 0);
+    const s = await F.getDoc(ooxxRef(id));
+    const r = s.exists() ? ooxxRoom(s.id, s.data()) : null;
+    return ooxxLive(r) ? r : null;
+  },
+  // 建立房間：同一個帳號只能有一間（未過期）；房號重複回 "exists"
+  async create(room) {
+    if (!roomsOn()) return { ok: false, error: "login" };
+    const uid = F.auth.currentUser.uid;
+    if (room.hostUid !== uid) return { ok: false, error: "login" };
+    const mine = await F.getDocs(F.query(ooxxCol(), F.where("hostUid", "==", uid)));
+    bump(mine.size || 1, 0);
+    let owned = false;
+    for (const d of mine.docs) {
+      if (ooxxLive(ooxxRoom(d.id, d.data()))) owned = true;
+      else { try { bump(0, 1); await F.deleteDoc(d.ref); } catch (e) { /* 過期的舊房間，刪不掉就略過 */ } }
+    }
+    if (owned) return { ok: false, error: "owned" };
+    bump(1, 1);
+    return F.runTransaction(F.db, async tx => {
+      const s = await tx.get(ooxxRef(room.id));
+      if (s.exists() && ooxxLive(ooxxRoom(s.id, s.data()))) return { ok: false, error: "exists" };
+      tx.set(ooxxRef(room.id), room);
+      return { ok: true };
+    });
+  },
+  // 交易更新：fn(room) 回傳新 room；回傳 null = 放棄（rejected）；房間不存在 / 已過期 = gone
+  async update(id, fn) {
+    if (!roomsOn()) return { ok: false, error: "login" };
+    bump(1, 1);
+    return F.runTransaction(F.db, async tx => {
+      const s = await tx.get(ooxxRef(id));
+      const cur = s.exists() ? ooxxRoom(s.id, s.data()) : null;
+      if (!ooxxLive(cur)) return { ok: false, error: "gone" };
+      const next = fn(ooxxClone(cur));
+      if (!next) return { ok: false, error: "rejected", room: cur };
+      next.at = Date.now();
+      tx.set(ooxxRef(id), next);
+      return { ok: true, room: next };
+    });
+  },
+  // 只有房主能刪
+  async remove(id, uid) {
+    if (!roomsOn()) return;
+    bump(1, 0);
+    const s = await F.getDoc(ooxxRef(id));
+    if (s.exists() && s.data().hostUid === uid) { bump(0, 1); await F.deleteDoc(ooxxRef(id)); }
+  },
+  // 即時監聽單一房間：cb(room | null)；null = 房間已被刪除（快取中的「不存在」不算，避免離線誤判）
+  subscribe(id, cb, onErr) {
+    if (!roomsOn()) return null;
+    return F.onSnapshot(ooxxRef(id), s => {
+      bump(1, 0);
+      if (s.exists()) cb(ooxxRoom(s.id, s.data()));
+      else if (!s.metadata.fromCache) cb(null);
+    }, err => { if (onErr) onErr(err); });
+  },
+  // 即時監聽房間列表：cb(room[])
+  subscribeList(cb, onErr) {
+    if (!roomsOn()) return null;
+    return F.onSnapshot(F.query(ooxxCol(), F.orderBy("at", "desc"), F.limit(OOXX_MAX)), s => {
+      bump(s.size || 1, 0);
+      cb(s.docs.map(d => ooxxRoom(d.id, d.data())).filter(r => /^\d{6}$/.test(r.id) && ooxxLive(r)));
+    }, err => { if (onErr) onErr(err); });
+  }
+};
+
 window.MiniHubAuth = {
-  hasSession, scores, rooms, cards,
+  hasSession, scores, rooms, cards, ooxx,
   preload: () => boot().catch(() => {}),     // 按下「登入」時預先載入，之後彈出視窗才不會被瀏覽器擋
   ping, usage: () => ({ ...use }),
   // key: "google" | "github"

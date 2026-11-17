@@ -1,9 +1,9 @@
 /* OOXX 雙人連線：房間資料層
  * ─────────────────────────────────────────────────────────
  * 介面只透過 OOXXOnline 操作房間；實際儲存由 backend 決定。
- * 目前 backend = 本機版（localStorage + storage 事件，同瀏覽器多分頁可測試）。
- * 之後接 Firebase：只要在載入本檔之前（或之後、頁面使用前）設定 window.OOXXRemote，
- * 並實作下列介面，介面程式不用改。（Firestore 路徑建議：games/ooxx/rooms/{房號}，整份房間文件即 room 物件）
+ * backend：remote.js 設定 window.OOXXRemote（Firebase Firestore：games/ooxx/rooms/{房號}，整份房間文件即 room 物件）；
+ * 沒有 OOXXRemote（不在 MiniHub 內單獨開啟）時退回本機版（localStorage + storage 事件，同瀏覽器多分頁可測試）。
+ * 任何 backend 操作失敗（斷線、逾時、權限）都會回傳 { ok:false, error:"network" }，介面不會卡住。
  *
  *   backend = {
  *     list()                   → Promise<room[]>
@@ -226,7 +226,10 @@
     });
   }
 
-  async function deleteRoom(id) { const m = me(); if (!m.loggedIn) return; return be().remove(id, m.uid); }
+  async function deleteRoom(id) { const m = me(); if (!m.loggedIn) return; try { return await be().remove(id, m.uid); } catch (e) { /* 離線時略過 */ } }
+
+  // 對外的寫入操作：backend 丟出錯誤（斷線 / 逾時 / 權限）時統一回傳 network
+  const safe = fn => async (...a) => { try { return await fn(...a); } catch (e) { return { ok: false, error: "network" }; } };
 
   // 落子：只有輪到自己、該格為空才成立（房主 = X、加入者 = O）
   async function move(id, i) {
@@ -269,6 +272,7 @@
     get: id => be().get(id),
     subscribe: (id, cb) => be().subscribe(id, cb),
     subscribeList: cb => be().subscribeList(cb),
-    myRoom, createRoom, joinRoom, leaveRoom, deleteRoom, move, rematch,
+    myRoom, deleteRoom,
+    createRoom: safe(createRoom), joinRoom: safe(joinRoom), leaveRoom: safe(leaveRoom), move: safe(move), rematch: safe(rematch),
   };
 })();
