@@ -37,7 +37,7 @@ svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round
 .backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; transition: opacity .5s; }
 .bd {
   position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease;
-  display: grid; place-items: center end; padding-right: 26vw; padding-top: 14vh;
+  display: grid; place-items: center end; padding-right: 48vw; padding-top: 14vh;
   font-style: normal; font-size: min(46vh, 380px);
 }
 .bd > * { opacity: .6; filter: blur(3px); }
@@ -187,6 +187,22 @@ body:not([data-view="library"]) .backdrop { opacity: 0; }   /* 只有遊戲庫�
 
 
 /* ---------- Hero ---------- */
+.hero-text { flex: 1; }
+.hero-board { flex: none; align-self: flex-end; width: min(400px, 26vw); min-width: 300px; box-sizing: border-box; padding: 16px 20px; border-radius: 16px;
+  background: rgba(14, 20, 27, .72); border: 1px solid var(--line); backdrop-filter: blur(6px); }
+.hero-board[hidden] { display: none; }
+.hero-board h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 10px; }
+.hero-board h3 small { font-size: 14px; font-weight: 600; color: var(--muted); }
+.hero-board ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.hero-board li { display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, .05); font-size: 18px; font-weight: 600; color: var(--text); }
+.hero-board li.me { background: rgba(26, 159, 255, .22); box-shadow: inset 0 0 0 1.5px var(--accent-2); }
+.hero-board li.empty { justify-content: center; color: var(--muted); font-size: 16px; padding: 28px 8px; }
+.hero-board .rk { flex: none; width: 28px; text-align: center; color: var(--muted); font-weight: 800; }
+.hero-board .r1 { color: #ffd34d; } .hero-board .r2 { color: #d5dde6; } .hero-board .r3 { color: #e0955a; }
+.hero-board .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hero-board em { font-style: normal; font-weight: 800; color: #fff; }
+.hero-board em small { font-size: 13px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+body.m .hero-board { display: none; }
 .hero { margin-top: auto; padding: 8px 8px 0; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
 .hero { min-height: min(320px, 42vh); }
 .hero-text { min-width: 0; align-self: flex-start; }

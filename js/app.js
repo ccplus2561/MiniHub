@@ -61,10 +61,30 @@
     bds.forEach((b, i) => b.classList.toggle("on", i === bdIdx));
   }
 
+  /* ---------- 遊戲庫排行榜（登入後，顯示在遊戲說明與「遊戲特色」之間） ---------- */
+  let boardOff = null, boardSeq = 0;
+  function paintBoard() {
+    const box = $("#heroBoard");
+    if (boardOff) { try { boardOff(); } catch (e) {} boardOff = null; }
+    const g = selected >= 0 ? shown[selected] : null;
+    const A = window.MiniHubAuth && MiniHubAuth.scores;
+    if (!g || !g.board || !g.path || !signedIn || !A || !A.watchTop) { box.hidden = true; box.innerHTML = ""; return; }
+    const seq = ++boardSeq, me = A.uid ? A.uid() : "", unit = esc(g.board.unit || "");
+    const draw = rows => {
+      if (seq !== boardSeq) return;
+      const list = rows.length ? rows.map((r, i) =>
+        `<li class="${r.uid === me ? "me" : ""}"><b class="rk r${i + 1}">${i + 1}</b><span class="nm">${esc(r.name || "玩家")}</span><em>${esc(r.score)}<small>${unit}</small></em></li>`).join("")
+        : `<li class="empty">還沒有人上榜，來搶第一名！</li>`;
+      box.innerHTML = `<h3>排行榜<small>${esc(g.title)}</small></h3><ol>${list}</ol>`;
+    };
+    box.hidden = false; draw([]);
+    try { boardOff = A.watchTop(g.id, 5, draw, g.board.modes && g.board.modes[0]); } catch (e) {}
+  }
+
   function select(i, quiet) {
     const hero = $("#hero");
     if (!shown.length || i < 0) {
-      selected = -1; hero.hidden = true; setLogoBackdrop();
+      selected = -1; hero.hidden = true; setLogoBackdrop(); paintBoard();
       $$("#libraryRow .card").forEach(c => c.classList.remove("selected"));
       return;
     }
@@ -86,6 +106,7 @@
     $("#heroHow").textContent = g.how || ""; $("#heroHow").hidden = !g.how;
     $("#playBtn span").textContent = phoneBlocked(g) ? "僅支援電腦" : g.path ? "開始遊戲" : (g.badge || "即將推出");
     paintTags(g);
+    paintBoard();
     setTagsOpen(false);   // 手機版切換遊戲時預設收合
     hero.hidden = false;
     hero.classList.remove("pop"); void hero.offsetWidth; hero.classList.add("pop");   // 每次選擇都從底部跳出
@@ -1069,6 +1090,7 @@
   document.addEventListener("minihub:auth", e => {
     const { user, profile, error } = e.detail;
     photo = (user && user.photoURL) || "";
+    setTimeout(paintBoard, 0);   // 登入 / 登出後重畫遊戲庫排行榜（signedIn 於下方更新）
     curAccount = (user && user.account) || ""; curProvider = (user && user.provider) || "";
     if (error) { toast("讀取資料失敗：" + (error.code || error.message)); MiniHubAuth.signOut(); return; }
     if (!user) {                       // 已登出
