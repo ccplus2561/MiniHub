@@ -86,8 +86,8 @@ const DEFAULT_SETTINGS = {
   maxBatchAmount: 100,
   prizeRatio: [50, 30, 20],
   consolationAmount: 50,
-  allowRepeat: true,
-  allowBlank: true,
+  allowRepeat: false, // 預設關閉；啟用獎金功能時自動開啟（仍可手動關閉）
+  allowBlank: false,
   hostFeePercent: 10,
   locked: false,
   prizeEnabled: false, // 預設關閉。關閉時：沒有獎金池、不收費、抽號不受任何金錢限制
@@ -540,8 +540,8 @@ function initSettings(root) {
     const editable = isEditable(key, status);
     const input = el('input', {
       type: 'checkbox', class: 'switch', id: `f-${key}`, checked: settings[key], disabled: !editable,
-      // 貼心連動：啟用獎金池 → 旁觀者顯示獎金池預設開啟；關閉 → 強制關閉
-      onChange: () => setState({ settings: key === 'prizeEnabled' ? { prizeEnabled: input.checked, spectatorShowPool: input.checked } : { [key]: input.checked } }),
+      // 貼心連動：啟用獎金池 → 旁觀者顯示獎金池、允許重複數字、允許銘謝惠顧自動開啟（可再手動關閉）；關閉獎金池 → 三者一併關閉
+      onChange: () => setState({ settings: key === 'prizeEnabled' ? { prizeEnabled: input.checked, spectatorShowPool: input.checked, allowRepeat: input.checked, allowBlank: input.checked } : { [key]: input.checked } }),
     });
     return row({ label, hint, forId: `f-${key}`, editable, control: input });
   }
