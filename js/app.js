@@ -68,8 +68,9 @@
     if (boardOff) { try { boardOff(); } catch (e) {} boardOff = null; }
     const g = selected >= 0 ? shown[selected] : null;
     const A = window.MiniHubAuth && MiniHubAuth.scores;
-    if (!g || !g.board || !g.path || !signedIn || !A || !A.watchTop) { box.hidden = true; box.innerHTML = ""; setRankOpen(false); $("#rankBtn").hidden = true; return; }
-    $("#rankBtn").hidden = false;
+    const can = !!(g && g.board && g.path && signedIn);
+    $("#rankBtn").hidden = !can;
+    if (!can || !A || !A.watchTop) { box.hidden = true; box.innerHTML = ""; setRankOpen(false); return; }
     const seq = ++boardSeq, me = A.uid ? A.uid() : "", unit = esc(g.board.unit || "");
     const draw = rows => {
       if (seq !== boardSeq) return;

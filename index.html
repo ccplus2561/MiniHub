@@ -78,7 +78,7 @@
     }
     if (store) store.removeItem(KEY);
 
-    var VER = "20261117a";   // ← 每次更新網站時修改（日期 + 當天流水字母）
+    var VER = "20261118a";   // ← 每次更新網站時修改（日期 + 當天流水字母）
     var CSS = "css/style.css";
     var JS = ["js/protect.js", "js/guard.js", "js/games.js", "js/sfx.js", "js/app.js", "js/settings.js", "js/idle-pause.js", "js/remote.js", "js/checkin.js"];
     var WARM_ONLY = "js/minihub-sdk.js";   // 遊戲頁會載入的共用檔：背景更新快取（不等待、不阻擋載入）
@@ -204,12 +204,12 @@
             <button class="tags-toggle" id="tagsToggle" type="button" aria-expanded="false" aria-controls="gameTags">遊戲特色<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
             <div class="game-tags" id="gameTags"></div>
             <div class="play-row">
-              <button class="rank-btn" id="rankBtn" type="button" hidden aria-label="排行榜" aria-haspopup="dialog">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a3 3 0 0 0 3 3M16 6h4v1a3 3 0 0 1-3 3M12 13v4M8 20h8M10 17h4"/></svg>
-              </button>
               <button class="btn-primary" id="playBtn">
                 <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z"/></svg>
                 <span>開始遊戲</span>
+              </button>
+              <button class="rank-btn" id="rankBtn" type="button" hidden aria-label="排行榜" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a3 3 0 0 0 3 3M16 6h4v1a3 3 0 0 1-3 3M12 13v4M8 20h8M10 17h4"/></svg>
               </button>
             </div>
           </div>
