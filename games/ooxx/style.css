@@ -565,3 +565,11 @@ h1 { font-size: clamp(26px, calc(var(--vh) * 4.6), 42px); }
 /* 雙人連線：等待玩家 2 加入時棋盤變暗、禁止落子 */
 .tic-board.is-waiting { opacity: .4; filter: grayscale(.4); cursor: not-allowed; }
 .tic-board.is-waiting .cell { cursor: not-allowed; }
+
+/* 禁止文字選取與複製（輸入框除外） */
+html, body, body * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea { -webkit-user-select: text; user-select: text; }
+
+/* 頂端「大廳」按鈕 */
+.topbar { justify-content: space-between; }
+.topbar-lobby { min-height: 40px; padding: 0 16px; white-space: nowrap; }

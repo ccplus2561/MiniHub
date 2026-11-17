@@ -369,6 +369,7 @@
     });
     $("pick-back").addEventListener("click", backToLobby);
     $("lobby-btn").addEventListener("click", backToLobby);
+    $("lobby-top").addEventListener("click", backToLobby);
     els.soloStart.addEventListener("click", startGame);
     els.repick.addEventListener("click", openPick);
   }
@@ -461,6 +462,7 @@
   function bindOnline() {
     const O = window.OOXXOnline;
     $("lobby-btn").lastChild.textContent = " 房間列表";
+    $("lobby-top").lastChild.textContent = " 房間列表";
     els.roomExit.addEventListener("click", exitRoom);
     els.noticeOk.addEventListener("click", () => { const f = noticeOnOk; hideNotice(); if (f) f(); });
     els.noticeCancel.addEventListener("click", hideNotice);

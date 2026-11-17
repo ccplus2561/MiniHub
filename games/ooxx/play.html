@@ -13,6 +13,7 @@
 <body>
   <main class="app-shell">
     <header class="topbar">
+      <button class="secondary-button topbar-lobby" id="lobby-top" type="button"><span>⌂</span> 大廳</button>
       <div class="topbar-right">
         <span class="preview-tag"><span class="live-dot"></span> <span id="mode-tag">單人對戰</span></span>
       </div>
@@ -121,6 +122,7 @@
     </div>
   </div>
   <script>if (/[?&]mode=online\b/.test(location.search)) document.write('<script src="gate.js"><\/script>');</script>
+  <script src="noselect.js"></script>
   <script src="audio.js"></script>
   <script src="remote.js"></script>
   <script src="online-store.js"></script>
