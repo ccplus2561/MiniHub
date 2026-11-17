@@ -109,7 +109,7 @@
     try {
       const res = await S.createRoom(el.name.value, el.pass.value);
       if (res.ok) { el.pass.value = ""; goRoom(res.room.id); }
-      else showErr(ERR[res.error] || "建立失敗，請再試一次。");
+      else showErr(res.error === "fail" ? `建立失敗（${res.code || "未知錯誤"}），請再試一次。` : (ERR[res.error] || "建立失敗，請再試一次。"));
     } catch (e) {
       showErr(ERR.network);
     } finally { busy = false; el.createBtn.disabled = false; el.createBtn.textContent = label; }

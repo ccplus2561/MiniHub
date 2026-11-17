@@ -234,7 +234,9 @@
     try { return await fn(...a); } catch (e) {
       try { console.error("[OOXX online]", e && e.code, e && e.message); } catch (x) { /* 忽略 */ }
       const code = String((e && e.code) || "");
-      return { ok: false, error: /permission-denied|unauthenticated/.test(code) ? "perm" : "network" };
+      // 斷線 / 逾時才算 network；其他（例如資料格式被拒）回 fail 並附錯誤碼，方便判斷
+      const net = !code || /unavailable|deadline-exceeded|cancelled|aborted|resource-exhausted/.test(code) || /^(offline|timeout)$/.test(String(e && e.message));
+      return { ok: false, error: /permission-denied|unauthenticated/.test(code) ? "perm" : net ? "network" : "fail", code };
     }
   };
 

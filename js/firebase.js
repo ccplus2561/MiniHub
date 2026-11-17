@@ -518,6 +518,9 @@ const ooxxRef = id => F.doc(F.db, "games", "ooxx", "rooms", String(id));
 const ooxxRoom = (id, x) => (x ? { ...x, id: String(id), at: Number(x.at) || 0 } : null);
 const ooxxLive = r => !!r && Date.now() - r.at < OOXX_TTL;
 const ooxxClone = o => JSON.parse(JSON.stringify(o));
+// 遊戲頁是在 iframe 內執行，它建立的物件和這支檔案不同 window；Firestore 會把「別的 window 的物件」判成無效資料而拒寫
+// （invalid-argument）。所以寫入前一律經過 JSON 轉成「這個 window 的純物件」。
+const ooxxPlain = o => JSON.parse(JSON.stringify(o));
 const ooxx = {
   on: roomsOn,
   async list() {
@@ -550,7 +553,7 @@ const ooxx = {
     return F.runTransaction(F.db, async tx => {
       const s = await tx.get(ooxxRef(room.id));
       if (s.exists() && ooxxLive(ooxxRoom(s.id, s.data()))) return { ok: false, error: "exists" };
-      tx.set(ooxxRef(room.id), room);
+      tx.set(ooxxRef(room.id), ooxxPlain(room));
       return { ok: true };
     });
   },
@@ -564,9 +567,10 @@ const ooxx = {
       if (!ooxxLive(cur)) return { ok: false, error: "gone" };
       const next = fn(ooxxClone(cur));
       if (!next) return { ok: false, error: "rejected", room: cur };
-      next.at = Date.now();
-      tx.set(ooxxRef(id), next);
-      return { ok: true, room: next };
+      const out = ooxxPlain(next);
+      out.at = Date.now();
+      tx.set(ooxxRef(id), out);
+      return { ok: true, room: out };
     });
   },
   // 只有房主能刪
