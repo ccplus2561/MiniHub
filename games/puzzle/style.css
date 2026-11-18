@@ -183,6 +183,14 @@ body {
 @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(.94); } to { opacity: 1; transform: none; } }
 
+.paybar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; font-size: 13px; font-weight: 700; color: #cdd9ee; }
+.paybar[hidden] { display: none; }
+.seg { display: inline-flex; border: 1px solid #5a7bab; border-radius: 999px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; font-weight: 800; color: #cdd9ee; background: transparent; border: 0; padding: 6px 14px; cursor: pointer; }
+.seg button em { font-style: normal; font-weight: 700; color: #ffd166; margin-left: 2px; }
+.seg button.on { background: #3b5f92; color: #fff; }
+.seg button:disabled { opacity: .5; cursor: not-allowed; }
+.paybar + .powerups { margin-top: 10px; }
 .powerups { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
 .button-sm { white-space: nowrap; min-height: 46px; font-size: 14px; padding: 8px 12px; gap: 6px; }
 .button-sm span { font-size: 18px; }
@@ -264,6 +272,8 @@ body {
   .brand h1 { font-size: 26px; }
   .score-row { grid-template-columns: 1fr; margin-bottom: 14px; }
   .powerups { margin-top: 0; grid-template-columns: 1fr; }
+  .paybar { margin-top: 0; margin-bottom: 10px; }
+  .paybar + .powerups { margin-top: 0; }
   .controls { grid-template-columns: 1fr; margin-top: 12px; }
   .note { margin-top: 14px; }
 }

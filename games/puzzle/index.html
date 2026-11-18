@@ -38,6 +38,13 @@
     </section>
 
     <div class="panel-bottom">
+      <div id="paybar" class="paybar" hidden>
+        <span>道具付費</span>
+        <div class="seg" role="group" aria-label="道具付費方式">
+          <button id="pay-score" type="button" class="on">分數</button>
+          <button id="pay-m" type="button">M 點<em id="pay-bal"></em></button>
+        </div>
+      </div>
       <div class="powerups" aria-label="道具">
         <button id="pu-remove" class="button button-light button-sm" type="button"><span aria-hidden="true">✕</span> 清除方塊 <em id="cost-remove" class="cost"></em></button>
         <button id="pu-swap" class="button button-light button-sm" type="button"><span aria-hidden="true">⇄</span> 交換方塊 <em id="cost-swap" class="cost"></em></button>

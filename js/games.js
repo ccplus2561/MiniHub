@@ -33,7 +33,7 @@ window.GAMES = [
   {
     id: "puzzle", title: "2048", category: "益智", emoji: "🧩", icon: "icons/puzzle.svg",
     colors: ["#5b4bd6", "#2a2178"], path: "games/puzzle/index.html",
-    desc: "合併相同數字，湊出 2048！\n規則：相同數字相鄰就合併成兩倍，棋盤全滿且無法合併即結束；可用分數買道具。\n操作：方向鍵／WASD，或滑動畫面。",
+    desc: "合併相同數字，湊出 2048！\n規則：相同數字相鄰就合併成兩倍，棋盤全滿且無法合併即結束；可用分數買道具，登入後也可改用 M 點（清除 1 M、交換 0.5 M、復原 0.5 M）。\n操作：方向鍵／WASD，或滑動畫面。",
     how: "", featured: true, board: { order: "desc", unit: "分", max: 5000000 },
     tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
   },

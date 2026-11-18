@@ -6,6 +6,9 @@
   const SWIPE_MIN = 28;      // 滑動 / 拖曳判定距離（px）
   const COST = { remove: 300, swap: 150, undo: 100 };   // 開局價格（用分數購買），可自行調整
   const COST_STEP = 0.5;     // 清除 / 交換：同一局每多用一次漲價 50%（復原固定價）
+  // 道具也可改用 M 點付費（登入後可選）：固定價、不影響分數與分數價格的漲幅。
+  // ★ 改價格時，Firestore 規則「花費 M 點」那段允許的扣點數（目前 0.5 或 1）要一起對應
+  const M_COST = { remove: 1, swap: 0.5, undo: 0.5 };
 
   /* ---------- 難度設定：隨場上最大方塊提升 ---------- */
   // tier = log2(最大方塊) − 8（512→1、1024→2、2048→3 …），tier 0 為初期
@@ -38,6 +41,7 @@
   const puButtons = { remove: $("pu-remove"), swap: $("pu-swap") };
   const costEls = { remove: $("cost-remove"), swap: $("cost-swap") };
   const costUndoEl = $("cost-undo");
+  const payBar = $("paybar"), payBtns = { score: $("pay-score"), m: $("pay-m") }, payBal = $("pay-bal");
 
   // 底層 SIZE × SIZE 個空格
   const cellsEl = document.querySelector(".cells");
@@ -59,7 +63,9 @@
   let pending = null;        // 動畫收尾工作 { timer, fn }
   let mode = null;           // 道具模式："remove" | "swap" | null
   let picked = null;         // 交換道具：已選的第一個方塊
-  let used = { remove: 0, swap: 0 };   // 本局道具使用次數（影響價格）
+  let used = { remove: 0, swap: 0 };   // 本局道具使用次數（影響分數價格）
+  let payMode = "score";     // 道具付費方式："score" 扣分數 | "m" 扣 M 點（只存在記憶體）
+  let busy = false;          // 正在等 M 點扣款結果
 
   // 本機最高分只存在記憶體（不寫入 localStorage）；登入後的最高分由大廳 SDK 同步
   function readBest() { return 0; }
@@ -224,6 +230,13 @@
     return false;
   }
   const costOf = k => Math.round(COST[k] * (1 + COST_STEP * (used[k] || 0)) / 10) * 10;
+  const fmtM = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
+  const mLogged = () => { try { return !!(hub && hub.player().loggedIn); } catch (_) { return false; } };
+  const mBal = () => { try { return hub ? hub.mPoints.balance() : 0; } catch (_) { return 0; } };
+  const payM = () => payMode === "m" && mLogged();
+  // 這個道具現在買得起嗎（依付費方式）
+  const canPay = k => payM() ? mBal() >= M_COST[k] : score >= costOf(k);
+  const mErr = c => c === "not-enough-m" ? "M 點不足" : c === "permission-denied" ? "伺服器拒絕扣點" : c === "unavailable" || /network/.test(c || "") ? "網路連線失敗，請再試" : "扣點失敗，請稍後再試";
   function tier() {
     const top = tiles.reduce((m, t) => Math.max(m, t.v), 0);
     return top >= 512 ? Math.min(Math.log2(top) - 8, 99) : 0;
@@ -273,10 +286,46 @@
     for (const k in puButtons) {
       const active = mode === k;
       puButtons[k].classList.toggle("active", active);
-      puButtons[k].disabled = !active && (gameOver || score < costOf(k));
-      costEls[k].textContent = `−${costOf(k)}`;
+      puButtons[k].disabled = !active && (gameOver || busy || !canPay(k));
+      costEls[k].textContent = payM() ? `−${fmtM(M_COST[k])} M` : `−${costOf(k)}`;
     }
     tilesEl.classList.toggle("picking", !!mode);
+    refreshPay();
+    refreshUndo();
+  }
+  // 付費方式切換列（只有在大廳裡才顯示；M 點需登入）
+  function refreshPay() {
+    if (!hub) return;
+    payBar.hidden = false;
+    const lg = mLogged();
+    if (!lg && payMode === "m") payMode = "score";      // 登出後自動回到扣分數
+    payBtns.score.classList.toggle("on", payMode === "score");
+    payBtns.m.classList.toggle("on", payMode === "m");
+    payBtns.m.disabled = !lg || busy;
+    payBtns.score.disabled = busy;
+    payBtns.m.title = lg ? "" : "登入後可用 M 點付費";
+    payBal.textContent = lg ? `（${fmtM(mBal())}）` : "";
+  }
+  function setPay(m) {
+    if (busy || (m === "m" && !mLogged())) return;
+    cancelMode();
+    payMode = m;
+    sound.click();
+    refreshPowerups();
+  }
+  payBtns.score.addEventListener("click", () => setPay("score"));
+  payBtns.m.addEventListener("click", () => setPay("m"));
+  setInterval(() => { if (hub && !busy) { const k = payMode + mLogged() + mBal() + score; if (k !== refreshPowerups.k) { refreshPowerups.k = k; refreshPowerups(); } } }, 1000);   // 登入 / 餘額變動時更新按鈕
+  // 付費後執行道具：分數付費 → 立刻執行並扣分；M 點付費 → 先扣 M 點，成功才執行
+  function payAndDo(kind, act) {
+    if (!payM()) { act(); spend(kind); return; }
+    if (busy) return;
+    busy = true; refreshPowerups();
+    hub.mPoints.spend(M_COST[kind]).then(r => {
+      busy = false;
+      if (!r.ok) { sound.error(); setNote(mErr(r.code)); refreshPowerups(); return; }
+      act();
+    });
   }
   let kbdShown = false;
   function setNote(text) { noteEl.textContent = text || NOTE_DEFAULT; noteEl.hidden = kbdShown && !text; }   // 快捷介面顯示時，預設提示隱藏（道具操作提示仍會顯示）
@@ -297,7 +346,7 @@
     flush();
     if (mode === kind) return cancelMode();
     cancelMode();
-    if (gameOver || score < costOf(kind) || !tiles.length) { sound.error(); return; }
+    if (busy || gameOver || !canPay(kind) || !tiles.length) { sound.error(); return; }
     mode = kind;
     sound.click();
     setNote(kind === "remove" ? "點選要清除的方塊（再按一次按鈕或 Esc 取消）" : "點選第一個要交換的方塊（Esc 取消）");
@@ -308,28 +357,29 @@
     refreshUndo();
   }
   function refreshUndo() {
-    undoButton.disabled = !previous || previous.score < COST.undo;   // 復原後的分數需足夠支付
-    costUndoEl.textContent = `−${COST.undo}`;
+    undoButton.disabled = busy || !previous || (payM() ? mBal() < M_COST.undo : previous.score < COST.undo);   // 分數付費：復原後的分數需足夠支付
+    costUndoEl.textContent = payM() ? `−${fmtM(M_COST.undo)} M` : `−${COST.undo}`;
   }
-  function spend(kind) {
+  function spend(kind) {      // 扣分數
     const cost = costOf(kind);
     used[kind]++;
     score -= cost;
     setScore(-cost);
   }
   tilesEl.addEventListener("click", e => {
-    if (!mode) return;
+    if (!mode || busy) return;
     const el = e.target.closest(".tile");
     const t = el && tiles.find(x => x.el === el);
     if (!t) return;
     if (mode === "remove") {
-      snapshot();
-      tiles = tiles.filter(x => x !== t);
-      t.el.classList.add("removing");
-      setTimeout(() => t.el.remove(), 230);
-      spend("remove");
-      sound.remove();
-      cancelMode();
+      payAndDo("remove", () => {
+        snapshot();
+        tiles = tiles.filter(x => x !== t);
+        t.el.classList.add("removing");
+        setTimeout(() => t.el.remove(), 230);
+        sound.remove();
+        cancelMode();
+      });
     } else if (!picked) {
       picked = t;
       sound.select();
@@ -343,13 +393,15 @@
       setNote("兩個數字相同，換了也一樣，請選不同數字的方塊");
       sound.error();
     } else {
-      snapshot();
-      [t.r, picked.r] = [picked.r, t.r];
-      [t.c, picked.c] = [picked.c, t.c];
-      place(t); place(picked);
-      spend("swap");
-      sound.swap();
-      cancelMode();
+      const a = picked;
+      payAndDo("swap", () => {
+        snapshot();
+        [t.r, a.r] = [a.r, t.r];
+        [t.c, a.c] = [a.c, t.c];
+        place(t); place(a);
+        sound.swap();
+        cancelMode();
+      });
     }
   });
   puButtons.remove.addEventListener("click", () => togglePowerup("remove"));
@@ -365,6 +417,7 @@
   }
 
   function startGame() {
+    if (busy) return;
     flush();
     cancelMode();
     tilesEl.innerHTML = "";
@@ -386,19 +439,34 @@
 
   function undo() {
     flush();
+    if (busy) return;
     cancelMode();
-    if (!previous || previous.score < COST.undo) { sound.error(); return; }
+    if (!previous) { sound.error(); return; }
+    if (payM()) {                                   // 用 M 點付費：先扣點，成功才復原，分數不變
+      if (mBal() < M_COST.undo) { sound.error(); return; }
+      busy = true; refreshPowerups();
+      hub.mPoints.spend(M_COST.undo).then(r => {
+        busy = false;
+        if (!r.ok) { sound.error(); setNote(mErr(r.code)); refreshPowerups(); return; }
+        doUndo(0);
+      });
+      return;
+    }
+    if (previous.score < COST.undo) { sound.error(); return; }
+    doUndo(COST.undo);
+  }
+  function doUndo(cost) {
     sound.undo();
     rebuild(previous.grid);
     tiles.forEach(t => animate(t, "pop"));
-    score = previous.score - COST.undo;   // 復原要付分數
+    score = previous.score - cost;   // 分數付費才扣分
     used = previous.used;
     gameOver = previous.gameOver;
     won = previous.won;
     keepPlayingAfterWin = previous.keepPlayingAfterWin;
     previous = null;
     hideOverlay();
-    setScore(-COST.undo);
+    setScore(-cost);
     refreshUndo();
   }
 
@@ -413,7 +481,7 @@
 
   function move(direction) {
     flush();
-    if (gameOver || mode) return false;
+    if (gameOver || mode || busy) return false;
 
     const before = valuesGrid();
     const at = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
