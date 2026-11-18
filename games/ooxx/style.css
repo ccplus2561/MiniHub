@@ -596,3 +596,9 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 }
 body.has-kbd-hints .app-shell { padding-bottom: 74px; }
 .seg-btn:focus-visible, .primary-button:focus-visible, .secondary-button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* 鍵盤快捷鍵開啟時，空格內顯示對應的數字鍵 */
+.cell-num { display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font: 700 clamp(18px, 4vh, 30px)/1 "Noto Sans TC", sans-serif; color: rgba(240, 241, 236, .28); pointer-events: none; transition: opacity .15s; }
+body.kbd-num .cell.is-empty .cell-num { display: block; }
+body.kbd-num .tic-board[data-over="true"] .cell-num { display: none; }
+body.kbd-num .cell.is-empty:hover .cell-num { opacity: 0; }

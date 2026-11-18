@@ -261,6 +261,8 @@
         if (v) cell.appendChild(makeMark(v));
         cell.dataset.mark = v || "";
       }
+      let num = cell.querySelector(".cell-num");   // 鍵盤快捷鍵的格子編號（1–9），是否顯示由 CSS 控制
+      if (!num) { num = document.createElement("span"); num.className = "cell-num"; num.setAttribute("aria-hidden", "true"); num.textContent = i + 1; cell.appendChild(num); }
       const row = Math.floor(i / 3) + 1;
       const col = (i % 3) + 1;
       const name = v === "X" ? "叉" : v === "O" ? "圈" : "空格";
@@ -591,6 +593,7 @@
     const on = !IS_TOUCH && MH.kbdOn();
     kbdBar.hidden = !on;
     document.body.classList.toggle("has-kbd-hints", on);
+    document.body.classList.toggle("kbd-num", on);
     if (!on) return;
     const list = !els.notice.hidden
       ? [[K("←", "→"), "選擇"], [K("Enter"), "確認"], ...(visible(els.noticeCancel) ? [[K("Esc"), "取消"]] : [])]
