@@ -542,10 +542,10 @@
   if (ONLINE) startOnline();
 
   // 按鈕音效：頁面上每個 <button>（音效 / 音樂開關除外，它們由 audio.js 自己處理）
-  document.addEventListener("click", e => {
-    const b = e.target.closest && e.target.closest("button");
-    if (b && !b.hasAttribute("data-audio") && !b.disabled) sound.click();
-  }, true);
+  const btnOf = e => { const b = e.target.closest && e.target.closest("button"); return b && !b.hasAttribute("data-audio") && !b.disabled ? b : null; };
+  let lastDown = 0;   // 按下去就先出聲，換頁的按鈕（大廳、房間列表）才不會被切掉；鍵盤操作則在 click 時出聲
+  document.addEventListener("pointerdown", e => { if (btnOf(e)) { lastDown = Date.now(); sound.click(); } }, true);
+  document.addEventListener("click", e => { if (e.detail === 0 && Date.now() - lastDown > 400 && btnOf(e)) sound.click(); }, true);
   // 棋盤格子：空格以外的點擊（已有棋子、還沒輪到）已在 play() 內給「無效」音效
   sound.musicStart();   // 背景音樂（瀏覽器需要第一次操作後才會出聲，audio.js 會自動接上）
 
