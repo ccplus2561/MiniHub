@@ -573,3 +573,10 @@ input, textarea { -webkit-user-select: text; user-select: text; }
 /* 頂端「大廳」按鈕 */
 .topbar { justify-content: space-between; }
 .topbar-lobby { min-height: 40px; padding: 0 16px; white-space: nowrap; }
+
+/* 音效 / 背景音樂開關（data-audio） */
+.audio-btns { display: flex; gap: 8px; }
+.audio-btn { width: 40px; height: 40px; border: 1px solid var(--line); border-radius: 11px; background: #1b2019; color: #d4dccd; font-size: 18px; line-height: 1; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.audio-btn.off { opacity: .45; background: #151813; text-decoration: line-through; }
+.audio-btn:active { transform: translateY(1px); }
+@media (max-width: 560px) { .topbar-right { gap: 8px; } .audio-btn { width: 36px; height: 36px; font-size: 16px; } }

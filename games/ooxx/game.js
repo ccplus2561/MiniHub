@@ -28,6 +28,18 @@
   const nameOf = s => (ONLINE ? onlineName(s) : SOLO ? (isAI(s) ? "電腦" : "你") : `玩家 ${num(s)}`);
   const labelOf = s => (SOLO ? (isAI(s) ? "AI" : "YOU") : `PLAYER 0${num(s)}`);
 
+  // 音效：全部經由 Proxy 呼叫 sound.xxx()；audio.js 沒載入或發生錯誤都不能影響遊戲
+  const sound = new Proxy({}, {
+    get: (_, name) => (...args) => {
+      try {
+        const G = window.GameAudio;
+        if (!G || typeof name !== "string") return;
+        if (name !== "play" && /^(music|sync|toggle)/.test(name) && typeof G[name] === "function") G[name](...args);
+        else G.play(name, ...args);
+      } catch (e) { /* 音效失敗不影響遊戲 */ }
+    }
+  });
+
   // DOM
   const $ = id => document.getElementById(id);
   const els = {
@@ -131,9 +143,9 @@
   function play(i, fromAI) {
     if (ONLINE) { onlineMove(i); return; }
     if (state.picking) return;
-    if (SOLO && isAI(state.turn) && !fromAI) return;
+    if (SOLO && isAI(state.turn) && !fromAI) { if (!state.over) sound.invalid(); return; }
     if (state.over || state.board[i]) {
-      if (!state.over) window.NeonAudio && window.NeonAudio.play("invalid");
+      if (!state.over) sound.invalid();
       return;
     }
     const player = state.turn;
@@ -145,15 +157,17 @@
       state.winLine = win.line;
       state.scores[win.player] += 1;
       save(state.round + 1, other(state.starter));
-      window.NeonAudio && window.NeonAudio.play("win");
+      sound[player === "X" ? "x" : "o"]();
+      sound[isAI(win.player) ? "lose" : "win"]();
     } else if (state.board.every(Boolean)) {
       state.over = true;
       state.scores.draw += 1;
       save(state.round + 1, other(state.starter));
-      window.NeonAudio && window.NeonAudio.play("draw");
+      sound[player === "X" ? "x" : "o"]();
+      sound.draw();
     } else {
       state.turn = other(player);
-      window.NeonAudio && window.NeonAudio.play(player === "X" ? "x" : "o");
+      sound[player === "X" ? "x" : "o"]();
     }
     render();
     scheduleAI();
@@ -220,7 +234,7 @@
     state.turn = state.starter;
     state.over = false;
     state.winLine = null;
-    window.NeonAudio && window.NeonAudio.play("reset");
+    sound.reset();
     render();
     scheduleAI();
   }
@@ -324,7 +338,7 @@
     state.winLine = null;
     state.picking = false;
     els.pick.hidden = true;
-    window.NeonAudio && window.NeonAudio.play("reset");
+    sound.reset();
     render();
     scheduleAI();
   }
@@ -409,12 +423,13 @@
     state.p1 = "X";
     state.picking = false;
     if (joined && g.rev !== lastRev) {
-      const N = window.NeonAudio;
-      if (N) {
-        if (g.over) N.play(g.winLine ? (state.board[g.winLine[0]] === mySym() ? "win" : "draw") : "draw");
-        else if (g.rev === 0) N.play("reset");
-        else N.play(g.turn === "X" ? "o" : "x");
+      const placed = g.turn === "X" ? "o" : "x";   // 剛落下的符號
+      if (g.over) {
+        if (g.winLine) { sound[state.board[g.winLine[0]] === "X" ? "x" : "o"](); sound[state.board[g.winLine[0]] === mySym() ? "win" : "lose"](); }
+        else { sound.draw(); }
       }
+      else if (g.rev === 0) sound.reset();
+      else sound[placed]();
     }
     if (prev && !prev.guestUid && r.guestUid) flashHint(`${r.guestName || "對手"} 已加入，開始對戰！`);
     if (prev && prev.guestUid && !r.guestUid) flashHint("對手已離開房間。");
@@ -431,8 +446,8 @@
   async function onlineMove(i) {
     if (!room) return;
     if (!room.guestUid) { flashHint("等待好友進入中…，玩家 2 加入後才能開始。"); return; }
-    if (state.over || state.board[i]) { if (!state.over) window.NeonAudio && window.NeonAudio.play("invalid"); return; }
-    if (state.turn !== mySym()) { flashHint("還沒輪到你。"); return; }
+    if (state.over || state.board[i]) { if (!state.over) sound.invalid(); return; }
+    if (state.turn !== mySym()) { flashHint("還沒輪到你。"); sound.invalid(); return; }
     const res = await window.OOXXOnline.move(ROOM_ID, i);
     if (res && res.error === "gone") applyRoom(null);
     else if (res && res.error === "network") flashHint("連線不穩，這一步沒有送出，請再試一次。");
@@ -526,9 +541,17 @@
   render();
   if (ONLINE) startOnline();
 
-  // 暫停：大廳要求暫停時（點左側導覽）停止電腦思考，玩家下一次操作（點一下或按鍵）時繼續
-  MH.onPause(() => { paused = true; clearTimeout(aiTimer); });
-  const resume = () => { if (paused) { paused = false; scheduleAI(); } };
+  // 按鈕音效：頁面上每個 <button>（音效 / 音樂開關除外，它們由 audio.js 自己處理）
+  document.addEventListener("click", e => {
+    const b = e.target.closest && e.target.closest("button");
+    if (b && !b.hasAttribute("data-audio") && !b.disabled) sound.click();
+  }, true);
+  // 棋盤格子：空格以外的點擊（已有棋子、還沒輪到）已在 play() 內給「無效」音效
+  sound.musicStart();   // 背景音樂（瀏覽器需要第一次操作後才會出聲，audio.js 會自動接上）
+
+  // 暫停：大廳要求暫停時（點左側導覽）停止電腦思考與背景音樂，玩家下一次操作（點一下或按鍵）時繼續
+  MH.onPause(() => { paused = true; clearTimeout(aiTimer); sound.musicStop(); });
+  const resume = () => { if (paused) { paused = false; scheduleAI(); sound.musicStart(); } };
   document.addEventListener("pointerdown", resume, true);
   document.addEventListener("keydown", resume, true);
   MH.onChange(() => { if (!hintTimer) els.hint.textContent = defaultHint(); });
