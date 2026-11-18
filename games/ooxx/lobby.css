@@ -77,3 +77,23 @@ h1 span { color: var(--green); }
 html, body, body * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 input, textarea { -webkit-user-select: text; user-select: text; }
 
+
+/* 底部快捷鍵提示列（鍵盤快捷鍵開啟時顯示） */
+.kbd-hints {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  display: flex; justify-content: flex-end; align-items: center; gap: 22px;
+  padding: 10px 28px max(10px, env(safe-area-inset-bottom));
+  font-size: 16px; color: #c9cfc3;
+  background: linear-gradient(0deg, rgba(8, 11, 8, .96), rgba(14, 18, 13, .6));
+  border-top: 1px solid var(--line);
+}
+.kbd-hints[hidden] { display: none; }
+.kbd-hints span {
+  display: inline-flex; align-items: center; gap: 4px; padding: 5px 14px 5px 8px; border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, .1); background: rgba(255, 255, 255, .04);
+}
+.kbd-hints kbd {
+  display: inline-block; min-width: 28px; margin-right: 3px; padding: 1px 9px; border-radius: 8px;
+  font: 700 14px/22px inherit; font-family: inherit; text-align: center; color: #0b1118;
+  border: 1px solid rgba(255, 255, 255, .7); background: linear-gradient(180deg, #fff, #cfdae6); box-shadow: 0 3px 0 rgba(0, 0, 0, .45);
+}
