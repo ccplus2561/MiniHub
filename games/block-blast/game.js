@@ -78,8 +78,10 @@ const POWERS = {
   bomb:   { cost: 250, name: '炸彈',   icon: '💣' },
   row:    { cost: 180, name: '清橫排', icon: '➖' }
 };
+const M_COST = 0.5;   // 每個道具的 M 點價格（Firestore 規則已允許扣 0.5 M，不需改規則；要改價請同步 firestore.rules）
 const ALL_CLEAR = 300; // 清空整個棋盤的額外獎勵
 const MIN_COST = Math.min(...Object.values(POWERS).map(p => p.cost));
+const fmtM = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
 const KEY_BEST = 'blockblast.best', KEY_GAME = 'blockblast.game';
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
@@ -100,7 +102,12 @@ const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e
 
 let board, pieces, slotEls = [], cells = [];
 let score = 0, peak = 0, best = parseInt(store.get(KEY_BEST), 10) || 0, bestAtStart = 0, combo = 0;   // peak：本局最高分（花分數買道具會讓 score 下降，排行榜以 peak 為準）
-let turnTimer = 0, overTimer = 0, power = null, powerAim = null;
+let turnTimer = 0, overTimer = 0, power = null, powerAim = null, powerPay = 'score';   // powerPay：目前選用的付款方式（'m' 扣 M 點 / 'score' 扣分數）
+const mBal = () => { try { return MH.mPoints.balance(); } catch (e) { return 0; } };   // 未登入 = 0
+const canM = () => mBal() >= M_COST;
+const canScore = k => score >= POWERS[k].cost;
+const canPay = k => canScore(k) || canM();
+const payText = (k, mode) => mode === 'm' ? `−${fmtM(M_COST)} M` : `−${POWERS[k].cost}`;
 const powerBtns = {};
 let selected = -1, paused = false, over = false, busy = false, modal = false;
 let drag = null, pvKey = '', justDragged = false;
@@ -298,10 +305,13 @@ function updateScore() {
   updatePowerUI();
 }
 function updatePowerUI() {
-  if (power && score < POWERS[power].cost) power = null;
+  if (power && !(powerPay === 'm' ? canM() : canScore(power))) power = null;
+  let logged = false; try { logged = !!MH.player().loggedIn; } catch (e) {}
   Object.entries(powerBtns).forEach(([k, b]) => {
-    b.disabled = score < POWERS[k].cost;
+    b.disabled = !canPay(k);
     b.classList.toggle('active', power === k);
+    const c = b.querySelector('.pw-cost');
+    c.textContent = logged ? `−${fmtM(M_COST)}M／−${POWERS[k].cost}分` : `−${POWERS[k].cost}`;
   });
 }
 function setTrend() {
@@ -455,7 +465,7 @@ function buildPowers() {
   Object.entries(POWERS).forEach(([k, p]) => {
     const b = document.createElement('button');
     b.type = 'button'; b.className = 'power';
-    b.setAttribute('aria-label', `${p.name}，花費 ${p.cost} 分`);
+    b.setAttribute('aria-label', `${p.name}，花費 ${fmtM(M_COST)} M 點或 ${p.cost} 分`);
     b.innerHTML = `<span class="pw-name">${p.icon} ${p.name}</span><span class="pw-cost">${p.cost}</span>`;
     b.addEventListener('click', () => usePower(k));
     el.powers.append(b);
@@ -483,38 +493,79 @@ function previewPower(cell) {
   powerCells(cell).forEach(k => cells[k].classList.add('tg'));
 }
 function spend(n) { score -= n; updateScore(); }
+// 付款：mode = 'm' 扣 M 點（非同步，成功才算）/ 'score' 扣分數。回傳 Promise<boolean>
+function charge(k, mode) {
+  if (mode === 'm') {
+    return MH.mPoints.spend(M_COST).then(r => {
+      if (r.ok) { updatePowerUI(); return true; }
+      say(r.code === 'not-enough-m' ? 'M 點不足。' : r.code === 'permission-denied' ? '伺服器拒絕扣點。' : r.code === 'unavailable' || /network/.test(r.code || '') ? '網路連線失敗，請再試。' : '扣 M 點失敗，請稍後再試。');
+      snd('error'); updatePowerUI();
+      return false;
+    });
+  }
+  if (!canScore(k)) return Promise.resolve(false);
+  spend(POWERS[k].cost);
+  return Promise.resolve(true);
+}
+// 選擇付款方式：已登入且 M 點足夠時，讓玩家選「扣 M 點」或「扣分數」；否則直接用能付的那種
+function choosePay(k, done) {
+  if (!canM()) return done('score');
+  if (drag) onCancel();
+  const p = POWERS[k], okScore = canScore(k);
+  modal = true;
+  const close = () => { modal = false; if (paused) showPause(); else hideOverlay(); };
+  showOverlay({
+    icon: p.icon, title: `使用「${p.name}」`,
+    text: `選擇付款方式<br>M 點餘額 ${fmtM(mBal())}　目前分數 ${fmt(score)}`,
+    buttons: [
+      { label: `扣 ${fmtM(M_COST)} M`, primary: true, fn: () => { modal = false; hideOverlay(); done('m'); } },
+      { label: `扣 ${fmt(p.cost)} 分`, disabled: !okScore, fn: () => { modal = false; hideOverlay(); done('score'); } },
+      { label: '取消', fn: close }
+    ]
+  });
+}
 function usePower(k) {
   if (blocked() || drag) return;
   const p = POWERS[k];
-  if (score < p.cost) { say(`分數不足，需要 ${p.cost} 分。`); snd('error'); return; }
-  if (k === 'reroll') {
-    if (!pieces.some(Boolean)) return;
-    setPower(null);
-    const old = pieces;
-    spend(p.cost); newPieces();
-    pieces = pieces.map((x, i) => (old[i] ? x : null));
-    selected = -1; renderPieces();
-    say(`已換一組新方塊（−${p.cost}）。`); snd('select');
-    return finishTurn();
-  }
   if (power === k) { setPower(null); say('已取消道具。'); return; }
-  setPower(k); snd('select');
-  say(k === 'bomb' ? '炸彈：點棋盤選擇 3×3 爆破中心。' : '清橫排：點選要清除的那一排。');
+  if (!canPay(k)) { say(`分數不足（需要 ${p.cost} 分），也沒有足夠的 M 點。`); snd('error'); return; }
+  if (k === 'reroll' && !pieces.some(Boolean)) return;
+  choosePay(k, mode => {
+    if (k === 'reroll') {
+      setPower(null);
+      busy = true;
+      charge(k, mode).then(ok => {
+        if (!ok) { busy = false; return; }
+        const old = pieces;
+        newPieces();
+        pieces = pieces.map((x, i) => (old[i] ? x : null));
+        selected = -1; renderPieces();
+        say(`已換一組新方塊（${payText(k, mode)}）。`); snd('select');
+        finishTurn();
+      });
+      return;
+    }
+    setPower(k); powerPay = mode; snd('select');
+    say(k === 'bomb' ? '炸彈：點棋盤選擇 3×3 爆破中心。' : '清橫排：點選要清除的那一排。');
+  });
 }
 function applyPower(cell) {
-  const k = power, cost = POWERS[k].cost;
+  const k = power, mode = powerPay;
   const idx = powerCells(cell).filter(i => board[i / N | 0][i % N]);
   if (!idx.length) { say('那裡沒有方塊可清除。'); snd('error'); return; }
-  busy = true; setPower(null); spend(cost);
-  idx.forEach(i => {
-    const e = cells[i];
-    e.classList.remove('tg'); e.classList.add('clearing'); e.style.animationDelay = '';
-    burst(e, [...e.classList].find(x => x.startsWith('c-')));
-    board[i / N | 0][i % N] = null;
+  busy = true; setPower(null);
+  charge(k, mode).then(ok => {
+    if (!ok) { busy = false; setPower(k); powerPay = mode; return; }   // 扣款失敗：保留道具選取，可再試
+    idx.forEach(i => {
+      const e = cells[i];
+      e.classList.remove('tg'); e.classList.add('clearing'); e.style.animationDelay = '';
+      burst(e, [...e.classList].find(x => x.startsWith('c-')));
+      board[i / N | 0][i % N] = null;
+    });
+    say(`${POWERS[k].name}！清除了 ${idx.length} 格（${payText(k, mode)}）。`);
+    snd('clear', 2); vib([15, 30]);
+    turnTimer = setTimeout(() => { renderBoard(); finishTurn(); }, 450);
   });
-  say(`${POWERS[k].name}！清除了 ${idx.length} 格（−${cost}）。`);
-  snd('clear', 2); vib([15, 30]);
-  turnTimer = setTimeout(() => { renderBoard(); finishTurn(); }, 450);
 }
 
 /* ---------- placing & clearing ---------- */
@@ -572,7 +623,7 @@ function finishTurn() {
   if (pieces.every(x => !x)) { newPieces(); renderPieces(); }
   busy = false;
   if (!pieces.some(p => p && canPlaceAnywhere(p))) {
-    if (score >= MIN_COST) say('沒有可放的位置了！花分數使用道具來解圍。');
+    if (score >= MIN_COST || canM()) say('沒有可放的位置了！使用道具（扣 M 點或分數）來解圍。');
     else gameOver();
   }
   updateWarn();
@@ -646,6 +697,7 @@ function showOverlay({ icon, title, text, buttons }) {
     const btn = document.createElement('button');
     btn.type = 'button'; btn.textContent = b.label;
     btn.className = 'btn' + (b.primary ? ' primary' : '');
+    if (b.disabled) btn.disabled = true;
     btn.onclick = b.fn;
     box.append(btn);
   });
@@ -883,6 +935,7 @@ function applyKbd() {
   document.body.classList.toggle('has-kbd', on);
 }
 MH.onChange(applyKbd);
+MH.onChange(updatePowerUI);   // 登入 / M 點餘額變動時更新道具按鈕
 applyKbd();
 
 initBoard(); buildPowers(); if (!restoreGame()) start();

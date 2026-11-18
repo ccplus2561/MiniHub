@@ -75,7 +75,7 @@ button:focus-visible{outline:2px solid #9ac8ff;outline-offset:3px}
 .power:disabled{opacity:.38;cursor:not-allowed}
 .power.active{border-color:#ffd37a;background:#ffb02e26;box-shadow:0 0 0 2px #ffb02e33,0 0 18px #ffb02e44}
 .pw-name{white-space:nowrap}
-.pw-cost{color:#ffd37a;font-size:14px;font-variant-numeric:tabular-nums}.pw-cost::before{content:"−"}
+.pw-cost{color:#ffd37a;font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .cell.tg{outline:2px solid #ffd37a;outline-offset:-2px;filter:brightness(1.35)}
 .msg{margin:6px 2px 0;min-height:20px;color:#9fb2dc;font-size:14px;line-height:1.4;text-align:center}
 .crown{position:absolute;right:12px;top:10px;color:#ffcb61;font-size:20px;text-shadow:0 0 12px #ffb02e88}
@@ -128,9 +128,10 @@ button:focus-visible{outline:2px solid #9ac8ff;outline-offset:3px}
 .ov-card h3{margin:0 0 6px;font-size:clamp(22px,6vw,28px)}
 .ov-card p{margin:0 0 18px;color:#b6c4e6;font-size:16px;line-height:1.7}
 .ov-card b{color:#fff;font-size:1.3em}
-.ov-actions{display:flex;gap:10px;justify-content:center}
+.ov-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 .btn{padding:13px 26px;border-radius:14px;border:1px solid #ffffff2e;background:#ffffff14;font-weight:700;font-size:17px;cursor:pointer;transition:transform .15s}
 .btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .btn.primary{border:0;background:linear-gradient(145deg,#4f9bff,#2b62e0);box-shadow:0 8px 22px #2b62e077,inset 0 1px #ffffff55}
 
 /* 待放置方塊 */
