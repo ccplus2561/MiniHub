@@ -73,7 +73,7 @@
       <span>也可以用滑動操作</span>
   </div>
   <div id="under">
-    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">開始 / 重來</button><button id="reviveBtn" class="revive" hidden title="花 1 M 點復活繼續（R）"><i class="coin" aria-hidden="true"></i><span>復活 -1 M</span></button></div>
+    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">開始 / 重來</button><button id="reviveBtn" class="revive" hidden title="花 0.5 M 點復活繼續（R）"><i class="coin" aria-hidden="true"></i><span>復活 -0.5 M</span></button></div>
     <small id="tip"></small>
   </div>
 <script src="../../js/protect.js"></script>
@@ -110,7 +110,7 @@
   try { new ResizeObserver(fit).observe(under); } catch (e) {}
   let snake, dir, next, food, score, best = 0, alive, started, timer, paused = false;
   // M 點復活：遊戲結束後花 REVIVE_COST 個 M 點，從撞牆 / 撞到自己之前的位置繼續（分數、蛇身都保留）
-  const REVIVE_COST = 1;
+  const REVIVE_COST = 0.5;
   let reviving = false, waitDir = false, note = "", noteT = 0;   // waitDir：剛復活，等玩家按下安全的方向才繼續
   const fmtM = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
 
