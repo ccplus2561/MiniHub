@@ -1,29 +1,14 @@
 (() => {
   "use strict";
   /* OOXX 音效 + 背景音樂：全部用 Web Audio 即時合成（不用音檔）。
-     對外只有 window.GameAudio：play(name) / musicStart() / musicStop() / sync() / toggle(kind) */
+     對外只有 window.GameAudio：play(name) / musicStart() / musicStop() / sync() */
 
   const AC = window.AudioContext || window.webkitAudioContext;
-  const KEY = "ooxx:audio:v1";
   let ctx = null, master = null, sfxBus = null, musicBus = null;
 
-  /* ---------- 設定：大廳（parent.MiniHubPrefs）+ 本頁按鈕 ---------- */
-  const local = { sfx: true, music: true };
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY) || "null");
-    if (d && typeof d.sfx === "boolean") local.sfx = d.sfx;
-    if (d && typeof d.music === "boolean") local.music = d.music;
-  } catch (e) { /* 讀不到就用預設 */ }
-
-  function hub() {   // 大廳設定 { mute, sfx, music }；單獨開啟本頁（或跨網域）時全部視為開啟
-    try {
-      const P = parent !== window ? parent : null;
-      const f = P && (P.MiniHubGamePrefs || P.MiniHubPrefs);
-      return (f && f()) || {};
-    } catch (e) { return {}; }
-  }
-  const sfxOk = () => { const p = hub(); return !p.mute && p.sfx !== false && local.sfx; };
-  const musicOk = () => { const p = hub(); return !p.mute && p.music !== false && local.music; };
+  /* ---------- 設定：完全交給 MiniHub（頂端音效／背景音樂按鈕 + 設定頁）；單獨開啟本頁時預設開啟 ---------- */
+  const sfxOk = () => { try { return !window.MiniHub || MiniHub.sfxOn(); } catch (e) { return true; } };
+  const musicOk = () => { try { return !window.MiniHub || MiniHub.musicOn(); } catch (e) { return true; } };
 
   /* ---------- 基礎 ---------- */
   function ensure() {
@@ -58,6 +43,8 @@
   /* ---------- 音效 ---------- */
   const SOUNDS = {
     click:   t => { tone(sfxBus, 920, t, 0.05, "triangle", 0.05, 640); },
+    hover:   t => { tone(sfxBus, 740, t, 0.04, "sine", 0.025, 880); },
+    start:   t => { tone(sfxBus, 523.25, t, 0.09, "triangle", 0.08); tone(sfxBus, 784, t + 0.07, 0.14, "triangle", 0.08, 1046.5); },
     x:       t => { tone(sfxBus, 520, t, 0.09, "square", 0.05); tone(sfxBus, 390, t + 0.05, 0.1, "square", 0.04); },
     o:       t => { tone(sfxBus, 660, t, 0.12, "sine", 0.09, 880); },
     invalid: t => { tone(sfxBus, 180, t, 0.08, "sawtooth", 0.04); tone(sfxBus, 150, t + 0.07, 0.08, "sawtooth", 0.035); },
@@ -111,31 +98,9 @@
   }
   function musicStop() { want = false; halt(); }
 
-  /* ---------- 按鈕 data-audio="sfx" / "music" ---------- */
-  function refresh() {
-    document.querySelectorAll("[data-audio]").forEach(b => {
-      const on = b.dataset.audio === "music" ? musicOk() : sfxOk();
-      b.classList.toggle("off", !on);
-      b.setAttribute("aria-pressed", String(on));
-    });
-  }
-  function sync() {   // 大廳設定或本頁按鈕改變：關閉就停、重新開啟就接著播
-    if (!musicOk()) halt(); else if (want) musicStart();
-    refresh();
-  }
-  function toggle(kind) {
-    if (kind !== "sfx" && kind !== "music") return;
-    local[kind] = !local[kind];
-    try { localStorage.setItem(KEY, JSON.stringify(local)); } catch (e) { /* 無法儲存時忽略 */ }
-    sync();
-    if (kind === "sfx") play("click");
-  }
-  document.addEventListener("click", e => {
-    const b = e.target.closest && e.target.closest("[data-audio]");
-    if (b) toggle(b.dataset.audio);
-  });
+  /* ---------- 大廳設定／頂端按鈕改變：關閉就停、重新開啟就接著播 ---------- */
+  function sync() { if (!musicOk()) halt(); else if (want) musicStart(); }
   try { window.MiniHub && MiniHub.onChange(sync); } catch (e) { /* 略過 */ }
-  document.addEventListener("DOMContentLoaded", refresh);
 
   /* ---------- 瀏覽器要求使用者操作後才能出聲；分頁隱藏時暫停 ---------- */
   const unlock = () => { try { if (ensure() && want) sync(); } catch (e) { /* 忽略 */ } };
@@ -146,5 +111,5 @@
   });
   addEventListener("pagehide", () => { halt(); });
 
-  window.GameAudio = { play, musicStart, musicStop, sync, toggle };
+  window.GameAudio = { play, musicStart, musicStop, sync };
 })();

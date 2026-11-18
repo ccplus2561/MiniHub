@@ -18,11 +18,18 @@
   };
   // 按下去就先出聲（換頁的按鈕才不會被切掉）；鍵盤操作（click 的 detail 為 0）則在 click 時出聲
   let last = 0;
-  document.addEventListener("pointerdown", e => { if (target(e)) { last = Date.now(); sound.click(); } }, true);
+  const isCard = b => b.classList && b.classList.contains("mode-card");
+  document.addEventListener("pointerdown", e => { const b = target(e); if (b) { last = Date.now(); isCard(b) ? sound.start() : sound.click(); } }, true);
+  // 滑鼠移到模式卡片上：輕輕的提示音（觸控裝置沒有 hover，不會觸發）
+  document.addEventListener("pointerover", e => {
+    if (e.pointerType !== "mouse") return;
+    const b = e.target.closest && e.target.closest("a.mode-card");
+    if (b && !(e.relatedTarget && b.contains(e.relatedTarget))) sound.hover();
+  }, true);
   document.addEventListener("click", e => {
     const b = target(e);
     if (!b) return;
-    if (e.detail === 0 && Date.now() - last > 400) sound.click();
+    if (e.detail === 0 && Date.now() - last > 400) isCard(b) ? sound.start() : sound.click();
     // 連結換頁前多等一下，讓點擊聲播完
     if (b.tagName === "A" && b.href && !e.defaultPrevented && !e.ctrlKey && !e.metaKey && !e.shiftKey && b.target !== "_blank") {
       e.preventDefault();
@@ -30,5 +37,8 @@
     }
   }, true);
 
+  try { window.MiniHub && MiniHub.onPause(() => sound.musicStop()); } catch (e) { /* 略過 */ }
+  const resume = () => sound.musicStart();
+  document.addEventListener("pointerdown", resume, true);
   sound.musicStart();   // 背景音樂（第一次操作後才會出聲）
 })();

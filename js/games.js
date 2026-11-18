@@ -48,7 +48,7 @@ window.GAMES = [
     id: "ooxx", title: "OOXX 圈叉", category: "益智", emoji: "⭕", icon: "icons/ooxx.svg",
     colors: ["#4a8f1c", "#17240f"], path: "games/ooxx/index.html",
     desc: "經典圈圈叉叉，單人挑戰無敵電腦，或與朋友同機對戰！\n規則：3 × 3 棋盤，先連成一線（橫、直、斜）者獲勝，下滿平手；單人模式的電腦不會輸，可選符號與先後手。\n操作：點擊格子落子，或按 1–9 鍵、R 重新開始。",
-    how: "", featured: false, music: false,
+    how: "", featured: false,
     tags: { single: true, multi: true, desktop: true, kbd: true, mobileP: true, touch: true, score: false, cloud: false }
   },
   {
