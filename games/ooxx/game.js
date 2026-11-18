@@ -521,16 +521,88 @@
     if (e.pointerType === "touch" && !MH.touchOn()) return;
     newRound();
   });
+  // ===== 鍵盤快捷鍵（大廳設定關閉時全部停用）=====
+  // 棋盤：↑↓←→ 移動、Enter / 空白鍵落子、1–9 直接落子、R 重新開始、C 換符號/先後、Esc 返回大廳
+  // 開局選擇：↑↓ 換列、←→ 切換選項、Enter 開始（停在「返回大廳」時為返回）、Esc 返回大廳
+  // 提示視窗：←→ / ↑↓ 切換按鈕、Esc 取消
+  const visible = el => el && !el.hidden && el.offsetParent !== null;
+  const gridRows = () => {
+    const c = els.cells, acts = [els.restart, $("lobby-btn"), els.repick].filter(visible);
+    return [[c[0], c[1], c[2]], [c[3], c[4], c[5]], [c[6], c[7], c[8]], acts].filter(r => r.length);
+  };
+  const pickRows = () => [
+    Array.from(els.pick.querySelectorAll('.seg[data-group="sym"] .seg-btn')),
+    Array.from(els.pick.querySelectorAll('.seg[data-group="first"] .seg-btn')),
+    [els.soloStart], [$("pick-back")]
+  ];
+  // 在二維列表中往 dir 移動焦點；radio = true 時（開局選擇），同列左右移動會循環並直接選取
+  function moveFocus(rows, dir, radio) {
+    const cur = document.activeElement;
+    let r = rows.findIndex(row => row.includes(cur)), c = r < 0 ? -1 : rows[r].indexOf(cur);
+    if (r < 0) {   // 還沒有焦點：開局選擇落在目前選取的選項，棋盤落在中間格
+      if (radio) { r = 0; c = Math.max(0, rows[0].findIndex(b => b.classList.contains("is-on"))); }
+      else { r = 1; c = 1; }
+    } else if (dir === "up" || dir === "down") {
+      r = Math.max(0, Math.min(rows.length - 1, r + (dir === "up" ? -1 : 1)));
+      c = Math.min(c, rows[r].length - 1);
+    } else {
+      const n = rows[r].length, d = dir === "left" ? -1 : 1;
+      c = radio ? (c + d + n) % n : Math.max(0, Math.min(n - 1, c + d));
+    }
+    const el = rows[r][c];
+    el.focus();
+    if (radio && el.classList.contains("seg-btn") && !el.classList.contains("is-on")) el.click();
+    sound.click();
+  }
+  const DIR = { ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right" };
+
   document.addEventListener("keydown", e => {
     if (!MH.kbdOn()) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (state.picking) {
-      if (e.key === "Enter") startGame();
+    const dir = DIR[e.key];
+
+    if (!els.notice.hidden) {   // 提示視窗
+      const btns = [els.noticeOk, els.noticeCancel].filter(visible);
+      if (dir && btns.length > 1) { e.preventDefault(); btns[(btns.indexOf(document.activeElement) + 1) % btns.length].focus(); }
+      else if (e.key === "Escape" && visible(els.noticeCancel)) { e.preventDefault(); hideNotice(); }
       return;
     }
+    if (state.picking) {   // 開局選擇
+      if (dir) { e.preventDefault(); moveFocus(pickRows(), dir, true); }
+      else if (e.key === "Enter" || e.key === " ") {
+        const a = document.activeElement;
+        if (a === $("pick-back")) { e.preventDefault(); backToLobby(); }
+        else if (e.key === "Enter") { e.preventDefault(); startGame(); }   // 選項按鈕 / 開始鈕 / 沒有焦點：開始對戰
+      }
+      else if (e.key === "Escape") { e.preventDefault(); backToLobby(); }
+      return;
+    }
+    if (dir) { e.preventDefault(); moveFocus(gridRows(), dir, false); return; }
+    if (e.key === "Escape") { e.preventDefault(); backToLobby(); return; }
     if (/^[1-9]$/.test(e.key)) play(Number(e.key) - 1);
     else if (e.key === "r" || e.key === "R") newRound();
+    else if ((e.key === "c" || e.key === "C") && !ONLINE) openPick();
   });
+
+  // 底部快捷鍵提示列：依目前畫面（棋盤 / 開局選擇 / 提示視窗）顯示現在能按的鍵
+  const kbdBar = $("kbd-hints");
+  const K = (...a) => a.map(x => `<kbd>${x}</kbd>`).join("");
+  function paintKbd() {
+    const on = !IS_TOUCH && MH.kbdOn();
+    kbdBar.hidden = !on;
+    document.body.classList.toggle("has-kbd-hints", on);
+    if (!on) return;
+    const list = !els.notice.hidden
+      ? [[K("←", "→"), "選擇"], [K("Enter"), "確認"], ...(visible(els.noticeCancel) ? [[K("Esc"), "取消"]] : [])]
+      : state.picking
+      ? [[K("↑", "↓", "←", "→"), "選擇"], [K("Enter"), "開始"], [K("Esc"), "返回大廳"]]
+      : [[K("↑", "↓", "←", "→"), "移動"], [K("Enter"), "落子"], [K("1–9"), "快速落子"], [K("R"), "重新開始"], ...(ONLINE ? [] : [[K("C"), "換符號/先後"]]), [K("Esc"), "返回大廳"]];
+    kbdBar.innerHTML = list.map(([k, t]) => `<span>${k} ${t}</span>`).join("");
+  }
+  const kbdObs = new MutationObserver(paintKbd);
+  [els.pick, els.notice].forEach(el => kbdObs.observe(el, { attributes: true, attributeFilter: ["hidden"] }));
+  MH.onChange(paintKbd);
+  paintKbd();
 
   // 啟動
   load();
