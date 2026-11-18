@@ -128,5 +128,16 @@
     if (t.closest("[data-ci-login]")) { modal.hidden = true; var b = $("#loginBtn"); if (b) b.click(); }
   });
 
+  // 遊戲花費 M 點（貪吃蛇復活等，經 MiniHub.mPoints.spend 呼叫）：回傳 Promise<{ ok, mPoints, code }>，不會 reject
+  window.MiniHubSpendM = function (n) {
+    if (!st.signedIn || !window.MiniHubAuth || !MiniHubAuth.spendM) return Promise.resolve({ ok: false, code: "not-signed-in", mPoints: st.mPoints });
+    return MiniHubAuth.spendM(n).then(function (r) {
+      st.mPoints = r.mPoints;
+      var a = window.MiniHubAccount; if (a) a.mPoints = r.mPoints;
+      render();
+      return { ok: true, mPoints: r.mPoints };
+    }, function (e) { return { ok: false, code: (e && e.code) || "error", mPoints: st.mPoints }; });
+  };
+
   load();
 })();

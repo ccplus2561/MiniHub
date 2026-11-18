@@ -23,6 +23,11 @@
   #btns button.main { background: var(--accent, #1a9fff); border-color: transparent; color: #04121f; }
   #btns button:hover:not(:disabled) { filter: brightness(1.15); }
   #btns button:disabled { opacity: .4; cursor: default; }
+  #btns button.revive { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: #3a2200; background: linear-gradient(180deg, #ffd770, #f5a623); border-color: transparent; }
+  .coin { position: relative; flex: none; display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 32% 26%, #fff6cf 0, #ffd770 34%, #f5a623 78%, #d98a0c 100%);
+    box-shadow: inset 0 0 0 1.5px rgba(255, 244, 200, .8), inset 0 -2px 3px rgba(150, 80, 0, .45); }
+  .coin::after { content: "M"; position: absolute; inset: 0; display: grid; place-items: center; padding-bottom: 1px; font: 900 13px/1 "Arial Black", Arial, sans-serif; color: #7a4300; }
   /* 右側資訊面板（個人最高 / 排行榜）：可展開 / 收合，頂端對齊畫布 */
   #side { position: fixed; right: 12px; top: 12px; width: 340px; z-index: 5; transition: transform .28s cubic-bezier(.2, .8, .2, 1); }
   #side.closed { transform: translateX(calc(100% + 12px)); }
@@ -64,10 +69,11 @@
   <div id="kbd" hidden>
       <span>移動 <kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> / <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span>
       <span>開始 / 重來 <kbd>空白</kbd></span>
+      <span id="kbdRev" hidden>M 點復活 <kbd>R</kbd></span>
       <span>也可以用滑動操作</span>
   </div>
   <div id="under">
-    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">開始 / 重來</button></div>
+    <div id="btns"><button id="startBtn" class="main">開始</button><button id="againBtn">開始 / 重來</button><button id="reviveBtn" class="revive" hidden title="花 1 M 點復活繼續（R）"><i class="coin" aria-hidden="true"></i><span>復活 -1 M</span></button></div>
     <small id="tip"></small>
   </div>
 <script src="../../js/protect.js"></script>
@@ -103,6 +109,10 @@
   addEventListener("resize", fit); fit();
   try { new ResizeObserver(fit).observe(under); } catch (e) {}
   let snake, dir, next, food, score, best = 0, alive, started, timer, paused = false;
+  // M 點復活：遊戲結束後花 REVIVE_COST 個 M 點，從撞牆 / 撞到自己之前的位置繼續（分數、蛇身都保留）
+  const REVIVE_COST = 1;
+  let reviving = false, waitDir = false, note = "", noteT = 0;   // waitDir：剛復活，等玩家按下安全的方向才繼續
+  const fmtM = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
 
   /* ---------- 音效：吃到食物 / 背景音樂 / 遊戲結束（Web Audio 即時合成，無音檔） ----------
      遵守大廳設定：「全部靜音」「音樂」「音效」；單獨開啟本頁時全部預設開啟。 */
@@ -188,7 +198,7 @@
   function reset() {
     snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
     dir = next = { x: 1, y: 0 };
-    score = 0; alive = true; started = false; paused = false;
+    score = 0; alive = true; started = false; paused = false; waitDir = false; note = "";
     place(); draw(); updateHud(); updateBtns();
     clearInterval(timer); snd.stop();
   }
@@ -199,15 +209,45 @@
   // 下一局：未登入時由大廳詢問是否同意條款（不同意會回首頁）；單獨開啟本頁時直接重來
   let asking = false;
   const askNext = MiniHub.requestNext;
-  const again = () => { if (alive || asking) return; restart(); };
+  const again = () => { if (alive || asking || reviving) return; restart(); };
   // 「再一次」按鈕：進行中也可重來（先送出目前分數）
-  function restart() { if (asking) return; asking = true; askNext().then(ok => { asking = false; if (ok) { board.submit(score); reset(); } }); }
+  function restart() { if (asking || reviving) return; asking = true; askNext().then(ok => { asking = false; if (ok) { board.submit(score); reset(); } }); }
   function start() { if (!started && alive) { started = true; timer = setInterval(step, 110); updateBtns(); snd.start(); } }
   // 暫停 / 繼續（大廳點左側導覽時會呼叫 MiniHubPause；繼續：空白鍵、方向鍵、點一下或滑動）
   function pause() { if (!alive || !started || paused) return; paused = true; clearInterval(timer); snd.stop(); draw(); }
-  function resume() { if (!paused) return; paused = false; timer = setInterval(step, 110); draw(); snd.start(); }
+  function resume() { if (!paused) return; paused = false; waitDir = false; timer = setInterval(step, 110); draw(); snd.start(); }
   MiniHub.onPause(pause);
-  function updateBtns() { $("startBtn").disabled = started || !alive; $("againBtn").classList.toggle("main", !alive); }
+  function updateBtns() {
+    $("startBtn").disabled = started || !alive; $("againBtn").classList.toggle("main", !alive);
+    const rb = $("reviveBtn"), bal = MiniHub.mPoints.balance();
+    rb.hidden = alive || !started || !logged;                 // 只有已登入、且遊戲結束時才出現
+    rb.disabled = reviving || bal < REVIVE_COST;
+    rb.querySelector("span").textContent = "復活 -" + REVIVE_COST + " M（剩 " + fmtM(bal) + "）";
+    $("kbdRev").hidden = !logged;
+  }
+  const safeMove = (x, y) => {                                // 往 (x, y) 走一步不會撞牆、也不會撞到自己
+    const h = { x: snake[0].x + x, y: snake[0].y + y };
+    return h.x >= 0 && h.y >= 0 && h.x < N && h.y < N && !snake.some(s => s.x === h.x && s.y === h.y);
+  };
+  function say(m) { note = m; clearTimeout(noteT); noteT = setTimeout(() => { note = ""; if (!alive) draw(); }, 3000); if (!alive) draw(); }
+  function revive() {
+    if (alive || !started || reviving || asking) return;
+    if (!logged) return say("登入後才能用 M 點復活");
+    if (MiniHub.mPoints.balance() < REVIVE_COST) return say("M 點不足，無法復活");
+    if (![[0, -1], [0, 1], [-1, 0], [1, 0]].some(d => safeMove(d[0], d[1]))) return say("蛇被困住了，復活也無法前進");   // 沒有安全方向就不扣點
+    reviving = true; updateBtns();
+    MiniHub.mPoints.spend(REVIVE_COST).then(r => {
+      reviving = false;
+      if (!r.ok) {
+        console.warn("[snake] 復活扣點失敗：", r.code);
+        say(r.code === "not-enough-m" ? "M 點不足，無法復活" : r.code === "permission-denied" ? "伺服器拒絕扣點" : r.code === "unavailable" || /network/.test(r.code) ? "網路連線失敗，請再試" : "復活失敗，請稍後再試");
+        return updateBtns();
+      }
+      note = ""; alive = true; paused = true; waitDir = true; next = dir;   // 暫停在原地，玩家按安全的方向鍵 / 滑動後才繼續
+      draw(); updateHud(); updateBtns();
+    });
+  }
+  $("reviveBtn").addEventListener("click", revive);
   $("startBtn").addEventListener("click", start);
   $("againBtn").addEventListener("click", restart);
   function step() {
@@ -262,13 +302,15 @@
     if (paused) {
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold " + 28 * K + "px system-ui";
-      ctx.fillText("已暫停", cv.width / 2, cv.height / 2 - 6 * K);
-      ctx.font = 16 * K + "px system-ui"; ctx.fillText("按空白鍵或點一下繼續", cv.width / 2, cv.height / 2 + 24 * K);
+      ctx.fillText(waitDir ? "已復活！" : "已暫停", cv.width / 2, cv.height / 2 - 6 * K);
+      ctx.font = 16 * K + "px system-ui"; ctx.fillText(waitDir ? "按安全的方向鍵或滑動繼續" : "按空白鍵或點一下繼續", cv.width / 2, cv.height / 2 + 24 * K);
     } else if (!alive) {
       ctx.fillStyle = "rgba(0,0,0,.6)"; ctx.fillRect(0, 0, cv.width, cv.height);
       ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.font = "bold " + 28 * K + "px system-ui";
       ctx.fillText("遊戲結束", cv.width / 2, cv.height / 2 - 6 * K);
       ctx.font = 16 * K + "px system-ui"; ctx.fillText("按空白鍵或下方按鈕重新開始", cv.width / 2, cv.height / 2 + 24 * K);
+      const rv = note || (logged ? (MiniHub.mPoints.balance() >= REVIVE_COST ? "或按 R 用 " + REVIVE_COST + " M 點復活繼續" : "M 點不足，無法復活") : "登入後可用 M 點復活繼續");
+      ctx.fillStyle = note ? "#ffd166" : "#ffd770"; ctx.fillText(rv, cv.width / 2, cv.height / 2 + 52 * K);
     }
   }
   function updateHud() {
@@ -279,6 +321,7 @@
   function turn(x, y) {
     // 方向輸入只負責轉向；遊戲只能由底部開始按鈕啟動。
     if (!alive || !started) return;
+    if (waitDir && !safeMove(x, y)) return;                  // 剛復活：朝牆 / 身體的方向不接受，避免白花 M 點
     if (paused) resume();
     if (x === -dir.x && y === -dir.y) return;
     next = { x, y };
@@ -291,7 +334,8 @@
     if (!keyboardOK()) return;
     const k = keys[e.key] || keys[e.key.toLowerCase()];
     if (k) { e.preventDefault(); turn(k[0], k[1]); }
-    else if (e.key === " ") { e.preventDefault(); if (paused) resume(); else if (alive && !started) start(); else again(); }
+    else if (e.key === " ") { e.preventDefault(); if (paused) { if (!waitDir) resume(); } else if (alive && !started) start(); else again(); }
+    else if (e.key === "r" || e.key === "R") { e.preventDefault(); revive(); }
   });
 
   // 電腦版滑鼠方向操作：在遊戲畫布按住並往上／下／左／右拖曳即可轉向。
@@ -345,7 +389,7 @@
     const kbdOn = MiniHub.kbdOn();
     $("kbd").hidden = !kbdOn; $("tip").hidden = kbdOn;
     $("tip").textContent = "滑動螢幕或點上方按鈕操作";
-    updateHud(); paintRank(); fit(); snd.sync();
+    updateHud(); paintRank(); updateBtns(); fit(); snd.sync();
   } });
 
   function revealRankOnGameOver() {

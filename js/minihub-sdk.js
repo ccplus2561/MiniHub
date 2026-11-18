@@ -15,6 +15,8 @@
  *   MiniHub.action({ title, path, onClick })  在大廳頂端「背景音樂」左邊放一顆遊戲專屬按鈕（path = 24×24 線條圖示的 SVG path）；傳 null 移除
  *   MiniHub.onRestart(fn)       登記後，大廳頂端的「重新載入」改由遊戲自己處理（可先彈確認視窗）
  *   MiniHub.requestNext()       開始下一局前呼叫；未登入時大廳會詢問同意條款。回傳 Promise<boolean>
+ *   MiniHub.mPoints.balance()   目前 M 點餘額（未登入 = 0）
+ *   MiniHub.mPoints.spend(n)    花費 n M 點（例如復活）。回傳 Promise<{ ok, mPoints, code }>；code：not-signed-in / not-enough-m / permission-denied …
  * ── 玩家 / 排行榜 ─────────────────────────────────────
  *   MiniHub.player()            { loggedIn, uid, name, canRank, displayName, maskName(name) }
  *   MiniHub.board(gameId, { top: 3, mode, onUpdate(state) })
@@ -68,6 +70,15 @@
     try { canRank = !!(uid && R && R.canRank()); display = canRank ? R.displayName() : (R && acc.name ? R.maskName(acc.name) : maskFallback(acc.name)); } catch (e) {}
     return { loggedIn: !!uid, uid: uid, name: acc.name || "", canRank: canRank, displayName: display, maskName: function (n) { try { return R ? R.maskName(n) : maskFallback(n); } catch (e) { return maskFallback(n); } } };
   }
+
+  /* ---------- M 點 ---------- */
+  var mPoints = {
+    balance: function () { try { var a = P && P.MiniHubAccount; return a && a.uid ? Number(a.mPoints) || 0 : 0; } catch (e) { return 0; } },
+    spend: function (n) {
+      try { if (P && P.MiniHubSpendM) return P.MiniHubSpendM(n); } catch (e) {}
+      return Promise.resolve({ ok: false, code: "unavailable", mPoints: 0 });
+    }
+  };
 
   /* ---------- 個人最高 + 排行榜 ---------- */
   function board(game, opt) {
@@ -228,6 +239,6 @@
     onPause: function (fn) { window.MiniHubPause = fn; },
     onRestart: function (fn) { window.MiniHubRestart = fn; },
     action: function (cfg) { try { if (P && P.MiniHubGameAction) P.MiniHubGameAction(cfg); } catch (e) {} },
-    requestNext: requestNext, player: player, board: board, cloud: cloud
+    requestNext: requestNext, player: player, board: board, cloud: cloud, mPoints: mPoints
   };
 })();

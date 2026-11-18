@@ -240,6 +240,26 @@ async function checkin() {
   return out;
 }
 
+// 花費 M 點（遊戲內功能，例如貪吃蛇復活）：用交易讀最新餘額再扣；餘額不足丟 not-enough-m。
+// 扣點是否合法（只能減少、不能低於 0、不能動其他欄位）由 Firestore 規則檢查。
+async function spendM(amount) {
+  const user = F && F.auth.currentUser;
+  if (!user) throw bad("not-signed-in");
+  if (!SAVE_PROFILE) throw bad("save-disabled");
+  amount = Number(amount);
+  if (!(amount > 0) || amount > 100) throw bad("invalid-input");
+  const ref = F.doc(F.db, "users", user.uid);
+  bump(1, 1);
+  return F.runTransaction(F.db, async tx => {
+    const s = await tx.get(ref);
+    if (!s.exists()) throw bad("no-profile");
+    const have = Number(s.data().mPoints) || 0;
+    if (have < amount) throw bad("not-enough-m");
+    tx.update(ref, { mPoints: have - amount });
+    return { mPoints: have - amount };
+  });
+}
+
 // 修改密碼（僅帳號密碼登入）：先用舊密碼重新驗證，再更新
 async function changePassword(oldPw, newPw) {
   const user = F && F.auth.currentUser;
@@ -672,7 +692,7 @@ window.MiniHubAuth = {
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
-  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount, checkin,
+  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount, checkin, spendM,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await F.getDoc(F.doc(F.db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(F.auth.currentUser.uid)
