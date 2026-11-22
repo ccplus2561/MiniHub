@@ -105,8 +105,6 @@
   const nextPieceElement = $("nextPiece");
   const scoreElement = $("scoreValue");
   const bestScoreElement = $("bestScore");
-  const linesElement = $("linesValue");
-  const timeElement = $("timeValue");
   const overlayElement = $("gameOverlay");
   const overlayTitleElement = $("overlayTitle");
   const overlayMessageElement = $("overlayMessage");
@@ -296,18 +294,12 @@
     return String(Math.max(0, value)).padStart(6, "0").replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
-  function formatTime(totalSeconds) {
-    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
-    const seconds = String(totalSeconds % 60).padStart(2, "0");
-    return `${minutes}:${seconds}`;
-  }
-
   function currentBest() {
     return Math.max(best, hub.best || 0, peak);
   }
 
   function renderBest() {
-    bestScoreElement.textContent = fmt(currentBest());
+    bestScoreElement.textContent = formatScore(currentBest());
   }
 
   function getPropCost(id) {
@@ -340,8 +332,6 @@
 
   function updateHUD() {
     scoreElement.textContent = formatScore(score);
-    linesElement.textContent = String(lines).padStart(2, "0");
-    timeElement.textContent = formatTime(elapsedSeconds);
     renderBest();
     propButtons.forEach(renderProp);
     renderStartButton();

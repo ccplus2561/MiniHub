@@ -17,11 +17,7 @@ button { font: inherit; }
 button:focus-visible { outline: 3px solid rgba(111,137,255,.55); outline-offset: 3px; }
 .app-shell { width: min(1100px, calc(100% - 64px)); margin: 0 auto; padding: 30px 0 24px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; gap: 12px; }
-.topbar-right { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; font-weight: 600; }
 .section-label { margin: 0; color: var(--muted); font-size: 16px; font-weight: 700; letter-spacing: .06em; }
-.best-score { display: flex; align-items: center; gap: 11px; padding: 11px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
-.best-score small { color: var(--muted); font-size: 16px; font-weight: 700; letter-spacing: .06em; }
-.best-score strong { font-size: 24px; letter-spacing: .04em; }
 .game-layout { display: grid; grid-template-columns: minmax(0,1.4fr) minmax(280px,.8fr); gap: 22px; align-items: stretch; }
 .board-column,.side-panel { min-width: 0; }
 .board-frame { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 18px; border: 1px solid #2c3556; border-radius: 21px; background: #070b16; box-shadow: 0 0 0 1px rgba(0,0,0,.5),0 18px 44px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05); }
@@ -52,14 +48,10 @@ button:focus-visible { outline: 3px solid rgba(111,137,255,.55); outline-offset:
 .overlay-card p { margin:10px 0 22px; color:#c3cce0; font-size:17px; line-height:1.7; }
 .overlay-button { width:100%; }
 .side-panel { display:flex; flex-direction:column; gap:13px; }
-.score-card,.stat-card,.next-card,.props-card { border:1px solid var(--line); border-radius:17px; background:var(--card); box-shadow:0 5px 18px rgba(0,0,0,.25); }
+.score-card,.next-card,.props-card { border:1px solid var(--line); border-radius:17px; background:var(--card); box-shadow:0 5px 18px rgba(0,0,0,.25); }
 .score-card { padding:19px 20px 16px; }
 .card-heading { display:flex; justify-content:space-between; align-items:center; }
 .score-number { display:block; margin:12px 0 4px; font-size:clamp(38px,4vw,52px); line-height:1; letter-spacing:.045em; font-weight:700; }
-.mini-stats { display:grid; grid-template-columns:1fr 1fr; gap:13px; }
-.stat-card { position:relative; padding:15px 16px 13px; }
-.stat-card small { display:block; color:var(--muted); font-size:16px; font-weight:700; letter-spacing:.06em; }
-.stat-card strong { display:block; margin:6px 0 2px; font-size:34px; letter-spacing:.02em; }
 .next-card { padding:16px 20px 12px; }
 .next-piece { --next-cell:26px; display:grid; gap:3px; justify-content:center; align-content:center; height:110px; margin:0; }
 .next-piece i,.codex-shape i { border:1px solid rgba(255,255,255,.3); border-radius:3px; box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 0 -2px 0 rgba(0,0,0,.1); }
@@ -109,10 +101,6 @@ body.pad-on .mobile-controls { display:grid; }
   .score-card { padding:10px 10px 8px; }
   .section-label { font-size:13px; letter-spacing:.02em; }
   .score-number { margin:6px 0 0; font-size:19px; letter-spacing:.01em; }
-  .mini-stats { grid-template-columns:1fr; gap:8px; }
-  .stat-card { padding:8px 10px 6px; }
-  .stat-card small { font-size:13px; }
-  .stat-card strong { margin:2px 0 0; font-size:22px; }
   .next-card { padding:10px 8px 6px; }
   .next-piece { --next-cell:16px; height:64px; }
   .mobile-controls { grid-area:pad; display:grid; margin-top:0; }
@@ -123,8 +111,6 @@ body.pad-on .mobile-controls { display:grid; }
 }
 @media (max-width:420px) {
   .app-shell { width:calc(100% - 24px); }
-  .best-score { padding:8px 10px; gap:7px; }
-  .best-score strong { font-size:20px; } .best-score small { font-size:14px; }
   .control-hint { gap:5px; }
   .hint-divider { margin:0 2px; }
 }
@@ -146,8 +132,6 @@ body.pad-on .mobile-controls { display:grid; }
   .side-panel { gap:9px; }
   .score-card { padding:14px 18px 12px; }
   .score-number { margin:6px 0 2px; font-size:40px; }
-  .stat-card { padding:11px 14px 9px; }
-  .stat-card strong { font-size:28px; }
   .next-card { padding:10px 16px; }
   .props-card { padding:9px 12px 10px; }
   .props-grid { margin-top:7px; }
@@ -181,7 +165,6 @@ body.pad-on .mobile-controls { display:grid; }
   .score-number { font-size:34px; }
   .next-piece { height:70px; --next-cell:19px; }
   .next-card { padding:8px 14px; }
-  .stat-card strong { font-size:25px; }
 }
 @media (min-width:761px) and (max-height:680px) {
   html,body { overflow:auto; }
