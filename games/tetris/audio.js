@@ -2,8 +2,6 @@
   "use strict";
 
   // ── 設定常數 ──────────────────────────────────────────
-  const KEY_SFX = "tetris.sfx";
-  const KEY_MUSIC = "tetris.music";
   const MUSIC_VOLUME = 0.5;
   const MUSIC_LOWPASS_HZ = 2200;
   const MUSIC_BPM = 124;
@@ -36,32 +34,13 @@
   // ── 狀態 ──────────────────────────────────────────────
   let context = null;
   let output = null;
-  let localOn = true;
-  let musicLocalOn = true;
   let musicBus = null;
   let musicWanted = false;      // 遊戲要求播放（進行中）
   let musicTimer = null;
   let musicNext = 0;
   let musicIndex = 0;
 
-  // ── 本機儲存 ──────────────────────────────────────────
-  function loadLocalOn() {
-    try { return localStorage.getItem(KEY_SFX) !== "0"; } catch (e) { return true; }
-  }
-
-  function saveLocalOn() {
-    try { localStorage.setItem(KEY_SFX, localOn ? "1" : "0"); } catch (e) { /* 略過 */ }
-  }
-
-  function loadMusicLocalOn() {
-    try { return localStorage.getItem(KEY_MUSIC) !== "0"; } catch (e) { return true; }
-  }
-
-  function saveMusicLocalOn() {
-    try { localStorage.setItem(KEY_MUSIC, musicLocalOn ? "1" : "0"); } catch (e) { /* 略過 */ }
-  }
-
-  // ── 大廳設定（全部靜音 / 音效）；單獨開啟時預設開啟 ──
+  // ── 音效 / 音樂開關統一由大廳控制；單獨開啟時預設開啟 ──
   function hubAllows() {
     try { return !window.MiniHub || window.MiniHub.sfxOn(); } catch (e) { return true; }
   }
@@ -71,11 +50,11 @@
   }
 
   function isAllowed() {
-    return localOn && hubAllows();
+    return hubAllows();
   }
 
   function isMusicAllowed() {
-    return musicLocalOn && hubMusicAllows();
+    return hubMusicAllows();
   }
 
   // ── 合成 ──────────────────────────────────────────────
@@ -194,7 +173,7 @@
     haltMusic();
   }
 
-  // 大廳設定 / 頂端音樂按鈕改變：關閉就停、重新開啟就接著播
+  // 大廳設定改變：關閉就停、重新開啟就接著播
   function syncMusic() {
     if (!isMusicAllowed()) haltMusic();
     else if (musicWanted) playMusic();
@@ -204,38 +183,7 @@
     if (musicWanted) syncMusic();
   }
 
-  // ── 音效開關按鈕（data-audio="sfx" / "music"） ──────
-  function refreshButtons() {
-    document.querySelectorAll("[data-audio]").forEach(button => {
-      const on = button.dataset.audio === "music" ? isMusicAllowed() : isAllowed();
-      button.classList.toggle("off", !on);
-      button.setAttribute("aria-pressed", String(on));
-    });
-  }
-
-  function toggleSfx() {
-    localOn = !localOn;
-    saveLocalOn();
-    refreshButtons();
-    if (localOn) play("click");
-  }
-
-  function toggleMusic() {
-    musicLocalOn = !musicLocalOn;
-    saveMusicLocalOn();
-    refreshButtons();
-    syncMusic();
-  }
-
-  function onDocumentClick(event) {
-    const button = event.target.closest("[data-audio]");
-    if (!button) return;
-    if (button.dataset.audio === "music") toggleMusic();
-    else toggleSfx();
-  }
-
   function onAudioSettingsChange() {
-    refreshButtons();
     syncMusic();
   }
 
@@ -247,10 +195,6 @@
   window.GameAudio = api;
 
   // ── 啟動 ──────────────────────────────────────────────
-  localOn = loadLocalOn();
-  musicLocalOn = loadMusicLocalOn();
-  document.addEventListener("click", onDocumentClick);
   ["pointerdown", "keydown", "touchstart"].forEach(name => document.addEventListener(name, unlockMusic, { passive: true }));
-  refreshButtons();
   try { if (window.MiniHub) window.MiniHub.onChange(onAudioSettingsChange); } catch (e) { /* 略過 */ }
 })();

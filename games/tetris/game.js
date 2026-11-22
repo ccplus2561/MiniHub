@@ -264,6 +264,7 @@
   }
 
   function toggleSide() {
+    sound.click();
     if (floatSide) floatOpen = !floatOpen; else userSide = !sideIsOpen();
     paintSide();
   }
@@ -610,6 +611,7 @@
 
   function softDrop() {
     if (movePiece(0, 1)) {
+      sound.move();
       changeScore(SOFT_DROP_POINTS);
       updateHUD();
     } else {
@@ -839,7 +841,7 @@
     down: softDrop,
     rotate: rotatePiece,
     drop: hardDrop,
-    pause: togglePause
+    pause: () => { togglePause(); sound.click(); }
   };
 
   function runAction(action) {
@@ -861,7 +863,7 @@
       return;
     }
     if (key === PAUSE_KEY) {
-      if (status === STATUS.RUNNING || status === STATUS.PAUSED) togglePause();
+      if (status === STATUS.RUNNING || status === STATUS.PAUSED) { togglePause(); sound.click(); }
       return;
     }
     const propId = PROP_BY_KEY[key];
@@ -915,6 +917,7 @@
 
   function onPropButton(event) {
     const button = event.currentTarget;
+    if (!canUseProp(button.dataset.prop)) sound.click();   // 無法使用也給點擊回饋
     useProp(button.dataset.prop);
     button.blur();
   }

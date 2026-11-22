@@ -18,9 +18,6 @@ button:focus-visible { outline: 3px solid rgba(111,137,255,.55); outline-offset:
 .app-shell { width: min(1100px, calc(100% - 64px)); margin: 0 auto; padding: 30px 0 24px; }
 .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 42px; gap: 12px; }
 .topbar-right { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 14px; font-weight: 600; }
-.icon-button { width: 44px; height: 44px; font-size: 20px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 11px; color: #c3cbe2; background: var(--btn); cursor: pointer; }
-.icon-button:hover { border-color: var(--btn-line); color: #fff; }
-.icon-button.off { opacity: .45; text-decoration: line-through; }
 .section-label { margin: 0; color: var(--muted); font-size: 16px; font-weight: 700; letter-spacing: .06em; }
 .best-score { display: flex; align-items: center; gap: 11px; padding: 11px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
 .best-score small { color: var(--muted); font-size: 16px; font-weight: 700; letter-spacing: .06em; }
