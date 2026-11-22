@@ -3,6 +3,21 @@
 
   // ── 設定常數 ──────────────────────────────────────────
   const KEY_SFX = "tetris.sfx";
+  const KEY_MUSIC = "tetris.music";
+  const MUSIC_VOLUME = 0.5;
+  const MUSIC_LOWPASS_HZ = 2200;
+  const MUSIC_BPM = 124;
+  const MUSIC_STEP = 60 / MUSIC_BPM / 2;       // 八分音符
+  const MUSIC_LOOKAHEAD = 0.3;                  // 提前排程（秒）
+  // 原創循環：Am – F – C – G，每小節 8 個八分音符（MIDI 音高）
+  const MUSIC_BARS = [
+    { bass: 45, chord: [57, 60, 64], lead: [72, null, 76, null, 79, null, 76, null] },
+    { bass: 41, chord: [53, 57, 60], lead: [77, null, 76, null, 72, null, 69, null] },
+    { bass: 48, chord: [55, 60, 64], lead: [74, null, 77, null, 79, null, 77, null] },
+    { bass: 43, chord: [55, 59, 62], lead: [76, null, 74, null, 71, null, 72, null] }
+  ];
+  const ARPEGGIO = [0, 1, 2, 1, 0, 1, 2, 1];
+  const BASS_STEPS = [0, 4];
   const MASTER_VOLUME = 0.8;
   const LOWPASS_HZ = 2600;   // 柔和、不刺耳
   // 每個音效 = 一串音符：f 頻率、d 長度(秒)、type 波形、v 音量、at 延後(秒)、to 滑音終點
@@ -22,6 +37,12 @@
   let context = null;
   let output = null;
   let localOn = true;
+  let musicLocalOn = true;
+  let musicBus = null;
+  let musicWanted = false;      // 遊戲要求播放（進行中）
+  let musicTimer = null;
+  let musicNext = 0;
+  let musicIndex = 0;
 
   // ── 本機儲存 ──────────────────────────────────────────
   function loadLocalOn() {
@@ -32,13 +53,29 @@
     try { localStorage.setItem(KEY_SFX, localOn ? "1" : "0"); } catch (e) { /* 略過 */ }
   }
 
+  function loadMusicLocalOn() {
+    try { return localStorage.getItem(KEY_MUSIC) !== "0"; } catch (e) { return true; }
+  }
+
+  function saveMusicLocalOn() {
+    try { localStorage.setItem(KEY_MUSIC, musicLocalOn ? "1" : "0"); } catch (e) { /* 略過 */ }
+  }
+
   // ── 大廳設定（全部靜音 / 音效）；單獨開啟時預設開啟 ──
   function hubAllows() {
     try { return !window.MiniHub || window.MiniHub.sfxOn(); } catch (e) { return true; }
   }
 
+  function hubMusicAllows() {
+    try { return !window.MiniHub || window.MiniHub.musicOn(); } catch (e) { return true; }
+  }
+
   function isAllowed() {
     return localOn && hubAllows();
+  }
+
+  function isMusicAllowed() {
+    return musicLocalOn && hubMusicAllows();
   }
 
   // ── 合成 ──────────────────────────────────────────────
@@ -86,34 +123,134 @@
     SOUNDS[name].forEach(note => playNote(audioContext, note));
   }
 
-  // ── 音效開關按鈕（data-audio="sfx"） ─────────────────
+  // ── 背景音樂（即時合成，不用音檔）─────────────────────
+  const midiToHz = note => 440 * Math.pow(2, (note - 69) / 12);
+
+  function createMusicBus(audioContext) {
+    const filter = audioContext.createBiquadFilter();
+    const gain = audioContext.createGain();
+    filter.type = "lowpass";
+    filter.frequency.value = MUSIC_LOWPASS_HZ;
+    gain.gain.value = MUSIC_VOLUME;
+    gain.connect(filter);
+    filter.connect(audioContext.destination);
+    return gain;
+  }
+
+  function musicNote(audioContext, start, midi, length, type, volume, attack) {
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    oscillator.type = type;
+    oscillator.frequency.value = midiToHz(midi);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + length);
+    oscillator.connect(gain);
+    gain.connect(musicBus);
+    oscillator.start(start);
+    oscillator.stop(start + length + 0.03);
+  }
+
+  function scheduleMusicStep(audioContext, index, start) {
+    const bar = MUSIC_BARS[Math.floor(index / 8) % MUSIC_BARS.length];
+    const step = index % 8;
+    if (BASS_STEPS.includes(step)) musicNote(audioContext, start, bar.bass - 12, MUSIC_STEP * 3.6, "triangle", 0.1, 0.02);
+    musicNote(audioContext, start, bar.chord[ARPEGGIO[step]], MUSIC_STEP * 1.7, "sine", 0.045, 0.01);
+    const lead = bar.lead[step];
+    if (lead !== null) musicNote(audioContext, start, lead, MUSIC_STEP * 1.8, "triangle", 0.05, 0.015);
+  }
+
+  function musicTick() {
+    if (!context) return;
+    while (musicNext < context.currentTime + MUSIC_LOOKAHEAD) {
+      scheduleMusicStep(context, musicIndex, musicNext);
+      musicIndex += 1;
+      musicNext += MUSIC_STEP;
+    }
+  }
+
+  function haltMusic() {
+    window.clearInterval(musicTimer);
+    musicTimer = null;
+  }
+
+  function playMusic() {
+    if (musicTimer !== null || !isMusicAllowed()) return;
+    const audioContext = getContext();
+    if (!audioContext) return;
+    if (!musicBus) musicBus = createMusicBus(audioContext);
+    musicNext = audioContext.currentTime + 0.08;
+    musicTimer = window.setInterval(musicTick, 100);
+    musicTick();
+  }
+
+  function musicStart() {
+    musicWanted = true;
+    playMusic();
+  }
+
+  function musicStop() {
+    musicWanted = false;
+    haltMusic();
+  }
+
+  // 大廳設定 / 頂端音樂按鈕改變：關閉就停、重新開啟就接著播
+  function syncMusic() {
+    if (!isMusicAllowed()) haltMusic();
+    else if (musicWanted) playMusic();
+  }
+
+  function unlockMusic() {
+    if (musicWanted) syncMusic();
+  }
+
+  // ── 音效開關按鈕（data-audio="sfx" / "music"） ──────
   function refreshButtons() {
     document.querySelectorAll("[data-audio]").forEach(button => {
-      const on = isAllowed();
+      const on = button.dataset.audio === "music" ? isMusicAllowed() : isAllowed();
       button.classList.toggle("off", !on);
       button.setAttribute("aria-pressed", String(on));
     });
   }
 
-  function toggleLocal() {
+  function toggleSfx() {
     localOn = !localOn;
     saveLocalOn();
     refreshButtons();
     if (localOn) play("click");
   }
 
+  function toggleMusic() {
+    musicLocalOn = !musicLocalOn;
+    saveMusicLocalOn();
+    refreshButtons();
+    syncMusic();
+  }
+
   function onDocumentClick(event) {
-    if (event.target.closest("[data-audio]")) toggleLocal();
+    const button = event.target.closest("[data-audio]");
+    if (!button) return;
+    if (button.dataset.audio === "music") toggleMusic();
+    else toggleSfx();
+  }
+
+  function onAudioSettingsChange() {
+    refreshButtons();
+    syncMusic();
   }
 
   // ── 對外介面（只暴露 window.GameAudio） ─────────────
   const api = {};
   Object.keys(SOUNDS).forEach(name => { api[name] = () => play(name); });
+  api.musicStart = musicStart;
+  api.musicStop = musicStop;
   window.GameAudio = api;
 
   // ── 啟動 ──────────────────────────────────────────────
   localOn = loadLocalOn();
+  musicLocalOn = loadMusicLocalOn();
   document.addEventListener("click", onDocumentClick);
+  ["pointerdown", "keydown", "touchstart"].forEach(name => document.addEventListener(name, unlockMusic, { passive: true }));
   refreshButtons();
-  try { if (window.MiniHub) window.MiniHub.onChange(refreshButtons); } catch (e) { /* 略過 */ }
+  try { if (window.MiniHub) window.MiniHub.onChange(onAudioSettingsChange); } catch (e) { /* 略過 */ }
 })();

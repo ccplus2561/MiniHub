@@ -79,7 +79,7 @@ button:focus-visible { outline: 3px solid rgba(111,137,255,.55); outline-offset:
 .prop-cost { color:#ffb45c; font-size:17px; font-weight:800; letter-spacing:.02em; }
 .score-number.is-penalty { color:#ff7b86; transition:color .1s; }
 .score-number { transition:color .5s; }
-.action-row { display:grid; grid-template-columns:1fr 56px; gap:10px; }
+.action-row { display:grid; grid-template-columns:1fr; gap:10px; }
 .primary-button,.secondary-button,.codex-button { min-height:56px; border:0; border-radius:13px; cursor:pointer; font-weight:700; }
 .primary-button { font-size:19px; color:white; background:linear-gradient(135deg,#6b86ff,#4a63ea); box-shadow:0 7px 18px rgba(74,99,234,.35); }
 .primary-button:hover { filter:brightness(1.08); }

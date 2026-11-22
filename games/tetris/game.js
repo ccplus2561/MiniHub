@@ -114,7 +114,6 @@
   const startButton = $("startButton");
   const startSymbolElement = $("startSymbol");
   const startLabelElement = $("startLabel");
-  const restartButton = $("restartButton");
   const propButtons = Array.from(document.querySelectorAll("[data-prop]"));
   const padElement = $("padControls");
   const kbdBarElement = $("kbdBar");
@@ -481,6 +480,7 @@
     renderBoard();
     startTimers();
     sound.start();
+    sound.musicStart();
   }
 
   function pauseGame() {
@@ -488,6 +488,7 @@
     status = STATUS.PAUSED;
     stopTimers();
     stopRepeat();
+    sound.musicStop();
     showOverlay(STATUS.PAUSED);
     updateHUD();
   }
@@ -498,6 +499,7 @@
     hideOverlay();
     updateHUD();
     startTimers();
+    sound.musicStart();
   }
 
   function togglePause() {
@@ -509,6 +511,7 @@
     status = STATUS.OVER;
     stopTimers();
     stopRepeat();
+    sound.musicStop();
     leaveRound();
     updateHUD();
     showOverlay(STATUS.OVER);
@@ -910,12 +913,6 @@
     overlayStartButton.blur();
   }
 
-  function onRestartButton() {
-    requestStart();
-    sound.click();
-    restartButton.blur();
-  }
-
   function onPropButton(event) {
     const button = event.currentTarget;
     useProp(button.dataset.prop);
@@ -934,7 +931,6 @@
   function bindEvents() {
     startButton.addEventListener("click", onStartButton);
     overlayStartButton.addEventListener("click", onOverlayButton);
-    restartButton.addEventListener("click", onRestartButton);
     propButtons.forEach(button => button.addEventListener("click", onPropButton));
     codexButton.addEventListener("click", openCodex);
     codexClose.addEventListener("click", closeCodex);
