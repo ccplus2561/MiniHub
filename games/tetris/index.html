@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0f1a">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <title>俄羅斯方塊</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="../../js/protect.js"></script>
+  <script src="../../js/minihub-sdk.js"></script>
+  <script src="audio.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="theme-badge" aria-live="polite">方塊主題 <strong id="themeName">經典</strong> <small id="themeNext"></small></div>
+      <div class="topbar-right">
+        <div class="best-score"><small>最高分</small><strong id="bestScore">0</strong></div>
+        <button class="icon-button" type="button" data-audio="sfx" aria-label="切換音效" title="切換音效">♫</button>
+      </div>
+    </header>
+
+    <section class="game-layout" aria-label="俄羅斯方塊遊戲">
+      <div class="board-column">
+        <div class="board-frame">
+          <div class="game-board" id="gameBoard" role="img" aria-label="俄羅斯方塊棋盤"></div>
+          <div class="theme-toast" id="themeToast" role="status"></div>
+          <div class="game-overlay" id="gameOverlay">
+            <div class="overlay-card">
+              <strong id="overlayTitle"></strong>
+              <p id="overlayMessage"></p>
+              <button class="primary-button overlay-button" id="overlayStart" type="button"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="info-stack">
+          <div class="score-card">
+            <div class="card-heading"><span class="section-label">目前分數</span></div>
+            <strong class="score-number" id="scoreValue">000,000</strong>
+          </div>
+          <div class="mini-stats">
+            <div class="stat-card"><small>行數</small><strong id="linesValue">00</strong></div>
+            <div class="stat-card"><small>時間</small><strong id="timeValue">00:00</strong></div>
+          </div>
+          <div class="next-card">
+            <div class="card-heading"><span class="section-label">下一個</span></div>
+            <div class="next-piece" id="nextPiece" aria-label="下一個方塊"></div>
+          </div>
+        </div>
+
+        <div class="action-stack">
+          <div class="props-card">
+            <div class="card-heading"><span class="section-label">道具</span><span class="props-note">使用會扣分，每次加價</span></div>
+            <div class="props-grid" id="propsGrid">
+              <button class="prop-button" type="button" data-prop="reroll"><span class="prop-key"></span><span class="prop-name"></span><span class="prop-cost"></span></button>
+              <button class="prop-button" type="button" data-prop="clearRow"><span class="prop-key"></span><span class="prop-name"></span><span class="prop-cost"></span></button>
+              <button class="prop-button" type="button" data-prop="slow"><span class="prop-key"></span><span class="prop-name"></span><span class="prop-cost"></span></button>
+            </div>
+          </div>
+          <button class="codex-button" id="codexButton" type="button" aria-haspopup="dialog">方塊圖鑑</button>
+          <div class="action-row">
+            <button class="primary-button" id="startButton" type="button"><span class="play-symbol" id="startSymbol">▶</span><span id="startLabel">開始遊戲</span></button>
+            <button class="secondary-button" id="restartButton" type="button" aria-label="重新開始" title="重新開始">↻</button>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="mobile-controls" id="padControls" aria-label="觸控操作">
+      <button type="button" data-action="left" aria-label="向左">←</button>
+      <button type="button" data-action="rotate" aria-label="旋轉">↻</button>
+      <button type="button" data-action="down" aria-label="向下">↓</button>
+      <button type="button" data-action="right" aria-label="向右">→</button>
+      <button type="button" data-action="drop" aria-label="直接落下">⇊</button>
+      <button type="button" data-action="pause" aria-label="暫停或繼續">Ⅱ</button>
+    </section>
+
+    <footer class="bottom-bar" id="kbdBar" hidden>
+      <div class="control-hint">
+        <span class="keycap">←</span><span class="keycap">→</span><span>移動</span>
+        <span class="hint-divider"></span><span class="keycap">↑</span><span>旋轉</span>
+        <span class="hint-divider"></span><span class="keycap">↓</span><span>加速</span>
+        <span class="hint-divider"></span><span class="keycap">空白</span><span>直落</span>
+        <span class="hint-divider hint-props"></span><span class="keycap hint-props">1</span><span class="keycap hint-props">2</span><span class="keycap hint-props">3</span><span class="hint-props">道具</span>
+        <span class="hint-divider"></span><span class="keycap">P</span><span>暫停</span>
+      </div>
+    </footer>
+  </main>
+
+  <aside id="side" hidden>
+    <button id="sideTog" type="button" aria-label="展開 / 收合" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div id="info">
+      <div class="box" id="meBox" hidden><h4>個人最高</h4><b id="meBest">0</b></div>
+      <div class="box" id="rankBox" hidden><h4>排行榜</h4><ol id="rankList"></ol></div>
+    </div>
+  </aside>
+
+  <div class="codex-modal is-hidden" id="codexModal" role="dialog" aria-modal="true" aria-labelledby="codexTitle">
+    <div class="codex-panel">
+      <div class="codex-header">
+        <h2 id="codexTitle">方塊圖鑑</h2>
+        <button class="codex-close" id="codexClose" type="button" aria-label="關閉">✕</button>
+      </div>
+      <div id="codexGrid"></div>
+    </div>
+  </div>
+</body>
+</html>

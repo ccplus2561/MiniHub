@@ -45,6 +45,13 @@ window.GAMES = [
     tags: { single: true, multi: false, desktop: true, kbd: false, mobileP: true, touch: true, score: true, cloud: true }
   },
   {
+    id: "tetris", title: "俄羅斯方塊", category: "益智", emoji: "🧱", icon: "icons/tetris.svg",
+    colors: ["#7a3fd1", "#120a30"], path: "games/tetris/index.html",
+    desc: "經典俄羅斯方塊，疊滿整行就消除！\n規則：10 × 20 棋盤，方塊越落越快；除了經典 7 種，還有單格、長條等特殊方塊；可花分數換方塊、消底行、減速（每次使用加價）；方塊堆到頂端即結束。\n操作：←→ 移動、↑ 旋轉、↓ 加速、空白鍵直落、1–3 使用道具、P 暫停；手機使用畫面按鍵。",
+    how: "", featured: false, board: { order: "desc", unit: "分", max: 2000000 }, music: false,
+    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
+  },
+  {
     id: "ooxx", title: "OOXX 圈叉", category: "益智", emoji: "⭕", icon: "icons/ooxx.svg",
     colors: ["#4a8f1c", "#17240f"], path: "games/ooxx/index.html",
     desc: "經典圈圈叉叉，單人挑戰無敵電腦，或與朋友同機對戰！\n規則：3 × 3 棋盤，先連成一線（橫、直、斜）者獲勝，下滿平手；單人模式的電腦不會輸，可選符號與先後手。\n操作：點擊格子落子，或按 1–9 鍵、R 重新開始。",
