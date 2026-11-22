@@ -51,12 +51,16 @@
 
         <div class="action-stack">
           <div class="props-card">
-            <div class="card-heading"><span class="section-label">道具</span><span class="props-note">使用會扣分，每次加價</span></div>
+            <div class="card-heading"><span class="section-label">道具</span><div class="seg" id="payBar" role="group" aria-label="道具付費方式" title="分數：使用會扣分，每次加價；M 點：固定價，不影響分數">
+              <button id="payScore" type="button" class="on">分數</button>
+              <button id="payM" type="button">M 點<em id="payBal"></em></button>
+            </div></div>
             <div class="props-grid" id="propsGrid">
               <button class="prop-button" type="button" data-prop="reroll"><span class="prop-key"></span><span class="prop-name"></span><span class="prop-cost"></span></button>
               <button class="prop-button" type="button" data-prop="clearRow"><span class="prop-key"></span><span class="prop-name"></span><span class="prop-cost"></span></button>
               <button class="prop-button" type="button" data-prop="slow"><span class="prop-key"></span><span class="prop-name"></span><span class="prop-cost"></span></button>
             </div>
+            <div class="pay-note" id="payNote" role="status" hidden></div>
           </div>
           <button class="codex-button" id="codexButton" type="button" aria-haspopup="dialog">方塊圖鑑</button>
           <div class="action-row">

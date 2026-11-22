@@ -168,6 +168,20 @@
 
   // ══ 大廳整合（獨立開啟時 SDK 會自動略過）═════════════
   const MH = window.MiniHub;
+  // 道具也可改用 M 點付費（登入後可選）：固定價、不影響分數與分數價格的漲幅。
+  // ★ 改價格時，Firestore 規則「花費 M 點」那段允許的扣點數（目前 0.5 或 1）要一起對應
+  const M_COST = { reroll: 0.5, clearRow: 1, slow: 0.5 };
+  let payMode = "score";     // "score" 扣分數 | "m" 扣 M 點（只存在記憶體）
+  let payBusy = false;       // 扣 M 點進行中：暫停下落與操作
+  let payNoteTimer = null;
+  const payButtons = { score: $("payScore"), m: $("payM") };
+  const payBalance = $("payBal");
+  const payNote = $("payNote");
+  const fmtM = n => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+  const mLogged = () => { try { return !!MH.player().loggedIn; } catch (e) { return false; } };
+  const mBal = () => { try { return MH.mPoints.balance(); } catch (e) { return 0; } };
+  const payM = () => payMode === "m" && mLogged();
+  const mErr = c => (c === "not-enough-m" ? "M 點不足" : c === "permission-denied" ? "伺服器拒絕扣點" : c === "unavailable" || /network/.test(c || "") ? "網路連線失敗，請再試" : "扣點失敗，請稍後再試");
   const lb = MH.board(GAME_ID, { top: TOP_N, onUpdate: onBoardUpdate });
 
   function onBoardUpdate(state) {
@@ -307,9 +321,39 @@
     return PROPS[id].base * ((propUses[id] || 0) + 1);
   }
 
+  function costLabel(id) {
+    return payM() ? `-${fmtM(M_COST[id])}M` : `-${getPropCost(id)}`;
+  }
+
+  function showPayNote(text) {
+    payNote.textContent = text;
+    payNote.hidden = !text;
+    window.clearTimeout(payNoteTimer);
+    if (text) payNoteTimer = window.setTimeout(() => { payNote.hidden = true; }, 2500);
+  }
+
+  function renderPayBar() {
+    const logged = mLogged();
+    if (!logged && payMode === "m") payMode = "score";   // 登出後自動回到扣分數
+    payButtons.score.classList.toggle("on", payMode === "score");
+    payButtons.m.classList.toggle("on", payMode === "m");
+    payButtons.m.disabled = !logged || payBusy;
+    payButtons.score.disabled = payBusy;
+    payButtons.m.title = logged ? "" : "登入後可用 M 點付費";
+    payBalance.textContent = logged ? `（${fmtM(mBal())}）` : "";
+  }
+
+  function setPayMode(mode) {
+    if (payBusy || (mode === "m" && !mLogged())) return;
+    payMode = mode;
+    sound.click();
+    updateHUD();
+  }
+
   function canUseProp(id) {
     if (status !== STATUS.RUNNING || !currentPiece) return false;
-    if (score < getPropCost(id)) return false;
+    if (payBusy) return false;
+    if (payM() ? mBal() < M_COST[id] : score < getPropCost(id)) return false;
     if (id === "clearRow") return board[BOARD_ROWS - 1].some(cell => cell !== null);
     return true;
   }
@@ -318,11 +362,11 @@
     const id = button.dataset.prop;
     const prop = PROPS[id];
     const slowActive = id === "slow" && slowRemaining > 0;
-    button.querySelector(".prop-cost").textContent = `-${getPropCost(id)}`;
+    button.querySelector(".prop-cost").textContent = costLabel(id);
     button.querySelector(".prop-name").textContent = slowActive ? `${prop.name} ${slowRemaining}s` : prop.name;
     button.classList.toggle("is-active", slowActive);
     button.disabled = !canUseProp(id);
-    button.setAttribute("aria-label", `${prop.name}，扣 ${getPropCost(id)} 分，本局已使用 ${propUses[id] || 0} 次`);
+    button.setAttribute("aria-label", payM() ? `${prop.name}，扣 ${fmtM(M_COST[id])} M 點` : `${prop.name}，扣 ${getPropCost(id)} 分，本局已使用 ${propUses[id] || 0} 次`);
   }
 
   function renderStartButton() {
@@ -334,6 +378,7 @@
   function updateHUD() {
     scoreElement.textContent = formatScore(score);
     renderBest();
+    renderPayBar();
     propButtons.forEach(renderProp);
     renderStartButton();
   }
@@ -546,7 +591,7 @@
   }
 
   function tick() {
-    if (status !== STATUS.RUNNING) return;
+    if (status !== STATUS.RUNNING || payBusy) return;
     if (!movePiece(0, 1)) lockPiece();
   }
 
@@ -689,6 +734,7 @@
 
   function useProp(id) {
     if (!PROPS[id] || !canUseProp(id)) return;
+    if (payM()) { usePropWithM(id); return; }
     const cost = getPropCost(id);
     if (!PROP_ACTIONS[id]()) return;
     propUses[id] = (propUses[id] || 0) + 1;
@@ -697,6 +743,26 @@
     renderBoard();
     updateHUD();
     sound[PROPS[id].sound]();
+  }
+
+  // M 點付費：先扣點，成功才執行（扣點期間遊戲暫停下落）；不影響分數與分數價格的漲幅
+  function usePropWithM(id) {
+    payBusy = true;
+    updateHUD();
+    MH.mPoints.spend(M_COST[id]).then(result => result, () => ({ ok: false, code: "unavailable" })).then(result => {
+      payBusy = false;
+      if (!result.ok) {
+        sound.error();
+        showPayNote(mErr(result.code));
+      } else if (status === STATUS.OVER || !currentPiece || !PROP_ACTIONS[id]()) {
+        showPayNote("道具未能使用");
+      } else {
+        flashPenalty();
+        renderBoard();
+        sound[PROPS[id].sound]();
+      }
+      updateHUD();
+    });
   }
 
   // ══ 繪製 ══════════════════════════════════════════════
@@ -838,6 +904,7 @@
   function runAction(action) {
     const handler = ACTION_HANDLERS[action];
     if (!handler) return;
+    if (payBusy) return;
     if (status !== STATUS.RUNNING && !ANYTIME_ACTIONS.includes(action)) return;
     handler();
   }
@@ -854,6 +921,7 @@
       return;
     }
     if (key === PAUSE_KEY) {
+      if (payBusy) return;
       if (status === STATUS.RUNNING || status === STATUS.PAUSED) { togglePause(); sound.click(); }
       return;
     }
@@ -926,6 +994,12 @@
     startButton.addEventListener("click", onStartButton);
     overlayStartButton.addEventListener("click", onOverlayButton);
     propButtons.forEach(button => button.addEventListener("click", onPropButton));
+    payButtons.score.addEventListener("click", () => setPayMode("score"));
+    payButtons.m.addEventListener("click", () => setPayMode("m"));
+    window.setInterval(() => {   // 登入 / 餘額變動時更新按鈕
+      const key = `${payMode}${mLogged()}${mBal()}`;
+      if (key !== bindEvents.payKey) { bindEvents.payKey = key; updateHUD(); }
+    }, 1000);
     codexButton.addEventListener("click", openCodex);
     codexClose.addEventListener("click", closeCodex);
     codexModal.addEventListener("click", onCodexBackdrop);

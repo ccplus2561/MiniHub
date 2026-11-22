@@ -28,6 +28,7 @@
     clear:    [{ f: 520, d: 0.09, type: "sine", v: 0.035 }, { f: 720, d: 0.12, type: "sine", v: 0.03, at: 0.075 }],
     prop:     [{ f: 600, d: 0.08, type: "square", v: 0.012 }, { f: 450, d: 0.1, type: "square", v: 0.012, at: 0.07 }],
     theme:    [{ f: 523, d: 0.1, type: "sine", v: 0.03 }, { f: 659, d: 0.1, type: "sine", v: 0.03, at: 0.09 }, { f: 784, d: 0.16, type: "sine", v: 0.03, at: 0.18 }],
+    error:    [{ f: 160, d: 0.12, type: "square", v: 0.012 }, { f: 130, d: 0.16, type: "square", v: 0.012, at: 0.09 }],
     gameOver: [{ f: 260, d: 0.18, type: "triangle", v: 0.035 }, { f: 185, d: 0.28, type: "triangle", v: 0.03, at: 0.15 }]
   };
 
