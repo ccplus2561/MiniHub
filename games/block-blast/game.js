@@ -82,7 +82,7 @@ const M_COST = 0.5;   // 每個道具的 M 點價格（Firestore 規則已允許
 const ALL_CLEAR = 300; // 清空整個棋盤的額外獎勵
 const MIN_COST = Math.min(...Object.values(POWERS).map(p => p.cost));
 const fmtM = n => Number.isInteger(n) ? String(n) : n.toFixed(1);
-const KEY_BEST = 'blockblast.best', KEY_GAME = 'blockblast.game';
+const KEY_GAME = 'blockblast.game';
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
@@ -101,7 +101,7 @@ const snd = (t, l) => window.GameAudio && GameAudio.play(t, l);
 const vib = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 
 let board, pieces, slotEls = [], cells = [];
-let score = 0, peak = 0, best = parseInt(store.get(KEY_BEST), 10) || 0, bestAtStart = 0, combo = 0;   // peak：本局最高分（花分數買道具會讓 score 下降，排行榜以 peak 為準）
+let score = 0, peak = 0, best = 0, bestAtStart = 0, combo = 0;   // peak：本局最高分（花分數買道具會讓 score 下降，排行榜以 peak 為準）
 let turnTimer = 0, overTimer = 0, power = null, powerAim = null, powerPay = 'score';   // powerPay：目前選用的付款方式（'m' 扣 M 點 / 'score' 扣分數）
 const mBal = () => { try { return MH.mPoints.balance(); } catch (e) { return 0; } };   // 未登入 = 0
 const canM = () => mBal() >= M_COST;
@@ -300,7 +300,6 @@ function updateScore() {
   if (score > best) {
     best = score;
     el.best.textContent = fmt(best);
-    store.set(KEY_BEST, String(best));
   }
   updatePowerUI();
 }

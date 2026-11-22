@@ -8,7 +8,6 @@
   const SOLO = QS.get("mode") === "solo";          // 由 OOXX 大廳決定：?mode=solo 單人，?mode=online 雙人連線，其餘同機雙人
   const ONLINE = QS.get("mode") === "online" && !!window.OOXXOnline;
   const ROOM_ID = ONLINE ? window.OOXXOnline.normalizeId(QS.get("room")) : "";
-  const storeKey = () => (SOLO ? `${GAME_ID}:solo:v1` : `${GAME_ID}:v1`);
   const AI_DELAY = 550;
   const LINES = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -92,28 +91,6 @@
     scores: { X: 0, O: 0, draw: 0 }
   };
 
-  // 本機儲存
-  const isCount = n => Number.isInteger(n) && n >= 0 && n < 100000;
-
-  function load() {
-    try {
-      const d = JSON.parse(localStorage.getItem(storeKey()) || "null");
-      if (!d || typeof d !== "object") return;
-      const s = d.scores || {};
-      if (isCount(s.X) && isCount(s.O) && isCount(s.draw)) {
-        state.scores = { X: s.X, O: s.O, draw: s.draw };
-      }
-      if (Number.isInteger(d.round) && d.round >= 1 && d.round < 100000) state.round = d.round;
-      if (d.starter === "X" || d.starter === "O") state.starter = d.starter;
-    } catch (e) { /* 讀取失敗就使用預設值 */ }
-  }
-
-  function save(round, starter) {
-    try {
-      localStorage.setItem(storeKey(), JSON.stringify({ scores: state.scores, round, starter }));
-    } catch (e) { /* 無法儲存時忽略 */ }
-  }
-
   // 大廳整合：開始下一局前先詢問大廳（未登入會跳出同意條款），回傳 false 就不開始
   async function askNext() {
     if (asking) return false;
@@ -156,13 +133,11 @@
       state.over = true;
       state.winLine = win.line;
       state.scores[win.player] += 1;
-      save(state.round + 1, other(state.starter));
       sound[player === "X" ? "x" : "o"]();
       sound[isAI(win.player) ? "lose" : "win"]();
     } else if (state.board.every(Boolean)) {
       state.over = true;
       state.scores.draw += 1;
-      save(state.round + 1, other(state.starter));
       sound[player === "X" ? "x" : "o"]();
       sound.draw();
     } else {
@@ -608,7 +583,6 @@
   paintKbd();
 
   // 啟動
-  load();
   state.starter = "X";
   state.turn = "X";
   state.scores = { X: 0, O: 0, draw: 0 };

@@ -3,7 +3,6 @@
 
   // ══ 設定常數 ══════════════════════════════════════════
   const GAME_ID = "tetris";
-  const KEY_BEST = "tetris.best";
   const BOARD_COLUMNS = 10;
   const BOARD_ROWS = 20;
   const SPAWN_X = Math.floor((BOARD_COLUMNS - 4) / 2);
@@ -153,7 +152,7 @@
   let lines = 0;
   let level = 1;
   let elapsedSeconds = 0;
-  let best = 0;              // 本機最高分
+  let best = 0;              // 本次開啟頁面期間的最高分（只在記憶體）
   let status = STATUS.READY;
   let dropTimer = null;
   let clockTimer = null;
@@ -170,22 +169,6 @@
   let floatSide = false;     // 窄螢幕：面板浮在棋盤上，預設收合
   let floatOpen = false;
 
-  // ══ 本機儲存 ══════════════════════════════════════════
-  const store = {
-    get(key) { try { return localStorage.getItem(key); } catch (e) { return null; } },
-    set(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* 略過 */ } }
-  };
-
-  function loadBest() {
-    return Number(store.get(KEY_BEST)) || 0;
-  }
-
-  function saveBest() {
-    if (peak <= best) return;
-    best = peak;
-    store.set(KEY_BEST, String(best));
-  }
-
   // ══ 大廳整合（獨立開啟時 SDK 會自動略過）═════════════
   const MH = window.MiniHub;
   const lb = MH.board(GAME_ID, { top: TOP_N, onUpdate: onBoardUpdate });
@@ -201,7 +184,7 @@
   }
 
   function leaveRound() {
-    saveBest();
+    if (peak > best) best = peak;
     submitScore();
   }
 
@@ -967,7 +950,6 @@
   }
 
   function initializeGame() {
-    best = loadBest();
     board = createEmptyBoard();
     createBoardCells();
     nextPieceKey = drawPieceKey();
