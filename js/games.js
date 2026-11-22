@@ -49,7 +49,7 @@ window.GAMES = [
     colors: ["#7a3fd1", "#120a30"], path: "games/tetris/index.html",
     desc: "經典俄羅斯方塊，疊滿整行就消除！\n規則：10 × 20 棋盤，方塊越落越快；除了經典 7 種，還有單格、長條等特殊方塊；可花分數換方塊、消底行、減速（每次使用加價）；方塊堆到頂端即結束。\n操作：←→ 移動、↑ 旋轉、↓ 加速、空白鍵直落、1–3 使用道具、P 暫停；手機使用畫面按鍵。",
     how: "", featured: false, board: { order: "desc", unit: "分", max: 2000000 },
-    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
+    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: true }
   },
   {
     id: "ooxx", title: "OOXX 圈叉", category: "益智", emoji: "⭕", icon: "icons/ooxx.svg",

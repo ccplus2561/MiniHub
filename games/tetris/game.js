@@ -518,6 +518,7 @@
     startTimers();
     sound.start();
     sound.musicStart();
+    saveCloud();
   }
 
   function pauseGame() {
@@ -528,6 +529,7 @@
     sound.musicStop();
     showOverlay(STATUS.PAUSED);
     updateHUD();
+    saveCloud();
   }
 
   function resumeGame() {
@@ -554,6 +556,7 @@
     showOverlay(STATUS.OVER);
     revealRank();
     sound.gameOver();
+    saveCloud();
   }
 
   function onClockTick() {
@@ -682,6 +685,7 @@
     }
     renderBoard();
     updateHUD();
+    saveCloud();
   }
 
   function clearCompletedLines() {
@@ -743,6 +747,7 @@
     renderBoard();
     updateHUD();
     sound[PROPS[id].sound]();
+    saveCloud();
   }
 
   // M 點付費：先扣點，成功才執行（扣點期間遊戲暫停下落）；不影響分數與分數價格的漲幅
@@ -760,6 +765,7 @@
         flashPenalty();
         renderBoard();
         sound[PROPS[id].sound]();
+        saveCloud();
       }
       updateHUD();
     });
@@ -1010,7 +1016,100 @@
     document.addEventListener("keydown", onKeydown);
     document.addEventListener("visibilitychange", onVisibilityChange);
     addEventListener("resize", () => { if (!sideElement.hidden) fitSide(); });
-    addEventListener("pagehide", leaveRound);
+    addEventListener("pagehide", () => { leaveRound(); flushCloud(); });
+    document.addEventListener("visibilitychange", () => { if (document.hidden) flushCloud(); });
+  }
+
+  // ══ 雲端存檔（登入後保留進行中的一局，下次回來可繼續）═══════
+  const cloud = MH.cloud ? MH.cloud(GAME_ID) : null;
+  let cloudUid = "";          // 已完成讀取（才允許寫入）的帳號
+  let cloudBusy = false;
+  const myUid = () => { try { return MH.player().uid || ""; } catch (e) { return ""; } };
+  const inProgress = () => status === STATUS.RUNNING || status === STATUS.PAUSED;
+
+  function snapshot() {
+    return {
+      board, bag, nextPieceKey, score, peak, lines, level, elapsedSeconds, propUses, slowRemaining, themeLevel,
+      piece: currentPiece ? { key: currentPiece.key, x: currentPiece.x, y: currentPiece.y, cells: currentPiece.cells } : null
+    };
+  }
+
+  function saveCloud() {
+    if (!cloud || !cloudUid || cloudUid !== myUid()) return;
+    cloud.save({ v: 1, s: inProgress() ? snapshot() : null });   // null = 沒有可繼續的進度
+  }
+
+  const isInt = value => Number.isInteger(value);
+  const isNum = value => typeof value === "number" && Number.isFinite(value);
+  const validColors = new Set(PIECE_KEYS.map(key => PIECES[key].color));
+
+  function parseSave(data) {
+    if (!data || !Array.isArray(data.board) || data.board.length !== BOARD_ROWS) return null;
+    const rows = data.board.map(row => (Array.isArray(row) && row.length === BOARD_COLUMNS
+      ? row.map(cell => (validColors.has(cell) ? cell : null)) : null));
+    if (rows.some(row => !row)) return null;
+    const piece = data.piece;
+    if (!piece || !PIECES[piece.key] || !isInt(piece.x) || !isInt(piece.y) || !Array.isArray(piece.cells) || !piece.cells.length || piece.cells.length > 8) return null;
+    if (!piece.cells.every(cell => Array.isArray(cell) && cell.length === 2 && isInt(cell[0]) && isInt(cell[1]) && Math.abs(cell[0]) < 8 && Math.abs(cell[1]) < 8)) return null;
+    if (!PIECES[data.nextPieceKey] || !Array.isArray(data.bag) || !data.bag.every(key => PIECES[key])) return null;
+    if (![data.score, data.peak, data.lines, data.level, data.elapsedSeconds, data.slowRemaining, data.themeLevel].every(isNum)) return null;
+    const restored = { key: piece.key, color: PIECES[piece.key].color, cells: piece.cells.map(([x, y]) => [x, y]), x: piece.x, y: piece.y };
+    const previous = board;
+    board = rows;
+    const blocked = hasCollision(restored, 0, 0);
+    board = previous;
+    if (blocked) return null;
+    return { rows, piece: restored, data };
+  }
+
+  function restoreFromCloud(data) {
+    const parsed = parseSave(data);
+    if (!parsed) return false;
+    stopTimers();
+    stopRepeat();
+    board = parsed.rows;
+    currentPiece = parsed.piece;
+    bag = data.bag.slice();
+    nextPieceKey = data.nextPieceKey;
+    score = Math.max(0, Math.floor(data.score));
+    peak = Math.max(score, Math.floor(data.peak));
+    lines = Math.max(0, Math.floor(data.lines));
+    level = Math.max(1, Math.floor(data.level));
+    elapsedSeconds = Math.max(0, Math.floor(data.elapsedSeconds));
+    slowRemaining = Math.max(0, Math.min(SLOW_SECONDS, Math.floor(data.slowRemaining)));
+    propUses = {};
+    Object.keys(PROPS).forEach(id => { propUses[id] = Math.max(0, Math.floor(Number(data.propUses && data.propUses[id]) || 0)); });
+    themeLevel = Math.max(0, Math.floor(data.themeLevel));
+    applyTheme(themeLevel);
+    status = STATUS.PAUSED;
+    renderNextPiece();
+    renderBoard();
+    updateHUD();
+    showOverlay(STATUS.PAUSED);
+    overlayMessageElement.textContent = "已載入雲端存檔，按下繼續接續上次的進度。";
+    return true;
+  }
+
+  async function syncCloud() {
+    if (!cloud) return;
+    const uid = myUid();
+    if (!uid) { cloudUid = ""; return; }
+    if (uid === cloudUid || cloudBusy) return;
+    cloudBusy = true;
+    try {
+      const result = await cloud.load();
+      if (!result.ok) return;   // 讀取失敗：不寫入，避免覆蓋雲端資料；下次狀態改變再試
+      // 還沒開始玩才載入雲端進度；已經在玩就保留目前的，並覆蓋雲端
+      if (result.data && result.data.s && status === STATUS.READY) restoreFromCloud(result.data.s);
+      cloudUid = uid;
+      saveCloud();
+    } finally { cloudBusy = false; }
+  }
+
+  function flushCloud() {
+    if (!cloud) return;
+    saveCloud();
+    cloud.flush();
   }
 
   function initializeGame() {
@@ -1027,9 +1126,11 @@
     bindEvents();
     applyInputMode();
     MH.onChange(applyInputMode);
+    if (cloud) MH.onChange(syncCloud);
     MH.onPause(pauseFromHub);        // 大廳要求暫停（window.MiniHubPause）
     MH.onRestart(requestRestart);    // 大廳頂端「重新載入」
     lb.refresh();
+    syncCloud();
   }
 
   initializeGame();
