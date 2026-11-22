@@ -75,17 +75,16 @@
       <button type="button" data-action="pause" aria-label="暫停或繼續">Ⅱ</button>
     </section>
 
-    <footer class="bottom-bar" id="kbdBar" hidden>
-      <div class="control-hint">
-        <span class="keycap">←</span><span class="keycap">→</span><span>移動</span>
-        <span class="hint-divider"></span><span class="keycap">↑</span><span>旋轉</span>
-        <span class="hint-divider"></span><span class="keycap">↓</span><span>加速</span>
-        <span class="hint-divider"></span><span class="keycap">空白</span><span>直落</span>
-        <span class="hint-divider hint-props"></span><span class="keycap hint-props">1</span><span class="keycap hint-props">2</span><span class="keycap hint-props">3</span><span class="hint-props">道具</span>
-        <span class="hint-divider"></span><span class="keycap">P</span><span>暫停</span>
-      </div>
-    </footer>
   </main>
+
+  <div id="kbdBar" hidden>
+    <span>移動 <kbd>←</kbd><kbd>→</kbd></span>
+    <span>旋轉 <kbd>↑</kbd></span>
+    <span>加速 <kbd>↓</kbd></span>
+    <span>直落 <kbd>空白</kbd></span>
+    <span class="kbd-props">道具 <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></span>
+    <span>暫停 <kbd>P</kbd></span>
+  </div>
 
   <aside id="side" hidden>
     <button id="sideTog" type="button" aria-label="展開 / 收合" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>

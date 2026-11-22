@@ -1,5 +1,6 @@
 * { box-sizing: border-box; }
 :root {
+  --kbd-h: 0px;   /* 鍵盤快捷介面佔用的底部高度（顯示時為 48px） */
   color-scheme: dark;
   --ink: #eef1fa; --muted: #98a2bc; --line: #29314d; --paper: #0b0f1a;
   --card: #151b2e; --card-2: #1b2340; --btn: #1d2644; --btn-line: #333f66;
@@ -83,15 +84,8 @@ button:focus-visible { outline: 3px solid rgba(111,137,255,.55); outline-offset:
 .mobile-controls button { min-height:48px; border:1px solid var(--btn-line); border-radius:12px; color:#d0d7ea; background:var(--btn); font-size:21px; font-weight:700; touch-action:none; }
 .mobile-controls button:active { color:white; background:#4a63ea; }
 body.pad-on .mobile-controls { display:grid; }
-.bottom-bar[hidden] { display:none; }
-.bottom-bar { display:flex; align-items:center; justify-content:flex-start; gap:15px; margin-top:22px; padding:14px 2px 0; border-top:1px solid var(--line); }
-.control-hint { display:flex; align-items:center; gap:9px; color:var(--muted); font-size:16px; }
-.keycap { display:inline-grid; min-width:30px; height:30px; padding:0 4px; place-items:center; border:1px solid var(--btn-line); border-bottom-width:2px; border-radius:5px; color:#d0d7ea; background:var(--btn); font-size:15px; }
-.hint-divider { width:1px; height:18px; margin:0 5px; background:var(--line); }
 @media (max-width:760px) {
-  .hint-props { display:none; }
-  .control-hint { flex-wrap:wrap; row-gap:6px; }
-  .app-shell { width:min(100% - 24px,520px); padding:max(12px,env(safe-area-inset-top)) 0 max(16px,env(safe-area-inset-bottom)); display:grid; grid-template-columns:minmax(0,1fr) 112px; grid-template-areas:"top top" "board info" "pad pad" "act act" "hint hint"; gap:10px; align-items:start; }
+  .app-shell { width:min(100% - 24px,520px); padding:max(12px,env(safe-area-inset-top)) 0 max(16px,env(safe-area-inset-bottom)); display:grid; grid-template-columns:minmax(0,1fr) 112px; grid-template-areas:"top top" "board info" "pad pad" "act act"; gap:10px; align-items:start; }
   .game-layout, .side-panel { display:contents; }
   .topbar { grid-area:top; }
   .board-column { grid-area:board; }
@@ -107,26 +101,22 @@ body.pad-on .mobile-controls { display:grid; }
   .action-stack { grid-area:act; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .props-card { grid-column:1/-1; }
   .action-row { grid-column:1/-1; }
-  .bottom-bar { grid-area:hint; margin-top:4px; }
 }
 @media (max-width:420px) {
   .app-shell { width:calc(100% - 24px); }
-  .control-hint { gap:5px; }
-  .hint-divider { margin:0 2px; }
 }
 
 /* ── 電腦版：整頁固定一屏，不捲動 ── */
 @media (min-width:761px) {
   html,body { height:100%; overflow:hidden; }
   body { min-height:0; }
-  .app-shell { height:100vh; height:100dvh; display:flex; flex-direction:column; padding:14px 0 12px; }
+  .app-shell { height:calc(100vh - var(--kbd-h)); height:calc(100dvh - var(--kbd-h)); display:flex; flex-direction:column; padding:14px 0 12px; }
   .topbar { flex:none; min-height:44px; margin-bottom:10px; }
   .game-layout { flex:1; min-height:0; grid-template-rows:minmax(0,1fr); }
   .board-column { display:flex; flex-direction:column; min-height:0; }
   .board-frame { flex:1; min-height:0; padding:14px; }
   .game-board { height:100%; width:auto; max-width:100%; }
   .side-panel { min-height:0; gap:12px; }
-  .bottom-bar { flex:none; margin-top:10px; padding-top:10px; }
 }
 @media (min-width:761px) and (max-height:800px) {
   .side-panel { gap:9px; }
@@ -218,3 +208,13 @@ html[data-bstyle] .cell.filled.ghost { border:1px dashed rgba(255,255,255,.85); 
 #rankList .sc { font-weight:700; }
 
 @media (prefers-reduced-motion:reduce) { * { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
+
+/* ── 鍵盤快捷介面（與 2048 相同樣式；大廳「鍵盤快捷鍵」開啟時才顯示） ── */
+body.has-kbd { --kbd-h: 48px; padding-bottom: var(--kbd-h); }
+#kbdBar[hidden] { display: none; }
+#kbdBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; height: 48px; display: flex; align-items: center; justify-content: flex-end; gap: 28px;
+  padding: 0 28px; font-size: 16px; color: #a3adbd; white-space: nowrap; overflow: hidden;
+  background: linear-gradient(0deg, rgba(11, 17, 24, .92), rgba(11, 17, 24, .5)); border-top: 1px solid #263447; }
+#kbdBar kbd { display: inline-block; min-width: 28px; margin-right: 4px; padding: 1px 9px; text-align: center; border-radius: 8px; font: 700 14px/22px system-ui, sans-serif;
+  color: #0e141b; background: #a3adbd; }
+@media (max-width:760px) { #kbdBar { gap: 14px; padding: 0 12px; font-size: 14px; } .kbd-props { display: none; } }

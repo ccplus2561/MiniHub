@@ -272,6 +272,7 @@
     const showKeys = MH.kbdOn() && !touchOnly;
     kbdBarElement.hidden = !showKeys;
     document.body.classList.toggle("pad-on", !showKeys);
+    document.body.classList.toggle("has-kbd", showKeys);
   }
 
   function requestStart() {
