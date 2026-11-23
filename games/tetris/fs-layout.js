@@ -8,8 +8,10 @@
   function check() {
     var fs = false;
     if (innerWidth <= 760) {
-      if (P) fs = innerHeight >= P.innerHeight - 6;
-      else fs = !!(document.fullscreenElement || (window.matchMedia && matchMedia("(display-mode: fullscreen)").matches));
+      /* 三種判斷任一成立即視為全螢幕：高度接近大廳視窗、或螢幕高度、或畫面夠細長（非全螢幕約 1.3，全螢幕約 2.1） */
+      fs = innerHeight / innerWidth > 1.65;
+      try { if (P && innerHeight >= P.innerHeight - 6) fs = true; } catch (e) {}
+      try { if (innerHeight >= screen.height * 0.9) fs = true; } catch (e) {}
     }
     de.classList.toggle("mfs", fs);
   }
