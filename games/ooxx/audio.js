@@ -16,11 +16,11 @@
     if (!ctx) {
       try {
         ctx = new AC();
-        master = ctx.createGain(); master.gain.value = 1; master.connect(ctx.destination);
+        master = ctx.createGain(); master.gain.value = 1; master.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination));
         sfxBus = ctx.createGain(); sfxBus.connect(master);
         musicBus = ctx.createGain(); musicBus.gain.value = 0.5;
         const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2600;
-        musicBus.connect(lp); lp.connect(master);
+        musicBus.connect(lp); lp.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "music") : ctx.destination));
       } catch (e) { ctx = null; return null; }
     }
     if (ctx.state === "suspended") ctx.resume().catch(() => {});

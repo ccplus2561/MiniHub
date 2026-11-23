@@ -21,14 +21,15 @@
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return false;
     ctx = new AC();
-    master = ctx.createGain(); master.gain.value = 0.9; master.connect(ctx.destination);
+    master = ctx.createGain(); master.gain.value = 0.9; master.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination));
+    const musicMaster = ctx.createGain(); musicMaster.gain.value = 0.9; musicMaster.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "music") : ctx.destination));
     musicBus = ctx.createGain(); musicBus.gain.value = musicAllowed() ? 1 : 0;
     sfxBus = ctx.createGain(); sfxBus.gain.value = sfxAllowed() ? 1 : 0;
     // 音樂加一點回音，營造空間感
     const delay = ctx.createDelay(1), fb = ctx.createGain(), wet = ctx.createGain();
     delay.delayTime.value = 0.42; fb.gain.value = 0.35; wet.gain.value = 0.45;
-    musicBus.connect(master);
-    musicBus.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(master);
+    musicBus.connect(musicMaster);
+    musicBus.connect(delay); delay.connect(fb); fb.connect(delay); delay.connect(wet); wet.connect(musicMaster);
     sfxBus.connect(master);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);

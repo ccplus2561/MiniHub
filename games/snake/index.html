@@ -128,7 +128,7 @@
       lp = ac.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 2400; lp.Q.value = 0.4;   // 柔和、不刺耳
       const comp = ac.createDynamicsCompressor(), master = ac.createGain(); master.gain.value = 0.7;
       lp.connect(comp); comp.connect(master); master.connect(ac.destination);
-      sfxBus = ac.createGain(); sfxBus.connect(lp);
+      sfxBus = MiniHub.volume(ac, "sfx", lp);
       return ac;
     }
     function tone(bus, f, t, dur, vol, type, to) {
@@ -171,7 +171,7 @@
     }
     function start() {
       if (playing || !musicOn() || !ensure()) return; wake();
-      bgm = ac.createGain(); bgm.gain.value = 1; bgm.connect(lp);
+      bgm = ac.createGain(); bgm.gain.value = 1; bgm.connect(MiniHub.volume(ac, "music", lp));
       playing = true; nextT = ac.currentTime + 0.08; sched();
       timer = setInterval(sched, 60);
     }

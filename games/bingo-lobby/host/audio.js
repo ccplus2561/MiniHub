@@ -139,7 +139,7 @@
           ctx = new Ctor();
           master = ctx.createGain();
           master.gain.value = MASTER_GAIN;
-          master.connect(ctx.destination);
+          master.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination));
         }
         // 在使用者手勢內一律呼叫 resume()（已在執行中時為無害空操作），確保各瀏覽器都真正解鎖
         if (typeof ctx.resume === 'function') {

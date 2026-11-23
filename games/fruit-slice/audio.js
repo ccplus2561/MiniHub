@@ -11,8 +11,8 @@
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return false;
     ctx = new AC();
-    master = ctx.createGain(); master.connect(ctx.destination);
-    musicBus = ctx.createGain(); musicBus.connect(master);
+    master = ctx.createGain(); master.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination));
+    musicBus = ctx.createGain(); musicBus.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "music") : ctx.destination));
     return true;
   }
   const unlock = () => { if (init() && ctx.state === "suspended") ctx.resume(); };

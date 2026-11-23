@@ -17,7 +17,7 @@
     ctx = new Ctor();
     master = ctx.createGain();
     master.gain.value = MASTER_VOLUME;
-    master.connect(ctx.destination);
+    master.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination));
     return ctx;
   }
 

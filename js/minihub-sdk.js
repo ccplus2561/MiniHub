@@ -8,6 +8,7 @@
  *   MiniHub.embedded            是否在大廳裡執行
  *   MiniHub.prefs()             目前生效的大廳設定 { mute, music, sfx, kbd, touch, anim, ... }
  *   MiniHub.sfxOn() / musicOn() 音效 / 音樂是否該播放（已考慮「全部靜音」）
+ *   MiniHub.volume(ctx, "sfx"|"music", dest?) 音效 / 音樂的音量節點（設定 > 音效 的滑桿，0–100%），把聲音接到它即可
  *   MiniHub.kbdOn() / touchOn() 是否接受鍵盤 / 觸控操作
  *   MiniHub.onChange(fn)        設定或登入狀態改變時呼叫 fn；回傳取消函式（離開頁面會自動取消）
  * ── 大廳互動 ──────────────────────────────────────────
@@ -33,7 +34,7 @@
   var P = null;   // 大廳視窗（同源時才拿得到）
   try { if (parent !== window && parent.document) P = parent; } catch (e) {}
 
-  var DEFAULTS = { mute: false, music: true, sfx: true, kbd: true, touch: true, anim: true, fsStart: false, cardSize: "m", lang: "zh-Hant" };
+  var DEFAULTS = { mute: false, music: true, sfx: true, kbd: true, touch: true, anim: true, fsStart: false, cardSize: "m", lang: "zh-Hant", sfxVol: 70, musicVol: 70 };
   var noop = function () {};
   var maskFallback = function (n) { var c = Array.from(String(n || "")); return c.length <= 1 ? "*" : c.length === 2 ? c[0] + "*" : c[0] + new Array(c.length - 1).join("*") + c[c.length - 1]; };
 
@@ -229,7 +230,29 @@
     sync(); onChange(sync);
   })();
 
+  /* ---------- 音量（0–100%）----------
+     100% = 3 倍原始合成音量，預設 70% ≈ 2.1 倍（原本整體偏小聲）。
+     MiniHub.volume(ctx, "sfx" | "music", dest?) 回傳一個音量節點（接到 dest，預設 ctx.destination）：
+     遊戲把該類聲音接到這個節點即可，大廳調整音量時會即時生效。 */
+  var VOL_MAX_GAIN = 3;
+  function volGain(kind) {
+    var v = prefs()[kind === "music" ? "musicVol" : "sfxVol"];
+    v = typeof v === "number" && isFinite(v) ? Math.max(0, Math.min(100, v)) : 70;
+    return v / 100 * VOL_MAX_GAIN;
+  }
+  function volume(ctx, kind, dest) {
+    var list = ctx.__mhVol || (ctx.__mhVol = []), d = dest || null;
+    for (var i = 0; i < list.length; i++) if (list[i].k === kind && list[i].d === d) return list[i].g;
+    var g = ctx.createGain();
+    g.gain.value = volGain(kind);
+    g.connect(d || ctx.destination);
+    list.push({ k: kind, d: d, g: g });
+    onChange(function () { try { g.gain.setTargetAtTime(volGain(kind), ctx.currentTime, 0.02); } catch (e) {} });
+    return g;
+  }
+
   window.MiniHub = {
+    volume: volume, volGain: volGain,
     embedded: !!P, prefs: prefs, theme: theme,
     sfxOn: function () { var p = prefs(); return !p.mute && p.sfx !== false; },
     musicOn: function () { var p = prefs(); return !p.mute && p.music !== false; },

@@ -116,7 +116,7 @@
   /* ---------- 偏好（開關 / 分段）：不保存 ---------- */
   const DEFAULTS = {
     cardSizeD: "m", cardSizeM: "m", anim: true, fsStart: false,   // 圖卡大小：電腦版 / 手機版各自保存
-    mute: false, music: true, sfx: true,
+    mute: false, music: true, sfx: true, sfxVol: 70, musicVol: 70,   // 音量 0–100（暫不同步到帳號）
     kbd: true, touch: true, publicName: false, joinRank: false,
     lang: "zh-Hant", display: "auto"
   };
@@ -129,7 +129,7 @@
   const SIZES = { s: "132px", m: "168px", l: "212px" };
   const SIZES_M = { s: "112px", m: "140px", l: "172px" };   // 手機版圖卡較小
   const SIZE_KEYS = ["s", "m", "l"];
-  const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱", joinRank: "加入排行榜" };
+  const LABELS = { cardSize: "圖卡大小", anim: "動畫效果", fsStart: "遊戲全螢幕", mute: "全部靜音", music: "音樂", sfx: "音效", musicVol: "音樂音量", sfxVol: "音效音量", kbd: "鍵盤快捷鍵", touch: "觸控滑動", publicName: "公開使用者名稱", joinRank: "加入排行榜" };
   const sfx = n => window.MiniHubSfx && MiniHubSfx(n);
   const say = m => window.MiniHubToast && MiniHubToast(m);
 
@@ -159,8 +159,20 @@
   }
   const sizeKey = () => isMobile() ? "cardSizeM" : "cardSizeD";
   const eff = k => isMobile() && k === "kbd" ? false : isMobile() && k === "touch" ? true : prefs[k];
+  // 音量滑桿：數值、進度條與右側 % 顯示
+  function paintRanges() {
+    $$(".range[data-set]").forEach(r => {
+      const v = prefs[r.dataset.set];
+      if (typeof v !== "number") return;
+      if (+r.value !== v) r.value = v;
+      r.style.setProperty("--p", v + "%");
+      r.setAttribute("aria-valuetext", v + "%");
+      const o = $(`[data-out="${r.dataset.set}"]`); if (o) o.textContent = v + "%";
+    });
+  }
   function paint() {
     const mob = isMobile();
+    paintRanges();
     $$("[data-set]").forEach(el => {
       const k = el.dataset.set, v = k === "cardSize" ? prefs[sizeKey()] : eff(k);
       if (el.classList.contains("switch")) { el.setAttribute("aria-checked", !!v); el.disabled = mob && (k === "kbd" || k === "touch"); }
@@ -220,6 +232,20 @@
   };
   addEventListener("pagehide", flush);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
+
+  // 音量滑桿：拖曳時即時生效（通知遊戲 / 音效），放開後才跳提示與試聽音
+  document.addEventListener("input", e => {
+    const r = e.target.closest && e.target.closest(".range[data-set]");
+    if (!r || !(r.dataset.set in prefs)) return;
+    prefs[r.dataset.set] = Math.max(0, Math.min(100, Math.round(+r.value) || 0));
+    paintRanges();
+    document.dispatchEvent(new CustomEvent("minihub:prefs"));
+  });
+  document.addEventListener("change", e => {
+    const r = e.target.closest && e.target.closest(".range[data-set]");
+    if (!r) return;
+    sfx("select"); say(LABELS[r.dataset.set] + "：" + prefs[r.dataset.set] + "%");
+  });
 
   document.addEventListener("click", e => {
     const dm = e.target.closest('[data-group="display"]:not(:disabled)');

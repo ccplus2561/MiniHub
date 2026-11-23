@@ -9,7 +9,7 @@ export function beep(freq = 660, dur = 0.09, type = 'sine', gain = 0.12) {
     o.type = type; o.frequency.value = freq;
     g.gain.setValueAtTime(gain, ctx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
-    o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime + dur);
+    o.connect(g).connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination)); o.start(); o.stop(ctx.currentTime + dur);
   } catch { /* 靜默失敗 */ }
 }
 export function fanfare() { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => beep(f, .16, 'triangle', .14), i * 110)); }

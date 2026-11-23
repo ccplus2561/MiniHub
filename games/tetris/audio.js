@@ -66,7 +66,7 @@
     filter.frequency.value = LOWPASS_HZ;
     master.gain.value = MASTER_VOLUME;
     filter.connect(master);
-    master.connect(audioContext.destination);
+    master.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(audioContext, "sfx") : audioContext.destination));
     return filter;
   }
 
@@ -113,7 +113,7 @@
     filter.frequency.value = MUSIC_LOWPASS_HZ;
     gain.gain.value = MUSIC_VOLUME;
     gain.connect(filter);
-    filter.connect(audioContext.destination);
+    filter.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(audioContext, "music") : audioContext.destination));
     return gain;
   }
 

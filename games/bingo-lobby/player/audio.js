@@ -56,7 +56,7 @@
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.linearRampToValueAtTime(gain, t0 + Math.min(0.01, dur / 3));
     g.gain.exponentialRampToValueAtTime(0.0001, t1);
-    osc.connect(g).connect(ctx.destination);
+    osc.connect(g).connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination));
     active++;
     osc.onended = () => { active = Math.max(0, active - 1); try { osc.disconnect(); g.disconnect(); } catch (e) { /* 已釋放 */ } };
     osc.start(t0);

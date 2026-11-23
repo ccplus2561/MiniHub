@@ -1,6 +1,6 @@
 // 介面音效：Web Audio 即時合成（無音檔）。刻意低音量、柔和音色（正弦 / 三角波 + 低通），避免刺耳。
 (() => {
-  let ctx = null, bus = null, last = 0;
+  let ctx = null, bus = null, master = null, last = 0;
   const lastBy = {};
   const prefs = () => (window.MiniHubPrefs ? MiniHubPrefs() : {});
 
@@ -12,7 +12,7 @@
     const lp = ctx.createBiquadFilter();            // 低通：削掉高頻刺耳成分
     lp.type = "lowpass"; lp.frequency.value = 2200; lp.Q.value = 0.4;
     const comp = ctx.createDynamicsCompressor();    // 壓縮：多音重疊時也不會突然變大聲
-    const master = ctx.createGain(); master.gain.value = 0.7;
+    master = ctx.createGain(); master.gain.value = 0.7;
     lp.connect(comp); comp.connect(master); master.connect(ctx.destination);
     bus = lp;
     return ctx;
@@ -55,6 +55,8 @@
     if (now - (lastBy[name] || 0) < 35) return;                    // 按住不放時不連發
     lastBy[name] = last = now;
     if (ctx.state === "suspended") ctx.resume();
+    const v = typeof p.sfxVol === "number" ? Math.max(0, Math.min(100, p.sfxVol)) : 70;   // 設定 > 音效 > 音效音量（100% = 3 倍）
+    master.gain.setValueAtTime(0.7 * v / 100 * 3, ctx.currentTime);
     def.forEach(([f, at, dur, o]) => tone(f, at, dur, o || {}));
   }
   play.recent = () => performance.now() - last < 80;

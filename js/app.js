@@ -525,7 +525,7 @@
     if (v === "home") list = $$("#homeGo, #perkOpen");
     else if (v === "library") list = $$("#chips .chip, #libraryRow .card, #playBtn");
     else if (v === "about") list = $$("#view-about .legal-tab");
-    else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
+    else if (v === "settings") list = $$(".set-item, " + P + ".switch, " + P + ".range, " + P + ".seg button, " + P + ".radio-card, " + P + ".row-btn, " + P + ".btn-primary");
     return list.filter(el => !el.disabled && !el.hidden && el.offsetParent !== null);
   }
   function move(dir) {
@@ -555,6 +555,7 @@
       return;
     }
     const txt = kEl.classList.contains("chip") ? kEl.textContent : null;
+    if (kEl.matches(".range")) return;   // 滑桿用 ← → 調整，Enter 不動作
     if (!kEl.matches(".switch, .seg button")) sfx("confirm");   // 開關 / 分段選項的聲音由設定頁自己處理
     kEl.click();
     if (txt) { const n = $$("#chips .chip").find(c => c.textContent === txt); if (n) setK(n, true); }   // 分類按鈕會重繪
@@ -675,6 +676,11 @@
     }
     if (esc) return setZone("nav", true);             // 中間：Esc 回最左側
     if (document.body.dataset.view === "home" && (!kEl || !kEl.isConnected)) { if (enter) $("#homeGo").click(); else if (dir === "left") setZone("nav", true); else move(dir); return; }   // 首頁：尚未選取時 Enter = 開始遊玩
+    if ((dir === "left" || dir === "right") && kEl && kEl.isConnected && kEl.matches(".range")) {   // 音量滑桿：← → 每次 5%
+      const v = Math.max(0, Math.min(100, +kEl.value + (dir === "right" ? 5 : -5)));
+      if (v !== +kEl.value) { kEl.value = v; kEl.dispatchEvent(new Event("input", { bubbles: true })); kEl.dispatchEvent(new Event("change", { bubbles: true })); }
+      return;
+    }
     if (dir) {
       if (!move(dir)) {
         if (dir === "left") setZone("nav", true);

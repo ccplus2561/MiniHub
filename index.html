@@ -320,6 +320,11 @@
                 <div class="set-row" data-dep="mute"><div class="set-text"><b>音樂</b><small>背景音樂</small></div><button class="switch" role="switch" aria-checked="false" data-set="music" aria-label="開關"><i></i></button></div>
                 <div class="set-row" data-dep="mute"><div class="set-text"><b>音效</b><small>按鈕與遊戲音效</small></div><button class="switch" role="switch" aria-checked="false" data-set="sfx" aria-label="開關"><i></i></button></div>
               </div>
+              <div class="set-label">音量</div>
+              <div class="set-group">
+                <div class="set-row" data-dep="mute"><div class="set-text"><b>音樂音量</b><small>背景音樂大小聲</small></div><div class="range-wrap"><input type="range" class="range" min="0" max="100" step="1" value="70" data-set="musicVol" aria-label="音樂音量"><output data-out="musicVol">70%</output></div></div>
+                <div class="set-row" data-dep="mute"><div class="set-text"><b>音效音量</b><small>按鈕與遊戲音效大小聲</small></div><div class="range-wrap"><input type="range" class="range" min="0" max="100" step="1" value="70" data-set="sfxVol" aria-label="音效音量"><output data-out="sfxVol">70%</output></div></div>
+              </div>
             </div>
 
             <!-- 操作 -->
@@ -406,8 +411,9 @@
               <ul class="help-list">
                 <li><b>全部靜音</b><span>關閉所有聲音</span></li>
                 <li><b>音效</b><span>按鈕、切換、進出遊戲的提示音，音量低、音色柔和</span></li>
+                <li><b>音量</b><span>拖曳滑桿調整音樂、音效大小（0–100%），鍵盤可用 ← → 微調</span></li>
                 <li><b>音樂</b><span>預留給之後的背景音樂</span></li>
-                <li><b>同步</b><span>登入後，設定會同步到帳號</span></li>
+                <li><b>同步</b><span>登入後，開關會同步到帳號；音量暫不同步</span></li>
               </ul>
             </div>
             <div class="help-pane" id="help-controls">

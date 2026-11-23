@@ -18,7 +18,7 @@
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
-    osc.connect(g); g.connect(ctx.destination);
+    osc.connect(g); g.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "sfx") : ctx.destination));
     osc.start(t0); osc.stop(t0 + d + 0.03);
   }
   // 同時遵守大廳的「全部靜音／音效」設定（單獨開啟本頁時預設開啟）
@@ -54,7 +54,7 @@
     if (!mBus) {
       mBus = ctx.createGain(); mBus.gain.value = 0.55;
       const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400;
-      mBus.connect(lp); lp.connect(ctx.destination);
+      mBus.connect(lp); lp.connect((window.MiniHub && MiniHub.volume ? MiniHub.volume(ctx, "music") : ctx.destination));
     }
     return true;
   }
