@@ -86,10 +86,14 @@ button:focus-visible { outline: 3px solid rgba(111,137,255,.55); outline-offset:
 .codex-button:hover,.secondary-button:hover { color:#fff; border-color:#4a5a8f; }
 .action-row { margin-top:0; }
 .info-stack, .action-stack { display:contents; }
-.mobile-controls { display:none; grid-template-columns:repeat(6,1fr); gap:8px; margin-top:13px; }
-.mobile-controls button { min-height:48px; border:1px solid var(--btn-line); border-radius:12px; color:#d0d7ea; background:var(--btn); font-size:21px; font-weight:700; touch-action:none; }
+.mobile-controls { display:none; gap:18px; margin-top:13px; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+.pad-move,.pad-act { display:grid; gap:8px; }
+.pad-move { grid-template-columns:repeat(3,1fr); flex:3; }
+.pad-act { grid-template-columns:1fr 1.25fr; flex:2.5; }
+.mobile-controls button { min-height:48px; border:1px solid var(--btn-line); border-radius:12px; color:#d0d7ea; background:var(--btn); font-size:21px; font-weight:700; touch-action:none; -webkit-tap-highlight-color:transparent; }
 .mobile-controls button:active { color:white; background:#4a63ea; }
-body.pad-on .mobile-controls { display:grid; }
+.mobile-controls .pad-rotate { color:#fff; border-color:#5a76f0; background:linear-gradient(135deg,#5a76f0,#3f57d8); }
+body.pad-on .mobile-controls { display:flex; }
 
 /* ── 電腦版：整頁固定一屏，不捲動 ── */
 @media (min-width:761px) {
@@ -203,20 +207,26 @@ body.has-kbd { --kbd-h: 48px; padding-bottom: var(--kbd-h); }
   color: #0e141b; background: #a3adbd; }
 @media (max-width:760px) { #kbdBar { gap: 14px; padding: 0 12px; font-size: 14px; } .kbd-props { display: none; } }
 
-/* ── 手機版（直式）：整頁一屏。左：棋盤（盡量放大）；右：分數／下一個／道具；下：觸控按鍵 ── */
+/* ── 手機版（直式）：整頁一屏。
+   左：棋盤（以高度為準盡量放大）；右：窄欄（主題／分數／下一個／道具／開始）；下：標準觸控按鍵
+   （左手：← ↓ →　右手：直落 ⇊、旋轉 ↻）── */
 @media (max-width:760px) {
   html,body { height:100%; }
   body { min-height:0; overflow-x:hidden; overflow-y:auto; }
   .app-shell {
-    --bw: min(calc((100dvh - 118px) / 2), calc(100vw - 16px - 12px - 8px - 136px));
-    width:calc(100% - 16px); max-width:none; height:100vh; height:100dvh; min-height:440px; margin:0 auto;
-    padding:6px 0 max(6px,env(safe-area-inset-bottom));
-    display:grid; grid-template-columns:calc(var(--bw) + 12px) minmax(0,1fr); grid-template-rows:36px auto minmax(46px,1fr);
-    grid-template-areas:"top top" "board side" "pad pad"; gap:6px 8px; align-items:start;
+    --padh: 54px;
+    --bw: min(calc((100dvh - var(--padh) - 32px) / 2), calc(100vw - 12px - 12px - 6px - 104px));
+    width:calc(100% - 12px); max-width:none; height:100vh; height:100dvh; min-height:420px; margin:0 auto;
+    padding:4px 0 max(6px,env(safe-area-inset-bottom));
+    display:grid; grid-template-columns:calc(var(--bw) + 12px) minmax(0,1fr); grid-template-rows:auto 1fr minmax(var(--padh),auto);
+    grid-template-areas:"board top" "board side" "pad pad"; gap:4px 6px; align-items:start;
   }
   .game-layout { display:contents; }
-  .topbar { grid-area:top; min-height:0; height:36px; padding-right:36px; }
-  .theme-badge { padding:5px 10px; font-size:13px; border-radius:10px; }
+  .topbar { grid-area:top; min-height:0; padding-right:32px; }
+  .theme-badge { width:100%; justify-content:center; gap:4px; padding:4px 6px; font-size:11px; letter-spacing:0; border-radius:9px; }
+  .theme-badge .tb-l { display:none; }
+  .theme-badge::before { content:"主題"; }
+  .theme-badge strong { overflow:hidden; text-overflow:ellipsis; }
   .board-column { grid-area:board; display:block; }
   .board-frame { display:block; padding:6px; border-radius:14px; }
   .game-board { width:var(--bw); height:auto; max-width:none; }
@@ -227,42 +237,46 @@ body.has-kbd { --kbd-h: 48px; padding-bottom: var(--kbd-h); }
   .overlay-card p { margin:6px 0 14px; font-size:14px; line-height:1.5; }
   .overlay-button { min-height:44px; font-size:16px; }
 
-  /* 右側欄 */
-  .side-panel { grid-area:side; display:flex; flex-direction:column; gap:6px; min-width:0; }
+  /* 右側窄欄：數字與道具都縮小，讓位給棋盤 */
+  .side-panel { grid-area:side; display:flex; flex-direction:column; gap:4px; min-width:0; min-height:0; height:100%; }
   .info-stack,.action-stack { display:contents; }
-  .score-card { padding:6px 10px 6px; border-radius:12px; }
-  .section-label { font-size:12px; letter-spacing:.03em; }
-  .score-number { margin:2px 0 0; font-size:21px; letter-spacing:.02em; }
-  .next-card { padding:6px 10px 4px; border-radius:12px; }
-  .next-piece { --next-cell:12px; gap:2px; height:44px; }
-  .props-card { padding:6px; border-radius:12px; }
+  .score-card { padding:4px 8px 4px; border-radius:10px; box-shadow:none; }
+  .section-label { font-size:10px; letter-spacing:0; }
+  .score-number { margin:1px 0 0; font-size:17px; letter-spacing:.01em; }
+  .next-card { padding:4px 8px 3px; border-radius:10px; box-shadow:none; }
+  .next-piece { --next-cell:10px; gap:2px; height:30px; }
+  .props-card { padding:5px; border-radius:10px; box-shadow:none; }
   .props-card .card-heading .section-label { display:none; }
   .props-card .card-heading { display:block; }
   .seg { display:flex; width:100%; }
-  .seg button { flex:1; padding:5px 4px; font-size:12px; white-space:nowrap; }
-  .props-grid { grid-template-columns:1fr; gap:5px; margin-top:6px; }
-  .prop-button { flex-direction:row; justify-content:space-between; align-items:center; gap:6px; min-height:34px; padding:5px 10px; border-radius:10px; }
+  .seg button { flex:1 1 0; min-width:0; padding:3px 2px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .seg button em { font-size:10px; margin-left:0; }
+  .props-grid { grid-template-columns:1fr; gap:4px; margin-top:4px; }
+  .prop-button { flex-direction:row; justify-content:space-between; align-items:center; gap:4px; min-height:30px; padding:3px 7px; border-radius:9px; }
   .prop-key { display:none; }
-  .prop-name { font-size:14px; }
-  .prop-cost { font-size:14px; }
-  .pay-note { margin-top:5px; font-size:11px; }
-  .codex-button { display:none; }
+  .prop-name { font-size:13px; white-space:nowrap; }
+  .prop-cost { font-size:13px; }
+  .pay-note { margin-top:4px; font-size:10px; }
+  .codex-button { margin:0; min-height:28px; font-size:12px; border-radius:9px; box-shadow:none; }
   .action-row { margin-top:auto; }
-  .primary-button { min-height:42px; font-size:15px; border-radius:11px; box-shadow:0 4px 12px rgba(74,99,234,.3); }
-  .play-symbol { margin-right:4px; font-size:11px; }
+  .primary-button { min-height:38px; font-size:14px; border-radius:10px; box-shadow:0 3px 10px rgba(74,99,234,.3); }
+  .play-symbol { margin-right:4px; font-size:10px; }
 
-  /* 觸控按鍵：貼齊底部、拇指好按 */
-  .mobile-controls { grid-area:pad; display:grid; margin:0; gap:6px; align-content:start; grid-auto-rows:minmax(46px,76px); }
-  .mobile-controls button { font-size:22px; border-radius:12px; }
+  /* 觸控按鍵：貼齊底部、拇指好按；左手移動、右手旋轉與直落 */
+  .mobile-controls { grid-area:pad; align-self:end; margin:0; gap:14px; }
+  .pad-move,.pad-act { gap:6px; grid-auto-rows:var(--padh); }
+  .mobile-controls button { font-size:24px; border-radius:14px; }
 
-  /* 圖鑑按鈕：移到頂列右側 */
-  #codexButton { display:block; position:fixed; z-index:4; top:6px; right:46px; min-height:36px; height:36px; margin:0; padding:0 12px; font-size:13px; border-radius:10px; }
-
-  /* 排行榜收合鈕：縮小並固定在頂列最右側，不蓋到分數 */
-  #side { top:6px !important; max-height:calc(100dvh - 60px) !important; }
-  #sideTog { width:30px; height:36px; left:-30px; }
+  /* 排行榜收合鈕：縮小並固定在右上角，不蓋到分數 */
+  #side { top:4px !important; max-height:calc(100dvh - 60px) !important; }
+  #sideTog { width:30px; height:30px; left:-30px; }
 }
 @media (max-width:360px) {
-  .app-shell { --bw: min(calc((100dvh - 118px) / 2), calc(100vw - 16px - 12px - 8px - 128px)); }
+  .app-shell { --bw: min(calc((100dvh - var(--padh) - 32px) / 2), calc(100vw - 12px - 12px - 6px - 96px)); }
 }
-
+@media (max-width:760px) and (max-height:470px) {
+  .next-piece { height:22px; }
+  .score-number { font-size:15px; }
+  .prop-button { min-height:26px; }
+  .props-grid { gap:3px; }
+}

@@ -15,7 +15,7 @@
 <body>
   <main class="app-shell">
     <header class="topbar">
-      <div class="theme-badge" aria-live="polite">方塊主題 <strong id="themeName">經典</strong> <small id="themeNext"></small></div>
+      <div class="theme-badge" aria-live="polite"><span class="tb-l">方塊主題</span> <strong id="themeName">經典</strong> <small id="themeNext"></small></div>
     </header>
 
     <section class="game-layout" aria-label="俄羅斯方塊遊戲">
@@ -71,12 +71,15 @@
     </section>
 
     <section class="mobile-controls" id="padControls" aria-label="觸控操作">
-      <button type="button" data-action="left" aria-label="向左">←</button>
-      <button type="button" data-action="rotate" aria-label="旋轉">↻</button>
-      <button type="button" data-action="down" aria-label="向下">↓</button>
-      <button type="button" data-action="right" aria-label="向右">→</button>
-      <button type="button" data-action="drop" aria-label="直接落下">⇊</button>
-      <button type="button" data-action="pause" aria-label="暫停或繼續">Ⅱ</button>
+      <div class="pad-move">
+        <button type="button" data-action="left" aria-label="向左">←</button>
+        <button type="button" data-action="down" aria-label="向下">↓</button>
+        <button type="button" data-action="right" aria-label="向右">→</button>
+      </div>
+      <div class="pad-act">
+        <button type="button" data-action="drop" aria-label="直接落下">⇊</button>
+        <button type="button" data-action="rotate" class="pad-rotate" aria-label="旋轉">↻</button>
+      </div>
     </section>
 
   </main>
