@@ -310,6 +310,33 @@ body {
   .score-card strong { font-size: 20px; }
 }
 
+/* ---------- 手機直式（含大廳框內高度不足）：緊湊版面，所有按鈕都要完整看得到、不橫向溢出 ---------- */
+@media (max-aspect-ratio: 999/1000) and (max-width: 520px) {
+  body { padding: max(10px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) calc(max(10px, env(safe-area-inset-bottom)) + var(--kbd-h)) max(12px, env(safe-area-inset-left)); }
+  .game { width: min(600px, 100%, max(220px, calc(100dvh - 172px - var(--kbd-h)))); }
+  .game:has(.paybar:not([hidden])) { width: min(600px, 100%, max(220px, calc(100dvh - 214px - var(--kbd-h)))); }
+  .brand { margin: 0 2px 4px; }
+  .brand h1 { font-size: 18px; }
+  .score-row { gap: 8px; margin-bottom: 8px; }
+  .score-card { padding: 6px 10px; }
+  .score-card strong { font-size: 18px; }
+  .board-wrap { margin-bottom: 8px; }
+  /* 道具 + 復原：同一排三顆按鈕（圖示＋名稱在上、價格在下） */
+  .panel-bottom { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .powerups, .controls { display: contents; }
+  .paybar { grid-column: 1 / -1; margin: 0; }
+  .seg button { padding: 5px 12px; }
+  .button, .button-sm {
+    min-height: 54px; padding: 6px 4px; font-size: 14px; min-width: 0;
+    flex-wrap: wrap; align-content: center; column-gap: 4px; row-gap: 0; white-space: nowrap;
+  }
+  .button span, .button-sm span { font-size: 17px; }
+  .cost { flex-basis: 100%; text-align: center; line-height: 1.2; }
+  .cost:empty { display: none; }
+  .note { grid-column: 1 / -1; margin: 0; }
+  .note:not(.tip) { display: none; }   /* 預設操作提示隱藏；道具操作提示（.tip）仍顯示 */
+}
+
 /* 大廳設定「動畫效果」關閉時：停用滑動、彈出與炫光（不再依系統的「減少動態效果」） */
 body.no-anim .tile { transition: none; }
 body.no-anim .tile-in, body.no-anim .score-card.bump strong, body.no-anim .score-add, body.no-anim .overlay, body.no-anim .overlay-card { animation: none !important; }

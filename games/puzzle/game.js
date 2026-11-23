@@ -328,7 +328,7 @@
     });
   }
   let kbdShown = false;
-  function setNote(text) { noteEl.textContent = text || NOTE_DEFAULT; noteEl.hidden = kbdShown && !text; }   // 快捷介面顯示時，預設提示隱藏（道具操作提示仍會顯示）
+  function setNote(text) { noteEl.textContent = text || NOTE_DEFAULT; noteEl.hidden = kbdShown && !text; noteEl.classList.toggle("tip", !!text); }   // 快捷介面顯示時，預設提示隱藏（道具操作提示仍會顯示）
   // 鍵盤快捷介面：只在「鍵盤快捷鍵」開啟時顯示；關閉時隱藏，改顯示滑動提示
   function applyKbd() {
     kbdShown = kbdOK() && !touchOnly;
