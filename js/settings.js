@@ -116,12 +116,13 @@
   /* ---------- 偏好（開關 / 分段）：不保存 ---------- */
   const DEFAULTS = {
     cardSizeD: "m", cardSizeM: "m", anim: true, fsStart: false,   // 圖卡大小：電腦版 / 手機版各自保存
-    mute: false, music: true, sfx: true, sfxVol: 70, musicVol: 70,   // 音量 0–100（暫不同步到帳號）
+    mute: false, music: true, sfx: true, sfxVol: 70, musicVol: 70,   // 音量 0–100（登入後同步到帳號）
     kbd: true, touch: true, publicName: false, joinRank: false,
     lang: "zh-Hant", display: "auto"
   };
   // 登入後同步到帳號的項目（動畫 / 全螢幕 / 語言 / 音效 / 操作；隱私與帳號另外同步）。圖卡大小、顯示模式不保存
-  const SYNC = ["anim", "fsStart", "lang", "mute", "music", "sfx", "kbd", "touch", "cardSizeD", "cardSizeM"];
+  const SYNC = ["anim", "fsStart", "lang", "mute", "music", "sfx", "sfxVol", "musicVol", "kbd", "touch", "cardSizeD", "cardSizeM"];
+  const AUDIO = ["mute", "music", "sfx", "sfxVol", "musicVol"];
   const LANGS = ["zh-Hant"];
   let prefs = { ...DEFAULTS };
   // 所有參數僅存在記憶體：不寫入 localStorage / cookie，重新開啟網頁即恢復預設
@@ -244,6 +245,7 @@
   document.addEventListener("change", e => {
     const r = e.target.closest && e.target.closest(".range[data-set]");
     if (!r) return;
+    queueSave(r.dataset.set);   // 登入後同步音量
     sfx("select"); say(LABELS[r.dataset.set] + "：" + prefs[r.dataset.set] + "%");
   });
 
@@ -278,7 +280,12 @@
       dirty = false; clearTimeout(saveT);
     }
     else if (newLogin) {
-      if (a.prefs) SYNC.forEach(k => { const v = a.prefs[k]; if (typeof v === typeof DEFAULTS[k] && (k !== "lang" || LANGS.includes(v)) && (!/^cardSize/.test(k) || SIZE_KEYS.includes(v))) prefs[k] = v; });
+      if (a.prefs) SYNC.forEach(k => {
+        let v = a.prefs[k];
+        if (/Vol$/.test(k) && typeof v === "number") v = Math.max(0, Math.min(100, Math.round(v)));
+        if (typeof v === typeof DEFAULTS[k] && (k !== "lang" || LANGS.includes(v)) && (!/^cardSize/.test(k) || SIZE_KEYS.includes(v))) prefs[k] = v;
+        else if (AUDIO.includes(k)) prefs[k] = DEFAULTS[k];   // 帳號尚未存過的音效 / 音樂項目：用預設，不沿用訪客時調整的值
+      });
       if (typeof a.publicName === "boolean") prefs.publicName = a.publicName;
       if (typeof a.joinRank === "boolean") prefs.joinRank = a.joinRank;
     }
