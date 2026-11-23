@@ -1006,6 +1006,11 @@
       const key = `${payMode}${mLogged()}${mBal()}`;
       if (key !== bindEvents.payKey) { bindEvents.payKey = key; updateHUD(); }
     }, 1000);
+    const propsToggle = $("propsToggle");   // 手機版：道具收在按鈕裡，點開才顯示
+    const setProps = on => { document.body.classList.toggle("props-open", on); propsToggle.setAttribute("aria-expanded", String(on)); };
+    propsToggle.addEventListener("click", () => { sound.click(); setProps(!document.body.classList.contains("props-open")); });
+    propButtons.forEach(button => button.addEventListener("click", () => setProps(false)));
+    document.addEventListener("pointerdown", event => { if (!event.target.closest(".props-card, #propsToggle")) setProps(false); });
     codexButton.addEventListener("click", openCodex);
     codexClose.addEventListener("click", closeCodex);
     codexModal.addEventListener("click", onCodexBackdrop);

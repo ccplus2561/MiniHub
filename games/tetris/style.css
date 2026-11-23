@@ -207,19 +207,20 @@ body.has-kbd { --kbd-h: 48px; padding-bottom: var(--kbd-h); }
   color: #0e141b; background: #a3adbd; }
 @media (max-width:760px) { #kbdBar { gap: 14px; padding: 0 12px; font-size: 14px; } .kbd-props { display: none; } }
 
-/* ── 手機版（直式）：整頁一屏。
-   左：棋盤（以高度為準盡量放大）；右：窄欄（主題／分數／下一個／道具／開始）；下：標準觸控按鍵
-   （左手：← ↓ →　右手：直落 ⇊、旋轉 ↻）── */
+.mini-row { display:contents; }
+.props-toggle { display:none; }
+
+/* ── 手機版（直式）：棋盤佔滿整個高度。
+   左：棋盤；右：窄欄（主題／分數／下一個／道具鈕／開始），底部放標準按鍵：旋轉 ↻ 最大，← → ↓ ⇊ ── */
 @media (max-width:760px) {
   html,body { height:100%; }
   body { min-height:0; overflow-x:hidden; overflow-y:auto; }
   .app-shell {
-    --padh: 54px;
-    --bw: min(calc((100dvh - var(--padh) - 32px) / 2), calc(100vw - 12px - 12px - 6px - 104px));
+    --bw: min(calc((100dvh - 26px) / 2), calc(100vw - 12px - 12px - 6px - 100px));
     width:calc(100% - 12px); max-width:none; height:100vh; height:100dvh; min-height:420px; margin:0 auto;
     padding:4px 0 max(6px,env(safe-area-inset-bottom));
-    display:grid; grid-template-columns:calc(var(--bw) + 12px) minmax(0,1fr); grid-template-rows:auto 1fr minmax(var(--padh),auto);
-    grid-template-areas:"board top" "board side" "pad pad"; gap:4px 6px; align-items:start;
+    display:grid; grid-template-columns:calc(var(--bw) + 12px) minmax(0,1fr); grid-template-rows:auto 1fr auto;
+    grid-template-areas:"board top" "board side" "board pad"; gap:4px 6px; align-items:start;
   }
   .game-layout { display:contents; }
   .topbar { grid-area:top; min-height:0; padding-right:32px; }
@@ -237,46 +238,47 @@ body.has-kbd { --kbd-h: 48px; padding-bottom: var(--kbd-h); }
   .overlay-card p { margin:6px 0 14px; font-size:14px; line-height:1.5; }
   .overlay-button { min-height:44px; font-size:16px; }
 
-  /* 右側窄欄：數字與道具都縮小，讓位給棋盤 */
-  .side-panel { grid-area:side; display:flex; flex-direction:column; gap:4px; min-width:0; min-height:0; height:100%; }
+  .side-panel { grid-area:side; position:relative; display:flex; flex-direction:column; gap:4px; min-width:0; min-height:0; height:100%; }
   .info-stack,.action-stack { display:contents; }
-  .score-card { padding:4px 8px 4px; border-radius:10px; box-shadow:none; }
+  .score-card { padding:3px 8px; border-radius:10px; box-shadow:none; }
   .section-label { font-size:10px; letter-spacing:0; }
-  .score-number { margin:1px 0 0; font-size:17px; letter-spacing:.01em; }
-  .next-card { padding:4px 8px 3px; border-radius:10px; box-shadow:none; }
-  .next-piece { --next-cell:10px; gap:2px; height:30px; }
-  .props-card { padding:5px; border-radius:10px; box-shadow:none; }
+  .score-number { margin:0; font-size:16px; letter-spacing:.01em; }
+  .next-card { padding:3px 8px; border-radius:10px; box-shadow:none; }
+  .next-piece { --next-cell:10px; gap:2px; height:28px; }
+  .mini-row { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+  .props-toggle,.codex-button { display:block; margin:0; min-height:30px; padding:0; font-size:12px; font-weight:700; border-radius:9px; box-shadow:none; color:#d0d7ea; border:1px solid var(--btn-line); background:var(--btn); cursor:pointer; }
+  body.props-open .props-toggle { color:#fff; border-color:#55c98b; }
+
+  /* 道具：預設收起；點「道具」才浮出，用完自動收起 */
+  .props-card { display:none; position:absolute; z-index:6; right:0; bottom:0; width:min(168px,calc(100vw - 24px)); padding:6px; border-radius:12px; background:#18203a; box-shadow:0 10px 28px rgba(0,0,0,.6); }
+  body.props-open .props-card { display:block; }
   .props-card .card-heading .section-label { display:none; }
   .props-card .card-heading { display:block; }
   .seg { display:flex; width:100%; }
-  .seg button { flex:1 1 0; min-width:0; padding:3px 2px; font-size:11px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .seg button { flex:1 1 0; min-width:0; padding:4px 2px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .seg button em { font-size:10px; margin-left:0; }
-  .props-grid { grid-template-columns:1fr; gap:4px; margin-top:4px; }
-  .prop-button { flex-direction:row; justify-content:space-between; align-items:center; gap:4px; min-height:30px; padding:3px 7px; border-radius:9px; }
+  .props-grid { grid-template-columns:1fr; gap:5px; margin-top:5px; }
+  .prop-button { flex-direction:row; justify-content:space-between; align-items:center; gap:4px; min-height:36px; padding:4px 10px; border-radius:9px; }
   .prop-key { display:none; }
-  .prop-name { font-size:13px; white-space:nowrap; }
-  .prop-cost { font-size:13px; }
-  .pay-note { margin-top:4px; font-size:10px; }
-  .codex-button { margin:0; min-height:28px; font-size:12px; border-radius:9px; box-shadow:none; }
-  .action-row { margin-top:auto; }
-  .primary-button { min-height:38px; font-size:14px; border-radius:10px; box-shadow:0 3px 10px rgba(74,99,234,.3); }
-  .play-symbol { margin-right:4px; font-size:10px; }
+  .prop-name { font-size:14px; white-space:nowrap; }
+  .prop-cost { font-size:14px; }
+  .pay-note { margin-top:4px; font-size:11px; }
+  .action-row { margin-top:0; }
+  .primary-button { min-height:36px; font-size:13px; border-radius:10px; box-shadow:0 3px 10px rgba(74,99,234,.3); }
+  .play-symbol { margin-right:3px; font-size:10px; }
 
-  /* 觸控按鍵：貼齊底部、拇指好按；左手移動、右手旋轉與直落 */
-  .mobile-controls { grid-area:pad; align-self:end; margin:0; gap:14px; }
-  .pad-move,.pad-act { gap:6px; grid-auto-rows:var(--padh); }
-  .mobile-controls button { font-size:24px; border-radius:14px; }
+  /* 觸控按鍵（右欄底部）：旋轉最大；← → 一排；↓ ⇊ 一排 */
+  .mobile-controls { grid-area:pad; align-self:end; flex-direction:column-reverse; margin:0; gap:5px; }
+  .pad-move,.pad-act { display:contents; }
+  .mobile-controls button { min-height:46px; font-size:22px; border-radius:12px; }
+  .mobile-controls { grid-template-columns:1fr 1fr; }
+  body.pad-on .mobile-controls { display:grid; grid-template-columns:1fr 1fr; }
+  .mobile-controls [data-action=rotate] { grid-column:1 / -1; grid-row:1; min-height:56px; font-size:28px; }
+  .mobile-controls [data-action=left] { grid-row:2; grid-column:1; }
+  .mobile-controls [data-action=right] { grid-row:2; grid-column:2; }
+  .mobile-controls [data-action=down] { grid-row:3; grid-column:1; }
+  .mobile-controls [data-action=drop] { grid-row:3; grid-column:2; }
 
-  /* 排行榜收合鈕：縮小並固定在右上角，不蓋到分數 */
   #side { top:4px !important; max-height:calc(100dvh - 60px) !important; }
   #sideTog { width:30px; height:30px; left:-30px; }
-}
-@media (max-width:360px) {
-  .app-shell { --bw: min(calc((100dvh - var(--padh) - 32px) / 2), calc(100vw - 12px - 12px - 6px - 96px)); }
-}
-@media (max-width:760px) and (max-height:470px) {
-  .next-piece { height:22px; }
-  .score-number { font-size:15px; }
-  .prop-button { min-height:26px; }
-  .props-grid { gap:3px; }
 }
