@@ -13,7 +13,7 @@
     "#mh-notice-root{position:fixed;top:var(--mh-notice-top,20px);right:20px;width:min(440px,calc(100vw - 24px));z-index:2147483000;display:flex;flex-direction:column;align-items:stretch;gap:10px;pointer-events:none;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif}" +
     ".mh-notice{pointer-events:auto;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;color:#16314a;background:#dff0fa;border:2.5px solid #1c7ec0;box-shadow:0 2px 4px rgba(0,0,0,.18),0 8px 18px rgba(0,0,0,.28),0 18px 40px rgba(0,0,0,.22);animation:mhNIn .3s cubic-bezier(.2,.9,.3,1.05) both}" +
     ".mh-notice.out{animation:mhNOut .45s ease both}" +
-    ".mh-notice-ic{flex:none;width:30px;height:30px;color:#16314a}" +
+    ".mh-notice-ic{flex:none;width:34px;height:34px;color:#16314a;filter:drop-shadow(0 1px 2px rgba(0,0,0,.28))}" +
     ".mh-notice-ic svg{width:100%;height:100%;display:block}" +
     ".mh-notice-tx{flex:1;min-width:0;text-align:left}" +
     ".mh-notice-ti{font-size:18px;font-weight:800;line-height:1.35}" +
@@ -23,7 +23,7 @@
     ".mh-notice-bt:focus-visible{outline:3px solid #16314a;outline-offset:2px}" +
     ".mh-notice.error{background:#fde8ea;border-color:#d4405a}.mh-notice.error .mh-notice-bt{background:#d4405a}" +
     ".mh-notice.success{background:#e1f6e8;border-color:#2c9a5b}.mh-notice.success .mh-notice-bt{background:#2c9a5b}" +
-    ".mh-notice.tip{background:#efe9ff;border-color:#7a5ad6}.mh-notice.tip .mh-notice-bt{background:#6a49c8}.mh-notice.tip .mh-notice-ic{color:#4b32a0}" +
+    ".mh-notice.tip{background:#efe9ff;border-color:#7a5ad6}.mh-notice.tip .mh-notice-bt{background:#6a49c8}" +
     ".mh-notice.warn{background:#fff3d6;border-color:#d99a1c}.mh-notice.warn .mh-notice-bt{background:#c98512}" +
     "@keyframes mhNIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}@keyframes mhNInM{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:none}}" +
     "@keyframes mhNOut{to{opacity:0;transform:translateX(24px)}}@keyframes mhNOutM{to{opacity:0;transform:translateY(-14px)}}" +
@@ -31,18 +31,24 @@
     "@media (max-width:600px){#mh-notice-root{right:auto;left:50%;transform:translateX(-50%);top:calc(var(--mh-notice-top-m,10px) + env(safe-area-inset-top))}.mh-notice{animation-name:mhNInM}.mh-notice.out{animation-name:mhNOutM}.mh-notice{padding:12px;gap:10px}.mh-notice-ti{font-size:17px}.mh-notice-ms{font-size:15px}.mh-notice-bt{min-width:94px;height:40px;padding:0 10px;font-size:16px}}" +
     "@media (prefers-reduced-motion:reduce){.mh-notice,.mh-notice.out{animation:none}}";
 
+  // 交通號誌風圖示：有外形（圓／方／三角）＋顏色＋白（或深色）符號
+  function disc(c, d, g) { return '<circle cx="12" cy="12" r="10.6" fill="' + c + '" stroke="' + d + '" stroke-width="1.2"/><circle cx="12" cy="12" r="8.6" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/>' + g; }
+  function sq(c, d, g) { return '<rect x="1.6" y="1.6" width="20.8" height="20.8" rx="5.2" fill="' + c + '" stroke="' + d + '" stroke-width="1.2"/><rect x="3.6" y="3.6" width="16.8" height="16.8" rx="3.4" fill="none" stroke="#fff" stroke-width=".9" opacity=".85"/>' + g; }
+  function wh(g) { return '<g stroke="#fff" stroke-width="2.4" fill="none">' + g + "</g>"; }
+  function sm(g, k) { return '<g transform="translate(12 12) scale(' + k + ') translate(-12 -12)" stroke="#fff" stroke-width="2.6" fill="none">' + g + "</g>"; }
   var ICON = {
-    info: '<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6"/><path d="M12 7.3v.1"/>',
-    success: '<circle cx="12" cy="12" r="9.5"/><path d="m7.8 12.4 3 3 5.6-6.4"/>',
-    warn: '<path d="M12 3.2 22 20.4H2z"/><path d="M12 10v5"/><path d="M12 17.6v.1"/>',
-    error: '<circle cx="12" cy="12" r="9.5"/><path d="m8.8 8.8 6.4 6.4M15.2 8.8l-6.4 6.4"/>',
-    offline: '<path d="M2.5 9a15 15 0 0 1 4-2.6M21.5 9a15 15 0 0 0-9.5-3.7M5.6 12.6a10 10 0 0 1 3-1.9M18.4 12.6a10 10 0 0 0-4-2.3M8.9 16.2a5 5 0 0 1 3.1-1.2 5 5 0 0 1 2.9 1"/><path d="M12 19.6v.1"/><path d="M3 3l18 18"/>',
-    tip: '<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/>',
-    bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.8 2H4.2z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/>',
-    welcome: '<circle cx="12" cy="12" r="9.5"/><path d="M8.2 14a4.6 4.6 0 0 0 7.6 0"/><path d="M8.8 9.4v.1M15.2 9.4v.1" stroke-width="3"/>',
-    logout: '<path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9.5"/>',
+    info: disc("#1c7ec0", "#0f5a8f", wh('<path d="M12 11v6"/><path d="M12 7.3v.1"/>')),
+    success: disc("#2c9a5b", "#1b6e3f", wh('<path d="m7.8 12.4 3 3 5.6-6.4"/>')),
+    warn: '<path d="M12 2.8 22 20.4H2z" fill="#ffc933" stroke="#16314a" stroke-width="1.9"/><g stroke="#16314a" stroke-width="2.4" fill="none"><path d="M12 9.6v5"/><path d="M12 17.4v.1"/></g>',
+    error: disc("#d4405a", "#a22640", wh('<path d="m8.6 8.6 6.8 6.8M15.4 8.6l-6.8 6.8"/>')),
+    offline: disc("#d4405a", "#a22640", sm('<path d="M2.5 9a15 15 0 0 1 4-2.6M21.5 9a15 15 0 0 0-9.5-3.7M5.6 12.6a10 10 0 0 1 3-1.9M18.4 12.6a10 10 0 0 0-4-2.3M8.9 16.2a5 5 0 0 1 3.1-1.2 5 5 0 0 1 2.9 1"/><path d="M12 19.6v.1"/><path d="M3 3l18 18"/>', .6)),
+    tip: disc("#6a49c8", "#4b32a0", sm('<path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/>', .6)),
+    bell: sq("#1c7ec0", "#0f5a8f", sm('<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.8 2H4.2z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/>', .62)),
+    welcome: disc("#ffc933", "#c98512", '<g stroke="#5a3b00" fill="none" stroke-linecap="round"><path d="M8.2 13.6a4.6 4.6 0 0 0 7.6 0" stroke-width="2"/><path d="M8.8 9.4v.1M15.2 9.4v.1" stroke-width="3"/></g>'),
+    logout: sq("#1c7ec0", "#0f5a8f", sm('<path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9.5"/>', .62)),
     mpoint: '<circle cx="12" cy="12" r="10" fill="#f5a623" stroke="#b36b00"/><circle cx="12" cy="12" r="7.2" fill="#ffd770" stroke="#d98a0c" stroke-width="1.2"/><path d="M8.3 15.6V8.6l3.7 4.2 3.7-4.2v7" stroke="#7a4300" stroke-width="2.2"/>'
   };
+
   var TITLE = { tip: "小提示", info: "提示", success: "完成", warn: "注意", error: "發生錯誤", offline: "連線失敗", bell: "通知", welcome: "歡迎", mpoint: "每日簽到", logout: "登出" };
   var TYPE_OF = { tip: "tip", offline: "error", bell: "info", welcome: "success", mpoint: "success", logout: "info" };
   var MAX = 3;
