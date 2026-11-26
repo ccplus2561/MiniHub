@@ -365,7 +365,7 @@
               <div id="delAccBox" hidden>
                 <div class="set-label">危險區域</div>
                 <div class="set-group">
-                  <div class="set-row"><div class="set-text"><b>刪除帳號</b><small>會清除所有資料（含 M 點、簽到），無法復原</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>刪除帳號</span></button></div>
+                  <div class="set-row"><div class="set-text"><b>停用帳號</b><small>停用後無法再登入；資料（含 M 點、簽到）會保留，不會刪除</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>停用帳號</span></button></div>
                 </div>
               </div>
             </div>
@@ -439,7 +439,7 @@
               <ul class="help-list">
                 <li><b>允許加入排行榜</b><span>開啟後才能參與排名；關閉則不會出現在排行榜</span></li>
                 <li><b>允許公開使用者名稱</b><span>開啟顯示完整名稱；關閉則部分字元以 * 取代</span></li>
-                <li><b>刪除帳號</b><span>清除所有資料（含 M 點與簽到紀錄）且無法復原，需重新註冊；任何登入管道皆可使用</span></li>
+                <li><b>停用帳號</b><span>停用後無法再登入，但不會刪除任何資料（含 M 點與簽到紀錄）；任何登入管道皆可使用，如需恢復請聯絡本站</span></li>
                 <li><b>同步與訪客</b><span>登入後設定會同步到帳號；訪客無法加入排行榜</span></li>
               </ul>
             </div>
@@ -499,7 +499,7 @@
             <li>M 點為本站內的虛擬點數（可透過註冊、每日簽到等方式取得），<b>僅限於本站使用</b>。</li>
             <li>M 點<b>無現金價值</b>，不是貨幣、有價證券或儲值金，<b>不可轉讓、買賣、贈與、出租，也不可兌換現金、實物或其他平台的點數／商品</b>。</li>
             <li>M 點餘額屬於個人帳號資訊，<b>不公開</b>，不會顯示在排行榜或其他玩家看得到的地方。</li>
-            <li>刪除帳號時，M 點與簽到紀錄會一併清除，無法復原、也不予補發。</li>
+            <li>帳號被停用（自行停用或因違規）後，M 點與簽到紀錄會保留但無法使用；本站不會因停用而刪除帳號資料。</li>
             <li>本站得因維護、系統調整或違規處理（如使用外掛、利用漏洞取得點數）而調整、扣除或重置 M 點，或調整其取得與使用方式。</li>
           </ul>
           <h4>4. 使用者責任</h4>
@@ -530,14 +530,14 @@
             <li><b>帳號紀錄</b>：註冊時間、上次登入時間、上次更名時間。</li>
             <li><b>設定</b>：「允許加入排行榜」「允許公開使用者名稱」的選擇，以及動畫效果、全螢幕、圖卡大小、語言、音效、操作等偏好。</li>
             <li><b>遊戲資料</b>：遊戲最高分與排行榜資料（分數、顯示名稱）。</li>
-            <li><b>M 點與簽到紀錄</b>：M 點餘額、連續簽到天數、累計簽到次數與最後簽到時間；僅供你本人查看，不會公開。</li>
+            <li><b>M 點與簽到紀錄</b>：M 點餘額、連續簽到天數與最後簽到時間；僅供你本人查看，不會公開。</li>
           </ul>
           <p>登入供應商提供的大頭貼僅在登入期間用於畫面顯示，不會另外儲存；本站無法取得、也不會儲存你的第三方帳號密碼；本站不自行蒐集 IP 位址、裝置資訊或進行廣告追蹤，但第三方服務（見第 4 點）可能記錄一般連線資訊。</p>
           <h4>2. 蒐集目的</h4>
           <p>識別玩家身分與管理帳號、顯示帳號資訊、提供排行榜與遊戲功能、維護系統安全與處理違規（如外掛、刷榜）、處理你的聯繫與申請。</p>
           <h4>3. 利用期間、地區、對象與方式</h4>
           <ul>
-            <li><b>期間</b>：自註冊起至你刪除帳號或本站終止服務為止；本站不會因長期未登入而自動刪除帳號，如欲刪除，可自行刪除或聯絡本站申請。被停用的帳號，其帳號與違規紀錄會保留，用於防止再次濫用、處理申訴及依法配合調查。</li>
+            <li><b>期間</b>：自註冊起至本站終止服務為止；本站不會因長期未登入而自動刪除帳號，也不提供自行刪除帳號，僅可自行停用；停用的帳號，其帳號與違規紀錄會保留，用於防止再次濫用、處理申訴及依法配合調查。</li>
             <li><b>地區</b>：資料儲存於 Google Firebase 雲端服務，所在地依 Google 的設定，可能位於中華民國境外；本站不會主動將資料傳輸至其他地區或第三方。</li>
             <li><b>對象</b>：本站開發者，以及提供雲端服務的第三方供應商。</li>
             <li><b>方式</b>：以電子或自動化方式處理與利用。</li>
@@ -557,7 +557,7 @@
           <h4>7. 你的權利與資料刪除</h4>
           <p>依個資法第 3 條，你可就本站保有的個人資料請求：查詢或閱覽、製給複製本、補充或更正、停止蒐集／處理／利用、刪除。</p>
           <ul>
-            <li><b>自行刪除</b>：於「設定 &gt; 隱私 &gt; 刪除帳號」可自行刪除帳號，使用者名稱、遊戲 UID、設定、M 點與簽到紀錄、遊戲成績與排行榜資料會從伺服器清除且無法復原，之後需重新註冊。第三方服務的備份可能於一定期間後才完全清除。</li>
+            <li><b>自行停用</b>：於「設定 &gt; 隱私 &gt; 停用帳號」可自行停用帳號，停用後無法再登入；帳號與玩家資料（使用者名稱、遊戲 UID、設定、M 點與簽到紀錄、遊戲成績與排行榜資料）會保留，不會自動刪除。</li>
             <li><b>其他申請</b>：請依第 10 點聯絡，我們會於核對身分後處理；查詢、閱覽、複製本於收到申請後 15 日內，補充、更正、停止或刪除於 30 日內處理並回覆（必要時依法延長並通知）。</li>
           </ul>
           <h4>8. 不提供資料的影響</h4>
@@ -774,22 +774,22 @@
     </div>
   </div>
 
-  <!-- 刪除帳號 -->
+  <!-- 停用帳號 -->
   <div class="modal" id="deleteModal" hidden>
     <div class="modal-box left" role="alertdialog" aria-modal="true" aria-labelledby="delTitle">
       <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg></div>
-      <h3 id="delTitle" class="c">刪除帳號</h3>
-      <p class="modal-text">刪除後，你的使用者名稱、遊戲 UID、<b>M 點與簽到紀錄</b>及所有玩家資料都會<b>永久清除、無法復原</b>，之後需要重新註冊。</p>
+      <h3 id="delTitle" class="c">停用帳號</h3>
+      <p class="modal-text">停用後，這個帳號<b>無法再登入</b>。你的使用者名稱、遊戲 UID、<b>M 點與簽到紀錄</b>及所有玩家資料都會<b>保留、不會刪除</b>；如需恢復請聯絡本站。</p>
       <p class="modal-text">為了安全，系統會請你再登入一次確認身分。</p>
       <div id="delPwBox" hidden>
         <label class="field-label" for="delPw">請輸入密碼確認身分</label>
         <div class="field"><input id="delPw" type="password" maxlength="64" autocomplete="current-password"></div>
       </div>
-      <label class="field-label" for="delInput">請輸入「刪除」以確認</label>
-      <div class="field"><input id="delInput" type="text" maxlength="4" autocomplete="off" placeholder="刪除" spellcheck="false"></div>
+      <label class="field-label" for="delInput">請輸入「停用」以確認</label>
+      <div class="field"><input id="delInput" type="text" maxlength="4" autocomplete="off" placeholder="停用" spellcheck="false"></div>
       <div class="modal-actions">
         <button class="btn-ghost" data-close>取消</button>
-        <button class="btn-primary sm danger" id="delOk" disabled><span>永久刪除</span></button>
+        <button class="btn-primary sm danger" id="delOk" disabled><span>停用帳號</span></button>
       </div>
     </div>
   </div>
@@ -896,7 +896,6 @@
         <div class="ci-sum">
           <div><small>我的 M 點</small><b><i class="mp-coin" aria-hidden="true"></i><span data-ci-only="todo done" data-ci-pts>0</span><span data-ci-only="guest">--</span></b></div>
           <div><small>連續簽到</small><b><span data-ci-only="todo done"><span data-ci-streak>0</span> 天</span><span data-ci-only="guest">--</span></b></div>
-          <div><small>累計簽到</small><b><span data-ci-only="todo done"><span data-ci-total>0</span> 次</span><span data-ci-only="guest">--</span></b></div>
         </div>
         <ol class="ci-week" id="ciWeek" aria-label="7 天簽到日曆">
             <li class="ci-day"><span class="ci-tag">今天</span><span class="ci-d">第 1 天</span><i class="mp-coin" aria-hidden="true"></i><b>+1.5</b><em class="ci-ck"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></em></li>

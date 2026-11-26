@@ -21,7 +21,7 @@ const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
 const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null, prefs: d.prefs && typeof d.prefs === "object" ? d.prefs : null,
-  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, totalCheckins: Number(d.totalCheckins) || 0, lastCheckinAt: ms(d.lastCheckinAt), rankBonus: d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {} });
+  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, disabled: d.disabled === true, lastCheckinAt: ms(d.lastCheckinAt), rankBonus: d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {} });
 
 // 「上次登入」：每次新的登入（分頁關閉後重開 / 登出後再登入）記錄一次；畫面顯示的是「這次登入之前」的那一次
 const SS = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return null; };
@@ -99,6 +99,13 @@ function boot() {
       const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "", account: isPwUser(user) ? (user.displayName || regName || "帳號") : "", provider: provKey(user) };
       try {
         const profile = await loadProfile(user.uid);
+        if (profile && profile.disabled) {   // 已停用的帳號：不讓進入，直接登出
+          SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
+          emit({ user: null });
+          try { await S.signOut(auth); } catch (e) {}
+          if (window.MiniHubToast) window.MiniHubToast("此帳號已停用，無法登入");
+          return;
+        }
         if (profile) profile.prevLoginAt = await recordLogin(user.uid, profile);
         emit({ user: u, profile });
       }
@@ -143,12 +150,12 @@ async function createProfile({ name, gameUid, publicName, joinRank, prefs }) {
     if ((await tx.get(uRef)).exists()) throw Object.assign(new Error("already"), { code: "already-has-profile" });
     if ((await tx.get(idRef)).exists()) throw Object.assign(new Error("taken"), { code: "uid-taken" });
     tx.set(idRef, { owner: user.uid });
-    tx.set(uRef, { name, gameUid, email: user.email, createdAt: F.serverTimestamp(), publicName: !!publicName, joinRank: !!joinRank, mPoints: SIGNUP_BONUS, streak: 0, totalCheckins: 0, ...(prefs ? { prefs } : {}) });
+    tx.set(uRef, { name, gameUid, email: user.email, createdAt: F.serverTimestamp(), publicName: !!publicName, joinRank: !!joinRank, mPoints: SIGNUP_BONUS, streak: 0, ...(prefs ? { prefs } : {}) });
   });
   // 交易已成功＝資料已建立；之後的讀取失敗（規則 / 網路）不應讓畫面顯示「建立失敗」
   try { await recordLogin(user.uid, null); } catch (e) {}          // 首次登入也記一筆，下次登入時才有「上次」可顯示
   try { return await loadProfile(user.uid); }
-  catch (e) { return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null, publicName: !!publicName, joinRank: !!joinRank, prefs: prefs || null, prevLoginAt: null, mPoints: SIGNUP_BONUS, streak: 0, totalCheckins: 0, lastCheckinAt: null }; }
+  catch (e) { return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null, publicName: !!publicName, joinRank: !!joinRank, prefs: prefs || null, prevLoginAt: null, mPoints: SIGNUP_BONUS, streak: 0, lastCheckinAt: null }; }
 }
 
 // 變更使用者名稱：14 天限制由 Firestore 規則強制，前端只負責顯示
@@ -224,13 +231,13 @@ async function checkin() {
     const claimed = d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {};
     const wins = firsts.filter(g => claimed[g] !== today);
     if (signed && !wins.length) throw bad("already-checked-in");
-    let streak = Number(d.streak) || 0, total = Number(d.totalCheckins) || 0, reward = 0;
+    let streak = Number(d.streak) || 0, reward = 0;
     if (!signed) {
       streak = last !== null && TW_DAY(last) === today - 1 && streak < STREAK_MAX ? streak + 1 : 1;   // 連續滿 7 天後，隔天重新從 1 開始
-      total += 1; reward = 1 + streak * 0.5;
+      reward = 1 + streak * 0.5;
     }
     const bonus = wins.length * RANK_BONUS;
-    const r = { mPoints: (Number(d.mPoints) || 0) + reward + bonus, streak, totalCheckins: total };
+    const r = { mPoints: (Number(d.mPoints) || 0) + reward + bonus, streak };
     const upd = { ...r };
     if (!signed) upd.lastCheckinAt = F.serverTimestamp();
     if (wins.length) { const nb = { ...claimed }; wins.forEach(g => { nb[g] = today; }); upd.rankBonus = nb; }
@@ -270,8 +277,9 @@ async function changePassword(oldPw, newPw) {
   await F.updatePassword(user, newPw);
 }
 
-// 刪除帳號：先重新驗證（刪除帳號需要「最近登入」）→ 刪 Firestore 玩家資料（users + uids）→ 刪登入帳號
-async function deleteAccount(pw) {
+// 停用帳號：先重新驗證 → 在 users/{uid} 標記 disabled（不刪除任何玩家資料、成績、UID 與登入帳號）→ 登出。
+// 之後這個帳號無法再登入；要恢復請由管理員把 disabled 改回 false。
+async function deactivateAccount(pw) {
   const user = F && F.auth.currentUser;
   if (!user) throw Object.assign(new Error("not-signed-in"), { code: "not-signed-in" });
   if (isPwUser(user)) {   // 帳號密碼：用密碼重新驗證
@@ -282,27 +290,11 @@ async function deleteAccount(pw) {
     await F.reauthenticateWithPopup(user, makeProvider(F, pid === "github.com" ? "github" : "google"));   // 需在點擊後立即呼叫，才不會被瀏覽器擋彈窗
   }
   if (SAVE_PROFILE) {
-    bump(1, 6);
-    const snap = await F.getDoc(F.doc(F.db, "users", user.uid));
-    const batch = F.writeBatch(F.db);
-    if (snap.exists() && snap.data().gameUid) batch.delete(F.doc(F.db, "uids", snap.data().gameUid));
-    batch.delete(F.doc(F.db, "users", user.uid));
-    // 一併清掉所有「有排行榜（games.js 宣告 board）」的遊戲成績 / 排行榜（含各模式）
-    (window.GAMES || []).filter(x => x.board).forEach(x => (Array.isArray(x.board.modes) && x.board.modes.length ? x.board.modes : [""]).forEach(m => {
-      if (m && !MODE_OK.test(m)) return;
-      batch.delete(F.doc(colB(x.id, m), user.uid)); batch.delete(F.doc(colR(x.id, m), user.uid));
-    }));
-    await batch.commit();
-    // 雲端存檔（盡力刪除；規則尚未開放時略過，不影響刪除帳號）
-    for (const x of (window.GAMES || []).filter(x => x.tags && x.tags.cloud)) { try { await F.deleteDoc(F.doc(F.db, "games", x.id, "saves", user.uid)); } catch (e) {} }
+    bump(0, 1);
+    await F.updateDoc(F.doc(F.db, "users", user.uid), { disabled: true, disabledAt: F.serverTimestamp() });
   }
   SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
-  // 資料已先清除；刪登入帳號失敗（網路等）時重試一次，仍失敗就丟出明確錯誤，讓畫面提示再按一次
-  try { await F.deleteUser(user); }
-  catch (e) {
-    try { await F.deleteUser(user); }
-    catch (e2) { throw Object.assign(new Error("account-delete-failed"), { code: "account-delete-failed" }); }
-  }   // 之後 onAuthStateChanged 會回報已登出
+  try { await F.signOut(F.auth); } catch (e) {}   // 之後 onAuthStateChanged 會回報已登出
 }
 
 // 伺服器狀態檢查：向 Firestore 讀一次；只要伺服器有回應（含被規則拒絕）就代表連得上。未登入不連線。
@@ -692,7 +684,7 @@ window.MiniHubAuth = {
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
-  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount, checkin, spendM,
+  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deactivateAccount, checkin, spendM,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await F.getDoc(F.doc(F.db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(F.auth.currentUser.uid)

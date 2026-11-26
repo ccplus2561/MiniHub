@@ -1,5 +1,5 @@
 /* 每日簽到：以台灣時間（UTC+8）的日曆日為準，每天 00:00 換日。
-   資料（存在 users/{uid}）：mPoints 目前 M 點 / streak 連續簽到天數 / totalCheckins 累計簽到次數 / lastCheckinAt 最後簽到時間（伺服器時間）
+   資料（存在 users/{uid}）：mPoints 目前 M 點 / streak 連續簽到天數（中斷就重算） / lastCheckinAt 最後簽到時間（伺服器時間）
    規則：每日簽到 +1 M，隔天接著簽 streak + 1，中斷就從 1 重算；連續天數 × 0.5（保留小數）為額外點數。
    連續天數最多 7 天：第 7 天之後的隔天（第 8 天）重新從第 1 天計算。
    註冊帳號首次登入 +10 M 在 firebase.js 的 createProfile()。
@@ -48,7 +48,6 @@
     var fill = function (sel, val) { $$(sel).forEach(function (e) { e.textContent = val; }); };
     fill("[data-ci-pts]", st.mPoints.toLocaleString("en-US", { maximumFractionDigits: 1 }));
     fill("[data-ci-streak]", v.streak);
-    fill("[data-ci-total]", st.total);
     fill("[data-ci-reward]", fmt(v.reward));
     var base = 1;                                              // 7 天一輪，永遠是第 1～7 天
     $$("#ciWeek .ci-day").forEach(function (li, i) {
@@ -89,7 +88,7 @@
   function load() {
     var a = window.MiniHubAccount || {};
     st.signedIn = !!a.uid;
-    st.mPoints = a.mPoints || 0; st.streak = a.streak || 0; st.total = a.totalCheckins || 0; st.last = a.lastCheckinAt || null; st.rb = a.rankBonus || {};
+    st.mPoints = a.mPoints || 0; st.streak = a.streak || 0; st.last = a.lastCheckinAt || null; st.rb = a.rankBonus || {};
     render();
     // 登入後自動簽到（含剛註冊完的首次登入）；登出後 autoUid 清除，下次登入會再判斷一次
     if (!st.signedIn) { autoUid = null; return; }
@@ -102,8 +101,8 @@
     if (busy || !window.MiniHubAuth || !(mode === "todo" || (auto && mode === "done"))) return;   // 已簽到時只有自動領取會嘗試補領排行榜加碼
     busy = true; $$("[data-ci-sign]").forEach(function (b) { b.disabled = true; });
     MiniHubAuth.checkin().then(function (r) {
-      st.mPoints = r.mPoints; st.streak = r.streak; st.total = r.totalCheckins; st.last = r.lastCheckinAt; st.rb = r.rankBonus || st.rb;
-      var a = window.MiniHubAccount; if (a) { a.mPoints = r.mPoints; a.streak = r.streak; a.totalCheckins = r.totalCheckins; a.lastCheckinAt = r.lastCheckinAt; a.rankBonus = st.rb; }
+      st.mPoints = r.mPoints; st.streak = r.streak; st.last = r.lastCheckinAt; st.rb = r.rankBonus || st.rb;
+      var a = window.MiniHubAccount; if (a) { a.mPoints = r.mPoints; a.streak = r.streak; a.lastCheckinAt = r.lastCheckinAt; a.rankBonus = st.rb; }
       render(); sfx("confirm");
       var names = (r.bonusGames || []).map(function (id) { var g = (window.GAMES || []).filter(function (x) { return x.id === id; })[0]; return g ? g.title : id; });
       var bonusTxt = r.bonus ? "排行榜第 1 名加碼 +" + fmt(r.bonus) + " M（" + names.join("、") + "）" : "";
@@ -113,7 +112,7 @@
       if (c === "already-checked-in" && auto && view().mode === "done") return;   // 自動領取：今天已簽到、也沒有可補領的加碼 → 不打擾
       if (c === "already-checked-in" || c === "permission-denied") {   // 其他裝置已簽到，或本機時間與伺服器差太多 → 重新讀取最新資料
         return MiniHubAuth.loadProfile().then(function (p) {
-          if (p) { st.mPoints = p.mPoints; st.streak = p.streak; st.total = p.totalCheckins; st.last = p.lastCheckinAt; st.rb = p.rankBonus || {}; }
+          if (p) { st.mPoints = p.mPoints; st.streak = p.streak; st.last = p.lastCheckinAt; st.rb = p.rankBonus || {}; }
           render(); if (auto && view().mode === "done") return; toast(view().mode === "done" ? "今天已經簽到過了" : "簽到失敗，請確認裝置時間正確後再試");
         }, function () { toast("簽到失敗，請稍後再試"); });
       }
