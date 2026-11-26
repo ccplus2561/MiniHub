@@ -473,7 +473,6 @@ code { padding: 2px 8px; border-radius: 6px; background: var(--a2); color: var(-
 .no-anim *, .no-anim *::before, .no-anim *::after { animation: none !important; transition-duration: .01s !important; }
 
 /* ---------- Toast ---------- */
-:root { --mh-notice-bottom: 70px; }   /* 提示框位置（notice.js；z-index 高於視窗） */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition-duration: .01s !important; }
@@ -868,7 +867,6 @@ body.m .player-title { font-size: 17px; visibility: hidden; }   /* 手機版不�
 /* 手機版：保留頂部列與底部分頁列 */
 body.m .player.with-rail { left: 0; top: 54px; bottom: calc(62px + env(safe-area-inset-bottom)); }
 body.m .player.with-rail:fullscreen { top: 0; bottom: 0; }
-body.m { --mh-notice-bottom: calc(78px + env(safe-area-inset-bottom)); }
 
 .switch:disabled { opacity: .5; cursor: not-allowed; transform: none !important; }
 .m-only { display: none !important; }

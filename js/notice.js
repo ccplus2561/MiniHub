@@ -8,8 +8,8 @@
   if (window.MiniHubNotice) return;
 
   var CSS =
-    "#mh-notice-root{position:fixed;left:0;right:0;bottom:var(--mh-notice-bottom,28px);z-index:2147483000;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px;pointer-events:none;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif}" +
-    ".mh-notice{pointer-events:auto;box-sizing:border-box;width:min(560px,100%);display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;color:#16314a;background:#dff0fa;border:2.5px solid #1c7ec0;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:mhNIn .28s cubic-bezier(.2,.9,.3,1.1) both}" +
+    "#mh-notice-root{position:fixed;top:var(--mh-notice-top,20px);right:20px;width:min(440px,calc(100vw - 24px));z-index:2147483000;display:flex;flex-direction:column;align-items:stretch;gap:10px;pointer-events:none;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif}" +
+    ".mh-notice{pointer-events:auto;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;color:#16314a;background:#dff0fa;border:2.5px solid #1c7ec0;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:mhNIn .3s cubic-bezier(.2,.9,.3,1.05) both}" +
     ".mh-notice.out{animation:mhNOut .22s ease both}" +
     ".mh-notice-ic{flex:none;width:30px;height:30px;color:#16314a}" +
     ".mh-notice-ic svg{width:100%;height:100%;display:block}" +
@@ -22,9 +22,10 @@
     ".mh-notice.error{background:#fde8ea;border-color:#d4405a}.mh-notice.error .mh-notice-bt{background:#d4405a}" +
     ".mh-notice.success{background:#e1f6e8;border-color:#2c9a5b}.mh-notice.success .mh-notice-bt{background:#2c9a5b}" +
     ".mh-notice.warn{background:#fff3d6;border-color:#d99a1c}.mh-notice.warn .mh-notice-bt{background:#c98512}" +
-    "@keyframes mhNIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}" +
-    "@keyframes mhNOut{to{opacity:0;transform:translateY(10px) scale(.97)}}" +
-    "@media (max-width:600px){.mh-notice{padding:12px;gap:10px}.mh-notice-ti{font-size:17px}.mh-notice-ms{font-size:15px}.mh-notice-bt{min-width:64px;height:40px;padding:0 12px;font-size:16px}}" +
+    "@keyframes mhNIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}@keyframes mhNInM{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:none}}" +
+    "@keyframes mhNOut{to{opacity:0;transform:translateX(40px)}}@keyframes mhNOutM{to{opacity:0;transform:translateY(-24px)}}" +
+    "body.m #mh-notice-root{right:auto;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top))}body.m .mh-notice{animation-name:mhNInM}body.m .mh-notice.out{animation-name:mhNOutM}" +
+    "@media (max-width:600px){#mh-notice-root{right:auto;left:50%;transform:translateX(-50%);top:calc(var(--mh-notice-top-m,10px) + env(safe-area-inset-top))}.mh-notice{animation-name:mhNInM}.mh-notice.out{animation-name:mhNOutM}.mh-notice{padding:12px;gap:10px}.mh-notice-ti{font-size:17px}.mh-notice-ms{font-size:15px}.mh-notice-bt{min-width:64px;height:40px;padding:0 12px;font-size:16px}}" +
     "@media (prefers-reduced-motion:reduce){.mh-notice,.mh-notice.out{animation:none}}";
 
   var ICON = {
@@ -76,7 +77,7 @@
     // 相同內容不重複疊加
     var old = r.querySelectorAll(".mh-notice");
     for (var i = 0; i < old.length; i++) if (old[i]._msg === msg) old[i]._close(true);
-    while (r.children.length >= MAX) r.firstChild._close(true);
+    while (r.children.length >= MAX) r.lastChild._close(true);
 
     var box = document.createElement("div");
     box.className = "mh-notice " + type; box._msg = msg;
@@ -101,7 +102,8 @@
     box.addEventListener("mouseleave", start);
     box.addEventListener("focusin", function () { clearTimeout(timer); });
     box.addEventListener("focusout", start);
-    r.appendChild(box); start();
+    r.insertBefore(box, r.firstChild); start();   // 新訊息在最上面，舊的往下
+
     return close;
   }
 
