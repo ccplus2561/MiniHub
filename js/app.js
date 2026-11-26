@@ -758,7 +758,7 @@
     if (!signedIn) { if (window.MiniHubAuth) MiniHubAuth.preload(); $("#loginAgreeChk").checked = false; return openModal("loginModal"); }   // 按登入才開始載入 Firebase
     openModal("logoutModal");
   });
-  /* ---------- 刪除帳號（設定 > 隱私）：先排定刪除並登出；保留期限內登入會恢復，逾期才真正刪除 ---------- */
+  /* ---------- 刪除帳號（設定 > 隱私）：重新驗證後立即刪除帳號與所有資料 ---------- */
   let deleting = false;
   const delOk = $("#delOk"), delInput = $("#delInput"), delPw = $("#delPw");
   const delReady = () => !deleting && delInput.value.trim() === "刪除" && (!curAccount || !!delPw.value);   // 帳號密碼登入者還需輸入密碼
@@ -776,9 +776,9 @@
     if (delOk.disabled || deleting || !window.MiniHubAuth) return;
     deleting = true; delOk.disabled = true; $("span", delOk).textContent = "處理中…";
     try {
-      await MiniHubAuth.requestDeletion(delPw.value);
+      await MiniHubAuth.deleteAccount(delPw.value);
       closeModal("deleteModal");
-      toast("帳號已排定刪除，" + MiniHubAuth.graceDays + " 天內登入可恢復");
+      toast("帳號已刪除");
     } catch (e) {
       const c = e.code || "";
       if (/popup-closed|cancelled-popup|popup-blocked/.test(c)) toast("未完成身分驗證，帳號沒有被刪除");

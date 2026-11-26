@@ -273,7 +273,6 @@
   document.addEventListener("minihub:account", () => {
     const a = window.MiniHubAccount;
     $("#delAccBox").hidden = !a.uid || a.banned === true;   // 只有登入且非違規帳號才顯示「刪除帳號」
-    $$("[data-grace]").forEach(el => { el.textContent = window.MiniHubDeleteDays || 30; });
     const newLogin = a.uid !== prefUid; prefUid = a.uid;   // 改名 / 簽到等帳號更新不可再用舊的伺服器資料蓋掉剛改的設定
     if (!a.uid) {   // 登出 / 訪客：回到預設，不留下上一位玩家的設定
       prefs.publicName = DEFAULTS.publicName; prefs.joinRank = DEFAULTS.joinRank;

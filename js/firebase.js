@@ -5,10 +5,6 @@
 // 總開關：false = 不寫入 / 不讀取 Firestore（每次登入都視為首次登入）
 const SAVE_PROFILE = true;
 
-// 使用者按「刪除帳號」後的保留天數：期間內登入會自動恢復；超過期限後再登入，系統才會真正刪除資料
-const DELETE_GRACE_DAYS = 30;
-window.MiniHubDeleteDays = DELETE_GRACE_DAYS;
-
 const firebaseConfig = {
   apiKey: "AIzaSyD_-2fhVRM-cDlCP8a6NweD99Gkwk5iaz8",
   authDomain: "minihub-2f1d9.firebaseapp.com",
@@ -25,7 +21,7 @@ const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
 const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null, prefs: d.prefs && typeof d.prefs === "object" ? d.prefs : null,
-  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, disabled: d.disabled === true, banned: d.banned === true, deleteRequestedAt: ms(d.deleteRequestedAt), lastCheckinAt: ms(d.lastCheckinAt), rankBonus: d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {} });
+  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, disabled: d.disabled === true, banned: d.banned === true, lastCheckinAt: ms(d.lastCheckinAt), rankBonus: d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {} });
 
 // 「上次登入」：每次新的登入（分頁關閉後重開 / 登出後再登入）記錄一次；畫面顯示的是「這次登入之前」的那一次
 const SS = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return null; };
@@ -117,22 +113,8 @@ function boot() {
           if (window.MiniHubToast) window.MiniHubToast("此帳號已停用，無法登入");
           return;
         }
-        let restored = false;
-        if (profile && profile.deleteRequestedAt) {   // 已申請刪除
-          if (Date.now() >= profile.deleteRequestedAt + DELETE_GRACE_DAYS * 864e5) {   // 超過保留期限：真正刪除
-            const done = await finalizeDeletion(user, profile);
-            SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
-            emit({ user: null });
-            try { await S.signOut(auth); } catch (e) {}
-            if (window.MiniHubToast) window.MiniHubToast(done ? "此帳號已超過保留期限，帳號與資料已刪除" : "帳號刪除失敗，請稍後再登入一次");
-            return;
-          }
-          await restoreAccount(user);   // 期限內登入：取消刪除並恢復排行榜
-          profile.deleteRequestedAt = null; restored = true;
-        }
         if (profile) profile.prevLoginAt = await recordLogin(user.uid, profile);
         emit({ user: u, profile });
-        if (restored && window.MiniHubToast) window.MiniHubToast("帳號已恢復，刪除已取消");
       }
       catch (error) { emit({ user: u, error }); }
     });
@@ -305,14 +287,15 @@ async function changePassword(oldPw, newPw) {
 // 每款有排行榜 / 雲端存檔的遊戲各模式：fn(game, mode) 逐一呼叫
 const eachBoard = fn => (window.GAMES || []).filter(x => x.board).forEach(x => (Array.isArray(x.board.modes) && x.board.modes.length ? x.board.modes : [""]).forEach(m => { if (m && !MODE_OK.test(m)) return; fn(x.id, m); }));
 
-// 刪除帳號（申請）：先重新驗證 → 標記 deleteRequestedAt 並移出排行榜 → 登出。
-// 保留期限內重新登入會自動恢復；超過期限後再登入才會真正刪除。違規（banned）帳號不可刪除。
-async function requestDeletion(pw) {
+// 刪除帳號：先重新驗證 → 立即刪除玩家資料、個人最高、排行榜、雲端存檔、UID 與登入帳號 → 登出。違規（banned）帳號不可刪除。
+async function deleteAccount(pw) {
   const user = F && F.auth.currentUser;
   if (!user) throw Object.assign(new Error("not-signed-in"), { code: "not-signed-in" });
+  let gameUid = "";
   if (SAVE_PROFILE) {
-    const cur = await F.getDoc(F.doc(F.db, "users", user.uid)); bump(1, 0);
-    if (cur.exists() && cur.data().banned === true) throw bad("account-banned");
+    bump(1, 0);
+    const cur = await F.getDoc(F.doc(F.db, "users", user.uid));
+    if (cur.exists()) { if (cur.data().banned === true) throw bad("account-banned"); gameUid = String(cur.data().gameUid || ""); }
   }
   if (isPwUser(user)) {   // 帳號密碼：用密碼重新驗證
     if (!pw) throw bad("password-required");
@@ -323,46 +306,16 @@ async function requestDeletion(pw) {
   }
   if (SAVE_PROFILE) {
     const batch = F.writeBatch(F.db);
-    batch.update(F.doc(F.db, "users", user.uid), { deleteRequestedAt: F.serverTimestamp() });
     let n = 1;
-    eachBoard((g, m) => { batch.delete(F.doc(colR(g, m), user.uid)); n++; });   // 只移除排行榜副本；個人最高 bests 保留，恢復時會自動補回
+    eachBoard((g, m) => { batch.delete(F.doc(colB(g, m), user.uid)); batch.delete(F.doc(colR(g, m), user.uid)); n += 2; });
+    (window.GAMES || []).filter(x => x.tags && x.tags.cloud).forEach(x => { batch.delete(F.doc(F.db, "games", x.id, "saves", user.uid)); n++; });
+    if (gameUid) { batch.delete(F.doc(F.db, "uids", gameUid)); n++; }
+    batch.delete(F.doc(F.db, "users", user.uid));
     bump(0, n);
     await batch.commit();
   }
   SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
-  try { await F.signOut(F.auth); } catch (e) {}
-}
-
-// 保留期限內登入：清除刪除標記，並依個人最高（inRank = true）把排行榜補回來
-async function restoreAccount(user) {
-  const batch = F.writeBatch(F.db), jobs = [];
-  batch.update(F.doc(F.db, "users", user.uid), { deleteRequestedAt: F.deleteField() });
-  let n = 1;
-  eachBoard((g, m) => jobs.push(F.getDoc(F.doc(colB(g, m), user.uid)).then(s => {
-    bump(1, 0);
-    const d = s.exists() ? s.data() : null;
-    if (d && d.inRank && Number(d.score) > 0) {
-      const ex = d.extra && typeof d.extra === "object" ? { extra: d.extra } : {};
-      batch.set(F.doc(colR(g, m), user.uid), { score: Number(d.score), name: String(d.name || "").slice(0, 40), ...ex, updatedAt: F.serverTimestamp() }); n++;
-    }
-  }).catch(() => {})));
-  await Promise.all(jobs);
-  bump(0, n);
-  await batch.commit();
-}
-
-// 超過保留期限：刪除玩家資料、個人最高、排行榜、雲端存檔、UID 與登入帳號。成功回傳 true
-async function finalizeDeletion(user, profile) {
-  try {
-    const batch = F.writeBatch(F.db);
-    eachBoard((g, m) => { batch.delete(F.doc(colB(g, m), user.uid)); batch.delete(F.doc(colR(g, m), user.uid)); });
-    (window.GAMES || []).filter(x => x.tags && x.tags.cloud).forEach(x => batch.delete(F.doc(F.db, "games", x.id, "saves", user.uid)));
-    if (profile && profile.gameUid) batch.delete(F.doc(F.db, "uids", profile.gameUid));
-    batch.delete(F.doc(F.db, "users", user.uid));
-    await batch.commit();
-  } catch (e) { return false; }   // 規則不允許 / 網路失敗：資料保留，下次登入再試
-  try { await F.deleteUser(user); } catch (e) {}
-  return true;
+  try { await F.deleteUser(user); } catch (e) { try { await F.signOut(F.auth); } catch (e2) {} throw e; }   // 刪除登入帳號；成功後會自動登出
 }
 
 // 伺服器狀態檢查：向 Firestore 讀一次；只要伺服器有回應（含被規則拒絕）就代表連得上。未登入不連線。
@@ -752,8 +705,7 @@ window.MiniHubAuth = {
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
-  graceDays: DELETE_GRACE_DAYS,
-  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, requestDeletion, checkin, spendM,
+  createProfile, changePassword, updateName, setPublicName, setJoinRank, savePrefs, deleteAccount, checkin, spendM,
   // 預先檢查 UID 是否已被使用（僅供顯示用；真正的唯一性由交易與 Firestore 規則保證）
   isUidFree: async g => { if (!SAVE_PROFILE) return true; bump(1, 0); return !(await F.getDoc(F.doc(F.db, "uids", g))).exists(); },
   loadProfile: () => loadProfile(F.auth.currentUser.uid)
