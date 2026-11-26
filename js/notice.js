@@ -2,30 +2,31 @@
  * MiniHub 共用提示框（大廳與所有遊戲共用）
  *   MiniHubNotice("訊息")                              一般提示
  *   MiniHubNotice("訊息", { type, title, duration })   type: info | success | warn | error
- * 樣式：圖示 + 標題/文字 + 「了解」按鈕；數秒後自動消失（滑鼠移上去或聚焦時暫停計時）。
+ * 樣式：圖示 + 短標題/簡單說明 + 「了解 5s」按鈕；倒數到 0s 自動淡出，點按鈕立即關閉。
+ * 標題與內容由 REWRITE 統一改寫成簡短白話（原始訊息仍會印在 console.debug 供除錯）。
  */
 (function () {
   if (window.MiniHubNotice) return;
 
   var CSS =
     "#mh-notice-root{position:fixed;top:var(--mh-notice-top,20px);right:20px;width:min(440px,calc(100vw - 24px));z-index:2147483000;display:flex;flex-direction:column;align-items:stretch;gap:10px;pointer-events:none;font-family:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif}" +
-    ".mh-notice{pointer-events:auto;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;color:#16314a;background:#dff0fa;border:2.5px solid #1c7ec0;box-shadow:0 10px 30px rgba(0,0,0,.35);animation:mhNIn .3s cubic-bezier(.2,.9,.3,1.05) both}" +
-    ".mh-notice.out{animation:mhNOut .22s ease both}" +
+    ".mh-notice{pointer-events:auto;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:16px;color:#16314a;background:#dff0fa;border:2.5px solid #1c7ec0;box-shadow:0 2px 4px rgba(0,0,0,.18),0 8px 18px rgba(0,0,0,.28),0 18px 40px rgba(0,0,0,.22);animation:mhNIn .3s cubic-bezier(.2,.9,.3,1.05) both}" +
+    ".mh-notice.out{animation:mhNOut .45s ease both}" +
     ".mh-notice-ic{flex:none;width:30px;height:30px;color:#16314a}" +
     ".mh-notice-ic svg{width:100%;height:100%;display:block}" +
     ".mh-notice-tx{flex:1;min-width:0;text-align:left}" +
     ".mh-notice-ti{font-size:18px;font-weight:800;line-height:1.35}" +
     ".mh-notice-ms{margin-top:2px;font-size:16px;font-weight:500;line-height:1.5;word-break:break-word}" +
-    ".mh-notice-bt{flex:none;min-width:72px;height:42px;padding:0 16px;border:0;border-radius:10px;font:inherit;font-size:17px;font-weight:700;color:#fff;background:#1c7ec0;cursor:pointer;transition:filter .15s,transform .15s}" +
-    ".mh-notice-bt:hover{filter:brightness(1.1)}.mh-notice-bt:active{transform:scale(.96)}" +
+    ".mh-notice-bt{flex:none;min-width:92px;white-space:nowrap;font-variant-numeric:tabular-nums;height:42px;padding:0 16px;border:0;border-radius:10px;font:inherit;font-size:17px;font-weight:700;color:#fff;background:#1c7ec0;cursor:pointer;transition:filter .15s,transform .15s}" +
+    ".mh-notice-bt small{font-size:.85em;font-weight:600;opacity:.9;margin-left:4px}.mh-notice-bt:hover{filter:brightness(1.1)}.mh-notice-bt:active{transform:scale(.96)}" +
     ".mh-notice-bt:focus-visible{outline:3px solid #16314a;outline-offset:2px}" +
     ".mh-notice.error{background:#fde8ea;border-color:#d4405a}.mh-notice.error .mh-notice-bt{background:#d4405a}" +
     ".mh-notice.success{background:#e1f6e8;border-color:#2c9a5b}.mh-notice.success .mh-notice-bt{background:#2c9a5b}" +
     ".mh-notice.warn{background:#fff3d6;border-color:#d99a1c}.mh-notice.warn .mh-notice-bt{background:#c98512}" +
     "@keyframes mhNIn{from{opacity:0;transform:translateX(60px)}to{opacity:1;transform:none}}@keyframes mhNInM{from{opacity:0;transform:translateY(-40px)}to{opacity:1;transform:none}}" +
-    "@keyframes mhNOut{to{opacity:0;transform:translateX(40px)}}@keyframes mhNOutM{to{opacity:0;transform:translateY(-24px)}}" +
+    "@keyframes mhNOut{to{opacity:0;transform:translateX(24px)}}@keyframes mhNOutM{to{opacity:0;transform:translateY(-14px)}}" +
     "body.m #mh-notice-root{right:auto;left:50%;transform:translateX(-50%);top:calc(10px + env(safe-area-inset-top))}body.m .mh-notice{animation-name:mhNInM}body.m .mh-notice.out{animation-name:mhNOutM}" +
-    "@media (max-width:600px){#mh-notice-root{right:auto;left:50%;transform:translateX(-50%);top:calc(var(--mh-notice-top-m,10px) + env(safe-area-inset-top))}.mh-notice{animation-name:mhNInM}.mh-notice.out{animation-name:mhNOutM}.mh-notice{padding:12px;gap:10px}.mh-notice-ti{font-size:17px}.mh-notice-ms{font-size:15px}.mh-notice-bt{min-width:64px;height:40px;padding:0 12px;font-size:16px}}" +
+    "@media (max-width:600px){#mh-notice-root{right:auto;left:50%;transform:translateX(-50%);top:calc(var(--mh-notice-top-m,10px) + env(safe-area-inset-top))}.mh-notice{animation-name:mhNInM}.mh-notice.out{animation-name:mhNOutM}.mh-notice{padding:12px;gap:10px}.mh-notice-ti{font-size:17px}.mh-notice-ms{font-size:15px}.mh-notice-bt{min-width:84px;height:40px;padding:0 10px;font-size:16px}}" +
     "@media (prefers-reduced-motion:reduce){.mh-notice,.mh-notice.out{animation:none}}";
 
   var ICON = {
@@ -42,6 +43,96 @@
   var TITLE = { info: "提示", success: "完成", warn: "注意", error: "發生錯誤", offline: "連線失敗", bell: "通知", welcome: "歡迎", mpoint: "每日簽到", logout: "登出" };
   var TYPE_OF = { offline: "error", bell: "info", welcome: "success", mpoint: "success", logout: "info" };
   var MAX = 3;
+
+  // 標題 ≤ 5 字抓重點；內容一句話、白話。[比對, 標題, 內容（可用 $1 $2）]
+  var REWRITE = [
+    [/^歡迎回來，(.+)！$/, "歡迎回來", "$1，祝你玩得開心！"],
+    [/^歡迎，(.+)！首次登入 \+(\d+) M 點$/, "註冊成功", "歡迎 $1！送你 $2 M 點。"],
+    [/^簽到成功！\+(\S+) M 點(?:（連續第 (\d+) 天）)?(?:，(.+))?$/, "簽到成功", function (m) { return "獲得 +" + m[1] + " M 點" + (m[2] ? "，連續 " + m[2] + " 天" : "") + (m[3] ? "。" + m[3] : "。"); }],
+    [/^今天已經簽到過了$/, "已簽到", "今天領過了，明天再來！"],
+    [/^簽到失敗，請確認裝置時間/, "簽到失敗", "請確認裝置時間後再試。"],
+    [/^簽到失敗：/, "簽到失敗", "請稍後再試。"],
+    [/^網路連線失敗/, "連線失敗", "請檢查網路後再試。"],
+    [/^「(.+)」需要登入後才能遊玩/, "請先登入", "「$1」需登入才能玩。"],
+    [/^「(.+)」.+，敬請期待！$/, "尚未開放", "「$1」準備中，敬請期待。"],
+    [/^帳號已刪除/, "已刪除", "帳號與資料都已清除。"],
+    [/^未完成身分驗證/, "未刪除", "身分驗證未完成，帳號仍保留。"],
+    [/^密碼錯誤，帳號沒有被刪除/, "未刪除", "密碼錯誤，帳號仍保留。"],
+    [/^嘗試次數過多/, "太頻繁", "操作太多次，請稍後再試。"],
+    [/^伺服器規則不允許刪除/, "未刪除", "目前無法刪除，帳號仍保留。"],
+    [/^玩家資料已清除，但登入帳號尚未刪除/, "尚未完成", "資料已清除，請再按一次「永久刪除」。"],
+    [/^刪除失敗/, "刪除失敗", "請稍後再試。"],
+    [/^請先勾選同意/, "請先同意", "勾選同意條款才能繼續。"],
+    [/^(登入服務載入失敗|無法載入登入服務)/, "登入失敗", "請檢查網路，再重新整理頁面。"],
+    [/^登入視窗被瀏覽器擋住/, "視窗被擋", "請允許彈出視窗後再試。"],
+    [/^此登入方式尚未在 Firebase/, "登入失敗", "此登入方式尚未開放。"],
+    [/^此網域未加入 Firebase/, "登入失敗", "此網址尚未授權登入。"],
+    [/^瀏覽器封鎖了儲存空間/, "儲存被擋", "請關閉無痕模式，或允許 Cookie。"],
+    [/^登入設定有誤/, "登入失敗", "登入設定有誤，請稍後再試。"],
+    [/^此電子郵件已用其他方式註冊/, "已註冊過", "此信箱用別的方式註冊過，請改用原方式登入。"],
+    [/^登入失敗：/, "登入失敗", "請稍後再試。"],
+    [/^已連結 (.+)，之後兩種方式都能登入$/, "連結成功", "已連結 $1。"],
+    [/^登入的帳號與原本註冊的電子郵件不同/, "無法連結", "兩個帳號的信箱不同。"],
+    [/^此帳號已有玩家資料/, "已有資料", "此帳號已建立過玩家資料。"],
+    [/^讀取資料失敗/, "讀取失敗", "請稍後再試。"],
+    [/^已登出$/, "已登出", "下次再見！"],
+    [/^使用者名稱已變更$/, "修改成功", "使用者名稱已更新。"],
+    [/^目前無法變更使用者名稱/, "無法修改", "使用者名稱 14 天只能改一次。"],
+    [/^變更失敗/, "修改失敗", "請稍後再試。"],
+    [/^密碼已修改$/, "修改成功", "下次請用新密碼登入。"],
+    [/^目前沒有公告$/, "沒有公告", "目前沒有新公告。"],
+    [/^再按一次返回即可離開/, "再按一次", "再按一次返回就會離開。"],
+
+    [/^號碼已抽完，實際抽出 (\d+) 次$/, "號碼抽完", "實際抽出 $1 次。"],
+    [/^號碼已全部抽出$/, "號碼抽完", "75 個號碼都抽出了。"],
+    [/^請先到設定頁開始遊戲$/, "尚未開始", "請先到設定頁開始遊戲。"],
+    [/^遊戲尚未開始或已結束$/, "尚未開始", "遊戲還沒開始，或已經結束。"],
+    [/^第 (\d+) 名已登錄(?:（同時 (\d+) 人）)?$/, "名次登錄", function (m) { return "第 " + m[1] + " 名" + (m[2] ? "（同時 " + m[2] + " 人）" : "") + "。"; }],
+    [/^開始抽獎！$/, "開始抽獎", "設定已鎖定，祝大家好運！"],
+    [/^已重新開始$/, "已重新開始", "已回到初始狀態。"],
+    [/^已開新局，設定參數已保留$/, "新的一局", "設定已保留，可直接開始。"],
+    [/^已開新局$/, "新的一局", "已開始新的一局。"],
+    [/^已載入上次的遊戲進度$/, "已載入", "上次的進度已還原。"],
+    [/^已載入上次(.+)$/, "已載入", "已還原上次$1。"],
+    [/^主持僅限平板、電腦使用/, "手機不支援", "主持請用平板或電腦；手機請選「玩家」或「旁觀」。"],
+    [/^請先填寫參加總人數$/, "請先填寫", "請輸入參加總人數。"],
+    [/^🎉 (.+) 完成賓果：第 (\d+) 名$/, "賓果！", "$1 完成賓果，第 $2 名。"],
+    [/^已撤銷$/, "已撤銷", "該名次已撤銷。"],
+    [/^已恢復，依賓果順序重新排入$/, "已恢復", "已依賓果順序重新排名。"],
+    [/^已還原上次的抽號進度$/, "已還原", "上次的抽號進度已回復。"],
+    [/^自動對號已開啟，不需要手動標記$/, "自動對號", "已開啟，不必手動標記。"],
+    [/^自動對號已開啟$/, "自動對號", "已開啟。"],
+    [/^自動對號已關閉/, "自動對號", "已關閉，請自己點號碼標記。"],
+    [/^主持人還沒有抽出這個號碼$/, "還沒抽到", "主持人尚未抽出這個號碼。"],
+    [/^本房為 BINGO 正式版/, "BINGO 正式版", "每欄數字有固定範圍，請依欄位填寫。"],
+    [/^主持人已關閉 BINGO 正式版/, "已關閉正式版", "號碼 1～75 可任意填寫。"],
+    [/^卡片已鎖定，開始遊戲！$/, "開始遊戲", "卡片已鎖定，祝你好運！"],
+    [/^遊戲結束$/, "遊戲結束", "本局已結束。"],
+    [/^已清除標記$/, "已清除", "所有標記都已清除。"],
+    [/^已恢復房間 (.+) 的卡片$/, "已恢復", "房間 $1 的卡片已還原。"],
+    [/^要連成 (\d+) 條線才能上名次$/, "還不能上榜", "要連成 $1 條線才能上名次。"],
+    [/^網路不穩，宣告可能未送出/, "送出失敗", "網路不穩，請再試一次。"],
+    [/^已通知主持人$/, "已通知", "主持人已收到。"],
+    [/^主持人已開始，卡片已鎖定$/, "遊戲開始", "主持人已開始，卡片已鎖定。"],
+    [/^主持人已開始，空格已自動補齊並鎖定$/, "遊戲開始", "空格已自動補齊，卡片已鎖定。"],
+    [/^主持人開新局/, "新的一局", "數字已保留，可重新修改。"],
+    [/^達成 2048！繼續挑戰$/, "達成 2048", "繼續挑戰更高分！"],
+    [/^已開啟正常版：/, "正式版", "超出欄位範圍的數字已標示，請修正。"],
+    [/^已開啟 BINGO 正常版$/, "正式版", "已開啟 BINGO 正式版。"],
+    [/^已關閉：1～75 全部隨機$/, "已關閉正式版", "1～75 全部隨機。"]
+  ];
+
+  function rewrite(msg) {
+    for (var i = 0; i < REWRITE.length; i++) {
+      var m = REWRITE[i][0].exec(msg);
+      if (!m) continue;
+      var t = REWRITE[i][2];
+      return { title: REWRITE[i][1], msg: typeof t === "function" ? t(m) : t.replace(/\$(\d)/g, function (_, n) { return m[n] || ""; }) };
+    }
+    return null;
+  }
+
+  var COUNT = 5;   // 自動關閉倒數秒數
 
   function guess(msg) {
     if (/^歡迎/.test(msg)) return "welcome";
@@ -73,7 +164,10 @@
     var icon = ICON[opts.icon] ? opts.icon : (ICON[opts.type] ? opts.type : guess(msg));
     var type = ICON[opts.type] && !ICON[opts.icon] ? opts.type : (TYPE_OF[icon] || icon);
     var title = opts.title || TITLE[icon];
-    var ms = opts.duration || (type === "error" ? 6000 : 4200);
+    var shown = msg;
+    var rw = opts.title ? null : rewrite(msg);
+    if (rw) { title = rw.title; shown = rw.msg; try { console.debug("[MiniHubNotice]", msg); } catch (e) {} }
+    var secs = opts.duration ? Math.max(1, Math.round(opts.duration / 1000)) : COUNT;
     var r = root();
 
     // 相同內容不重複疊加
@@ -87,24 +181,24 @@
     box.innerHTML =
       '<span class="mh-notice-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICON[icon] + "</svg></span>" +
       '<div class="mh-notice-tx"><div class="mh-notice-ti"></div><div class="mh-notice-ms"></div></div>' +
-      '<button type="button" class="mh-notice-bt">了解</button>';
+      '<button type="button" class="mh-notice-bt">了解<small></small></button>';
     box.querySelector(".mh-notice-ti").textContent = title;
-    box.querySelector(".mh-notice-ms").textContent = msg;
+    box.querySelector(".mh-notice-ms").textContent = shown;
 
-    var timer = 0, done = false;
+    var timer = 0, done = false, left = secs, cd = box.querySelector(".mh-notice-bt small");
+    function paint() { cd.textContent = left + "s"; }
     function close(now) {
-      if (done) return; done = true; clearTimeout(timer);
+      if (done) return; done = true; clearInterval(timer);
       if (now) { box.remove(); return; }
-      box.classList.add("out"); setTimeout(function () { box.remove(); }, 220);
+      box.classList.add("out"); setTimeout(function () { box.remove(); }, 450);
     }
-    function start() { clearTimeout(timer); timer = setTimeout(close, ms); }
+    function start() {
+      paint();
+      timer = setInterval(function () { left--; paint(); if (left <= 0) close(); }, 1000);
+    }
     box._close = close;
     box.querySelector(".mh-notice-bt").addEventListener("click", function () { close(); });
-    box.addEventListener("mouseenter", function () { clearTimeout(timer); });
-    box.addEventListener("mouseleave", start);
-    box.addEventListener("focusin", function () { clearTimeout(timer); });
-    box.addEventListener("focusout", start);
-    r.insertBefore(box, r.firstChild); start();   // 新訊息在最上面，舊的往下
+    r.insertBefore(box, r.firstChild); start();   // 新訊息在最上面，舊的往下；倒數 5s→0s 後淡出
 
     return close;
   }
