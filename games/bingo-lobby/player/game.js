@@ -231,11 +231,7 @@
       dlg.showModal();
     });
   }
-  let toastTimer;
-  function toast(msg) {
-    const t = $('toast'); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
-  }
+  function toast(msg) { if (window.MiniHubNotice) MiniHubNotice(msg); }
   const buzz = ms => { if (MiniHub.touchOn()) navigator.vibrate?.(ms); };
   function shake() { const c = $('card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); buzz([40, 40, 40]); }
 

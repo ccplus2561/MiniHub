@@ -742,14 +742,7 @@
   $$(".legal-tab").forEach(b => b.addEventListener("click", () => legalTab(b.dataset.tab)));
 
   /* ---------- Toast ---------- */
-  let timer;
-  function toast(msg) {
-    const t = $("#toast");
-    t.textContent = msg;
-    t.classList.add("show");
-    clearTimeout(timer);
-    timer = setTimeout(() => t.classList.remove("show"), 2200);
-  }
+  function toast(msg, opts) { if (window.MiniHubNotice) MiniHubNotice(msg, opts); }
 
   window.MiniHubToast = toast;
 

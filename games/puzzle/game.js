@@ -570,19 +570,7 @@
   }
 
   /* ---------- 小提示 ---------- */
-  let toastEl = null, toastTimer = 0;
-  function showToast(text) {
-    if (!toastEl) {
-      toastEl = document.createElement("div");
-      toastEl.className = "toast";
-      toastEl.setAttribute("role", "status");
-      boardWrap.appendChild(toastEl);
-    }
-    toastEl.textContent = text;
-    toastEl.classList.remove("show"); void toastEl.offsetWidth; toastEl.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2600);
-  }
+  function showToast(text) { if (window.MiniHubNotice) MiniHubNotice(text); }
 
   /* ---------- 結束畫面 ---------- */
   function hideOverlay() { overlay.classList.add("hidden"); }

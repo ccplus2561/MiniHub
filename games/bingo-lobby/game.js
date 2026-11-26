@@ -90,6 +90,7 @@
 
   function toast(msg) {
     if (window.parent !== window && window.parent.MiniHubToast) { try { window.parent.MiniHubToast(msg); return; } catch (e) { /* 改用下方提示 */ } }
+    if (window.MiniHubNotice) { MiniHubNotice(msg); return; }
     const sub = $("subtitle"); if (sub) sub.textContent = msg;
   }
 

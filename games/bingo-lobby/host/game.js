@@ -244,14 +244,7 @@ function appendAll(node, children) {
 
 /** 畫面下方短暫提示。type: 'info' | 'error' */
 function toast(message, type = 'info') {
-  let root = document.getElementById('toast-root');
-  if (!root) {
-    root = el('div', { id: 'toast-root', 'aria-live': 'polite' });
-    document.body.append(root);
-  }
-  const item = el('div', { class: `toast toast-${type}`, role: type === 'error' ? 'alert' : 'status' }, message);
-  root.append(item);
-  setTimeout(() => item.remove(), 2800);
+  if (window.MiniHubNotice) MiniHubNotice(message, { type: type === 'error' ? 'error' : undefined });
 }
 
 /** 彈窗關閉：先播淡出動畫再移除 */

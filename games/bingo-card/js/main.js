@@ -48,11 +48,7 @@ function ask(title, text, okLabel = '確定', altLabel = '') {
     dlg.showModal();
   });
 }
-let toastTimer;
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
-}
+function toast(msg) { if (window.MiniHubNotice) MiniHubNotice(msg); }
 const buzz = ms => { if (touchOn()) navigator.vibrate?.(ms); };
 function shake() { const c = $('card'); c.classList.remove('shake'); void c.offsetWidth; c.classList.add('shake'); buzz([40, 40, 40]); }
 
@@ -349,7 +345,7 @@ buildGrid();
 refresh();
 
 // 大廳要求暫停（點左側導覽）：關閉開啟中的對話框與提示
-MiniHub.onPause(() => { const d = $('dlg'); if (d.open) d.close('cancel'); $('toast').classList.remove('show'); });
+MiniHub.onPause(() => { const d = $('dlg'); if (d.open) d.close('cancel'); });
 
 // 所有按鈕（含對話框內）的點擊音效；是否播放由大廳音效設定決定
 document.addEventListener('click', e => {

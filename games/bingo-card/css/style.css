@@ -115,9 +115,6 @@ dialog::backdrop { background: rgba(10, 25, 32, .55); backdrop-filter: blur(3px)
 dialog[open] { animation: pop .3s ease-out; }
 dialog h2 { margin: 0 0 8px; font-size: 1.6rem; } dialog p { margin: 0 0 20px; font-size: 1.15rem; color: var(--soft); }
 .dlg-actions { display: flex; flex-wrap: wrap; gap: 10px; } .dlg-actions .btn { flex: 1; }
-.toast { position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); transform: translate(-50%, 30px); opacity: 0; pointer-events: none;
-  background: var(--gold); color: #143b49; padding: 12px 22px; border-radius: 99px; font-weight: 800; font-size: 1.15rem; box-shadow: var(--shadow); transition: .25s; z-index: 20; }
-.toast.show { opacity: 1; transform: translate(-50%, 0); }
 .confetti { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
 @media (max-width: 360px) { .grid { gap: 4px; } .card { padding: 8px; } .btn { font-size: 1rem; padding: 0 4px; } }

@@ -71,7 +71,6 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 /* 設定頁：置中、只在內容區捲動 */
 .panel-settings { height: 100%; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .panel-settings .desk-slot { flex: none; }
-#toast-root { bottom: 24px; }
 .desk-more { flex: none; white-space: nowrap; }
 .desk-brand-title { font-size: clamp(1.25rem, 3vh, 1.75rem); letter-spacing: .03em; }
 .desk-brand { gap: 8px; }

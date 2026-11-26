@@ -166,17 +166,6 @@ button { cursor: pointer; }
 .modal-actions .btn { flex: 1; padding: 0 8px; white-space: nowrap; }
 .modal-actions .btn-primary, .modal-actions .btn-danger { flex: 2; }  /* 主要按鈕留較寬，文字（如「下一步：顯示規則」）不換行 */
 
-/* 提示 */
-#toast-root {
-  position: fixed; left: 0; right: 0; z-index: 200;
-  bottom: calc(84px + env(safe-area-inset-bottom));
-  display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none;
-}
-.toast {
-  max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 999px;
-  background: var(--ink); color: #fff; font-weight: 600; font-size: var(--fs-sm);
-}
-.toast-error { background: var(--red-700); }
 
 /* 佔位畫面 */
 .placeholder { text-align: center; padding: 48px 16px; }
@@ -600,7 +589,6 @@ html[data-layout="desktop"] .draw-topbar .btn-tool { min-height: clamp(36px, 5vh
 .stepper-value { display: inline-block; }
 
 /* 提示、收合區塊、更多選單 */
-.toast { animation: toast-in .25s cubic-bezier(.2,.9,.3,1.2) both; }
 .prize-fold[open] > :not(summary) { animation: fold-in .28s ease-out both; }
 .rule-edit { animation: fold-in .25s ease-out both; }
 .more-list .more-item { animation: rise-in .32s cubic-bezier(.2,.8,.2,1) both; }
@@ -712,7 +700,6 @@ body { overflow: hidden; display: flex; flex-direction: column; }
 /* 設定頁：左側分類導覽＋右側設定列表（與賓果抽獎盤相同） */
 .panel-settings { height: 100%; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .panel-settings .desk-slot { flex: none; }
-#toast-root { bottom: 24px; }
 
 /* ===== 設定頁（電腦版）：左側分類導覽＋右側設定列表 ===== */
 .panel-settings .desk-slot { max-width: none; }
