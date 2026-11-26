@@ -758,10 +758,10 @@
     if (!signedIn) { if (window.MiniHubAuth) MiniHubAuth.preload(); $("#loginAgreeChk").checked = false; return openModal("loginModal"); }   // 按登入才開始載入 Firebase
     openModal("logoutModal");
   });
-  /* ---------- 停用帳號（設定 > 隱私）：不刪除任何資料，只標記停用並登出 ---------- */
+  /* ---------- 刪除帳號（設定 > 隱私）：先排定刪除並登出；保留期限內登入會恢復，逾期才真正刪除 ---------- */
   let deleting = false;
   const delOk = $("#delOk"), delInput = $("#delInput"), delPw = $("#delPw");
-  const delReady = () => !deleting && delInput.value.trim() === "停用" && (!curAccount || !!delPw.value);   // 帳號密碼登入者還需輸入密碼
+  const delReady = () => !deleting && delInput.value.trim() === "刪除" && (!curAccount || !!delPw.value);   // 帳號密碼登入者還需輸入密碼
   $("#delAccBtn").addEventListener("click", () => {
     delInput.value = ""; delPw.value = ""; delOk.disabled = true;
     $("#delPwBox").hidden = !curAccount;
@@ -774,20 +774,21 @@
   });
   delOk.addEventListener("click", async () => {
     if (delOk.disabled || deleting || !window.MiniHubAuth) return;
-    deleting = true; delOk.disabled = true; $("span", delOk).textContent = "停用中…";
+    deleting = true; delOk.disabled = true; $("span", delOk).textContent = "處理中…";
     try {
-      await MiniHubAuth.deactivateAccount(delPw.value);
+      await MiniHubAuth.requestDeletion(delPw.value);
       closeModal("deleteModal");
-      toast("帳號已停用，資料仍會保留");
+      toast("帳號已排定刪除，" + MiniHubAuth.graceDays + " 天內登入可恢復");
     } catch (e) {
       const c = e.code || "";
-      if (/popup-closed|cancelled-popup|popup-blocked/.test(c)) toast("未完成身分驗證，帳號沒有被停用");
-      else if (/wrong-password|invalid-credential|password-required/.test(c)) toast("密碼錯誤，帳號沒有被停用");
+      if (/popup-closed|cancelled-popup|popup-blocked/.test(c)) toast("未完成身分驗證，帳號沒有被刪除");
+      else if (/wrong-password|invalid-credential|password-required/.test(c)) toast("密碼錯誤，帳號沒有被刪除");
       else if (c === "auth/too-many-requests") toast("嘗試次數過多，請稍後再試");
-      else if (c === "permission-denied") toast("伺服器規則不允許停用，帳號沒有被停用");
-      else toast("停用失敗：" + (c || e.message));
+      else if (c === "permission-denied") toast("伺服器規則不允許刪除，帳號沒有被刪除");
+      else if (c === "account-banned") toast("違規帳號無法刪除");
+      else toast("刪除失敗：" + (c || e.message));
     }
-    deleting = false; $("span", delOk).textContent = "停用帳號";
+    deleting = false; $("span", delOk).textContent = "刪除帳號";
     delOk.disabled = !delReady();
   });
 
@@ -1082,7 +1083,7 @@
   let curAccount = "", curProvider = "";   // 帳號密碼登入者的帳號名稱（Google / GitHub 為空字串）
   function setAccount(p) {
     window.MiniHubAccount = p
-      ? { name: p.name, uid: p.gameUid || p.uid, email: curAccount ? "" : p.email, account: curAccount, provider: curProvider, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null, mPoints: p.mPoints || 0, streak: p.streak || 0, lastCheckinAt: p.lastCheckinAt || null, rankBonus: p.rankBonus || {} }
+      ? { name: p.name, uid: p.gameUid || p.uid, email: curAccount ? "" : p.email, account: curAccount, provider: curProvider, createdAt: p.createdAt || null, nameChangedAt: p.nameChangedAt || null, lastLoginAt: p.prevLoginAt || null, publicName: typeof p.publicName === "boolean" ? p.publicName : null, joinRank: typeof p.joinRank === "boolean" ? p.joinRank : null, prefs: p.prefs || null, mPoints: p.mPoints || 0, streak: p.streak || 0, lastCheckinAt: p.lastCheckinAt || null, rankBonus: p.rankBonus || {}, banned: p.banned === true }
       : { name: "", uid: "", email: "", createdAt: null, nameChangedAt: null, lastLoginAt: null, publicName: null, joinRank: null, prefs: null, mPoints: 0, streak: 0, lastCheckinAt: null, rankBonus: {} };
     document.dispatchEvent(new CustomEvent("minihub:account"));
   }
