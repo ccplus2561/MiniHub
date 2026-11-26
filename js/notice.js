@@ -36,15 +36,17 @@
     offline: '<path d="M2.5 9a15 15 0 0 1 4-2.6M21.5 9a15 15 0 0 0-9.5-3.7M5.6 12.6a10 10 0 0 1 3-1.9M18.4 12.6a10 10 0 0 0-4-2.3M8.9 16.2a5 5 0 0 1 3.1-1.2 5 5 0 0 1 2.9 1"/><path d="M12 19.6v.1"/><path d="M3 3l18 18"/>',
     bell: '<path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.8 2H4.2z"/><path d="M10 21a2.2 2.2 0 0 0 4 0"/>',
     welcome: '<circle cx="12" cy="12" r="9.5"/><path d="M8.2 14a4.6 4.6 0 0 0 7.6 0"/><path d="M8.8 9.4v.1M15.2 9.4v.1" stroke-width="3"/>',
+    logout: '<path d="M9 4H5.5A1.5 1.5 0 0 0 4 5.5v13A1.5 1.5 0 0 0 5.5 20H9"/><path d="M16 8l4 4-4 4"/><path d="M20 12H9.5"/>',
     mpoint: '<circle cx="12" cy="12" r="10" fill="#f5a623" stroke="#b36b00"/><circle cx="12" cy="12" r="7.2" fill="#ffd770" stroke="#d98a0c" stroke-width="1.2"/><path d="M8.3 15.6V8.6l3.7 4.2 3.7-4.2v7" stroke="#7a4300" stroke-width="2.2"/>'
   };
-  var TITLE = { info: "提示", success: "完成", warn: "注意", error: "發生錯誤", offline: "連線失敗", bell: "通知", welcome: "歡迎", mpoint: "每日簽到" };
-  var TYPE_OF = { offline: "error", bell: "info", welcome: "success", mpoint: "success" };
+  var TITLE = { info: "提示", success: "完成", warn: "注意", error: "發生錯誤", offline: "連線失敗", bell: "通知", welcome: "歡迎", mpoint: "每日簽到", logout: "登出" };
+  var TYPE_OF = { offline: "error", bell: "info", welcome: "success", mpoint: "success", logout: "info" };
   var MAX = 3;
 
   function guess(msg) {
     if (/^歡迎/.test(msg)) return "welcome";
     if (/簽到|M 點/.test(msg) && !/失敗/.test(msg)) return "mpoint";
+    if (/^已登出/.test(msg)) return "logout";
     if (/連線失敗|網路|離線|斷線/.test(msg)) return "offline";
     if (/失敗|錯誤|無法|有誤|不允許|封鎖|擋住|過多|沒有被刪除|未完成/.test(msg)) return "error";
     if (/公告|通知/.test(msg)) return "bell";
