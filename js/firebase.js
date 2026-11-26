@@ -277,7 +277,7 @@ async function changePassword(oldPw, newPw) {
   await F.updatePassword(user, newPw);
 }
 
-// 停用帳號：先重新驗證 → 在 users/{uid} 標記 disabled（不刪除任何玩家資料、成績、UID 與登入帳號）→ 登出。
+// 停用帳號：先重新驗證 → 在 users/{uid} 標記 disabled 並移出排行榜（不刪除玩家資料、個人最高、UID 與登入帳號）→ 登出。
 // 之後這個帳號無法再登入；要恢復請由管理員把 disabled 改回 false。
 async function deactivateAccount(pw) {
   const user = F && F.auth.currentUser;
@@ -290,8 +290,16 @@ async function deactivateAccount(pw) {
     await F.reauthenticateWithPopup(user, makeProvider(F, pid === "github.com" ? "github" : "google"));   // 需在點擊後立即呼叫，才不會被瀏覽器擋彈窗
   }
   if (SAVE_PROFILE) {
-    bump(0, 1);
-    await F.updateDoc(F.doc(F.db, "users", user.uid), { disabled: true, disabledAt: F.serverTimestamp() });
+    // 同一批次：標記停用 + 從所有排行榜移除（只刪 ranks 排行榜副本；個人最高 bests 與其他資料都保留）。排行榜依分數即時查詢，下面的名次會自動往上補
+    const batch = F.writeBatch(F.db);
+    batch.update(F.doc(F.db, "users", user.uid), { disabled: true, disabledAt: F.serverTimestamp() });
+    let n = 1;
+    (window.GAMES || []).filter(x => x.board).forEach(x => (Array.isArray(x.board.modes) && x.board.modes.length ? x.board.modes : [""]).forEach(m => {
+      if (m && !MODE_OK.test(m)) return;
+      batch.delete(F.doc(colR(x.id, m), user.uid)); n++;
+    }));
+    bump(0, n);
+    await batch.commit();
   }
   SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
   try { await F.signOut(F.auth); } catch (e) {}   // 之後 onAuthStateChanged 會回報已登出
