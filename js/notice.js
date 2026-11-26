@@ -3,7 +3,7 @@
  *   MiniHubNotice("訊息")                              一般提示
  *   MiniHubNotice("訊息", { type, title, duration })   type: info | success | warn | error
  *   MiniHubNotice.tip("說明", { title })               💡 教學提示（燈泡圖示，僅用於教學／操作小技巧，非通知）
- * 樣式：圖示 + 短標題/簡單說明 + 「了解 5s」按鈕；倒數到 0s 自動淡出，點按鈕立即關閉。
+ * 樣式：圖示 + 短標題/簡單說明 + 「了解 (Ns)」按鈕；停留秒數依字數與類型自動計算（約 6～15s），滑鼠停在提示上或分頁在背景時暫停倒數，倒數到 0s 自動淡出，點按鈕立即關閉。
  * 標題與內容由 REWRITE 統一改寫成簡短白話（原始訊息仍會印在 console.debug 供除錯）。
  */
 (function () {
@@ -141,7 +141,12 @@
     return null;
   }
 
-  var COUNT = 5;   // 自動關閉倒數秒數
+  // 停留秒數：基本 4s + 每字 0.22s（中文約每秒讀 4～5 字），再依類型設下限，最長 15s
+  var MIN = { info: 6, success: 6, warn: 8, error: 10, tip: 10 };
+  function calc(type, title, shown) {
+    var s = Math.round(4 + (String(title).length + String(shown).length) * 0.22);
+    return Math.min(15, Math.max(MIN[type] || 6, s));
+  }
 
   function guess(msg) {
     if (/^歡迎/.test(msg)) return "welcome";
@@ -176,7 +181,7 @@
     var shown = msg;
     var rw = (opts.title || icon === "tip") ? null : rewrite(msg);
     if (rw) { title = rw.title; shown = rw.msg; try { console.debug("[MiniHubNotice]", msg); } catch (e) {} }
-    var secs = opts.duration ? Math.max(1, Math.round(opts.duration / 1000)) : COUNT;
+    var secs = opts.duration ? Math.max(1, Math.round(opts.duration / 1000)) : calc(icon === "tip" ? "tip" : type, title, shown);
     var r = root();
 
     // 相同內容不重複疊加
@@ -194,7 +199,7 @@
     box.querySelector(".mh-notice-ti").textContent = title;
     box.querySelector(".mh-notice-ms").textContent = shown;
 
-    var timer = 0, done = false, left = secs, cd = box.querySelector(".mh-notice-bt small");
+    var timer = 0, done = false, paused = false, left = secs, cd = box.querySelector(".mh-notice-bt small");
     function paint() { cd.textContent = "(" + left + "s)"; }
     function close(now) {
       if (done) return; done = true; clearInterval(timer);
@@ -203,11 +208,16 @@
     }
     function start() {
       paint();
-      timer = setInterval(function () { left--; paint(); if (left <= 0) close(); }, 1000);
+      timer = setInterval(function () { if (paused || document.hidden) return; left--; paint(); if (left <= 0) close(); }, 1000);
     }
     box._close = close;
+    // 滑鼠移上或鍵盤聚焦時暫停倒數，讓人慢慢讀
+    box.addEventListener("mouseenter", function () { paused = true; });
+    box.addEventListener("mouseleave", function () { paused = false; });
+    box.addEventListener("focusin", function () { paused = true; });
+    box.addEventListener("focusout", function () { paused = false; });
     box.querySelector(".mh-notice-bt").addEventListener("click", function () { close(); });
-    r.insertBefore(box, r.firstChild); start();   // 新訊息在最上面，舊的往下；倒數 5s→0s 後淡出
+    r.insertBefore(box, r.firstChild); start();   // 新訊息在最上面，舊的往下；倒數到 0s 後淡出
 
     return close;
   }
