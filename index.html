@@ -365,7 +365,7 @@
               <div id="delAccBox" hidden>
                 <div class="set-label">危險區域</div>
                 <div class="set-group">
-                  <div class="set-row"><div class="set-text"><b>停用帳號</b><small>停用後無法再登入；資料（含 M 點、簽到）會保留，不會刪除</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>停用帳號</span></button></div>
+                  <div class="set-row"><div class="set-text"><b>停用帳號</b><small>停用後無法再登入、也無法自行取消；會移出排行榜，資料（含 M 點、簽到）會保留，不會刪除</small></div><button class="btn-primary sm danger" id="delAccBtn"><span>停用帳號</span></button></div>
                 </div>
               </div>
             </div>
@@ -439,7 +439,7 @@
               <ul class="help-list">
                 <li><b>允許加入排行榜</b><span>開啟後才能參與排名；關閉則不會出現在排行榜</span></li>
                 <li><b>允許公開使用者名稱</b><span>開啟顯示完整名稱；關閉則部分字元以 * 取代</span></li>
-                <li><b>停用帳號</b><span>停用後無法再登入，但不會刪除任何資料（含 M 點與簽到紀錄）；任何登入管道皆可使用，如需恢復請聯絡本站</span></li>
+                <li><b>停用帳號</b><span>停用後無法再登入，也無法自行取消；會先從排行榜移除（下方名次自動遞補），但不會刪除任何資料（含 M 點與簽到紀錄）；任何登入管道皆可使用，如需恢復請聯絡本站</span></li>
                 <li><b>同步與訪客</b><span>登入後設定會同步到帳號；訪客無法加入排行榜</span></li>
               </ul>
             </div>
@@ -557,7 +557,7 @@
           <h4>7. 你的權利與資料刪除</h4>
           <p>依個資法第 3 條，你可就本站保有的個人資料請求：查詢或閱覽、製給複製本、補充或更正、停止蒐集／處理／利用、刪除。</p>
           <ul>
-            <li><b>自行停用</b>：於「設定 &gt; 隱私 &gt; 停用帳號」可自行停用帳號，停用後無法再登入；帳號與玩家資料（使用者名稱、遊戲 UID、設定、M 點與簽到紀錄、遊戲成績與排行榜資料）會保留，不會自動刪除。</li>
+            <li><b>自行停用</b>：於「設定 &gt; 隱私 &gt; 停用帳號」可自行停用帳號。停用後無法再登入，且無法自行取消，需恢復請依第 10 點聯絡本站由管理員處理；停用時會同時從排行榜移除，原有名次由後面的玩家自動遞補，恢復後須重新創下成績才會再上榜；帳號與玩家資料（使用者名稱、遊戲 UID、設定、M 點與簽到紀錄、遊戲成績與排行榜資料）會保留，不會自動刪除。</li>
             <li><b>其他申請</b>：請依第 10 點聯絡，我們會於核對身分後處理；查詢、閱覽、複製本於收到申請後 15 日內，補充、更正、停止或刪除於 30 日內處理並回覆（必要時依法延長並通知）。</li>
           </ul>
           <h4>8. 不提供資料的影響</h4>
@@ -779,7 +779,7 @@
     <div class="modal-box left" role="alertdialog" aria-modal="true" aria-labelledby="delTitle">
       <div class="modal-logo warn"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.1"/></svg></div>
       <h3 id="delTitle" class="c">停用帳號</h3>
-      <p class="modal-text">停用後，這個帳號<b>無法再登入</b>。你的使用者名稱、遊戲 UID、<b>M 點與簽到紀錄</b>及所有玩家資料都會<b>保留、不會刪除</b>；如需恢復請聯絡本站。</p>
+      <p class="modal-text">停用後，這個帳號<b>無法再登入</b>，也<b>無法自行取消</b>，並會<b>從排行榜移除</b>（下方名次自動遞補）。你的使用者名稱、遊戲 UID、<b>M 點與簽到紀錄</b>及所有玩家資料都會<b>保留、不會刪除</b>；如需恢復請聯絡本站。</p>
       <p class="modal-text">為了安全，系統會請你再登入一次確認身分。</p>
       <div id="delPwBox" hidden>
         <label class="field-label" for="delPw">請輸入密碼確認身分</label>
