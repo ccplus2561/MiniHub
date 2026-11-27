@@ -59,6 +59,13 @@ window.GAMES = [
     tags: { single: true, multi: true, desktop: true, kbd: true, mobileP: true, touch: true, score: false, cloud: false }
   },
   {
+    id: "1a2b", title: "1A2B 數字猜謎", category: "益智", emoji: "🔢", icon: "icons/1a2b.svg",
+    colors: ["#5b4bd6", "#141a38"], path: "games/1a2b/index.html",
+    desc: "經典 1A2B 猜數字，用最少次數破解電腦的答案！\n規則：猜出 4～10 位數字；A＝數字與位置都對，B＝數字對但位置不對；可自訂位數、答案與猜測是否重複，以及特殊 B 計分。排行榜只計「不重複答案、不重複猜測、特殊 B 關閉」，依位數分榜，猜得越少次越前面。\n操作：點格子輸入、長按鎖定數字；電腦可用數字鍵、Backspace、Enter 送出、Esc 清除。",
+    how: "", featured: false, board: { order: "asc", unit: "次", max: 999, modes: ["l4", "l5", "l6", "l7", "l8", "l9", "l10"] },
+    tags: { single: true, multi: false, desktop: true, kbd: true, mobileP: true, touch: true, score: true, cloud: false }
+  },
+  {
     id: "fruit-slice", title: "水果忍者", category: "動作", emoji: "🍉", icon: "icons/fruit-slice.svg",
     colors: ["#0f766e", "#073b4c"], path: "games/fruit-slice/index.html",
     desc: "揮動刀刃切開飛出的水果，連擊越多分數越高！\n規則：60 秒內盡量得分，漏接水果會扣生命，切到炸彈直接結束。\n操作：滑鼠拖曳或手指滑動切水果。",

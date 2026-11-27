@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="description" content="經典 1A2B 數字猜謎遊戲介面">
+  <title>1A2B — 數字猜謎</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <main class="app-shell">
+
+    <section class="hero">
+      <h1>猜出正確數字</h1>
+    </section>
+
+    <section class="game-layout" aria-label="遊戲介面預覽">
+      <aside class="side-panel">
+        <div class="panel-heading">
+          <div><h2>遊戲設定</h2></div>
+        </div>
+
+        <div class="setting-group">
+          <span class="field-label">目前設定</span>
+          <div class="cfg-card">
+            <div class="cfg-line"><span>位數</span><b id="cfgLen">4 位</b></div>
+            <div class="cfg-line"><span>電腦的答案</span><b id="cfgRep">不重複</b></div>
+            <div class="cfg-line"><span>你的猜測</span><b id="cfgGuess">不重複</b></div>
+            <div class="cfg-line"><span>特殊 B 計分</span><b id="cfgDupB">關閉</b></div>
+            <button class="ghost-button" id="openSettings" type="button">更改設定</button>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <span class="field-label">數字規則</span>
+          <div class="rule-card">
+            <div class="rule-line"><b id="ruleTitle">不重複數字</b><small id="ruleDesc">電腦的答案每個數字都不同</small></div>
+            <div class="rule-line"><span class="badge badge-a">A</span><small>數字正確，位置也正確</small></div>
+            <div class="rule-line"><span class="badge badge-b">B</span><small>數字正確，但位置不對</small></div>
+            <div class="rule-line" id="dupBRule" hidden><span class="badge badge-b">B</span><small>特殊 B 計分：答案中重複的數字，每一個都會計入 B</small></div>
+            <div class="rule-line rule-tip"><span class="badge badge-tip">點</span><small>點擊格子即可輸入數字</small></div>
+            <div class="rule-line rule-tip peek-tip"><span class="badge badge-tip">看</span><small>按住右上角「紀錄」鈕可快速查看猜測紀錄，放開即消失；按住時用另一根手指可上下滑動</small></div>
+            <div class="rule-line rule-tip"><span class="badge badge-tip">鎖</span><small>長按格子可鎖定數值，送出後不會被清除。鎖定不代表是正確數值喔！</small></div>
+            <div class="rule-line rule-example"><small>例：答案 1234，猜 1357 → <strong>1A1B</strong></small></div>
+          </div>
+        </div>
+
+        <div class="setting-group" id="boardGroup" hidden>
+          <span class="field-label">排行榜</span>
+          <div class="cfg-card">
+            <div class="cfg-line"><span>個人最佳</span><b id="meBest">—</b></div>
+            <small class="board-note" id="boardNote" hidden></small>
+            <div class="rank-box" id="rankBox" hidden>
+              <div class="rank-title" id="rankTitle">排行榜</div>
+              <ol class="rank-list" id="rankList"></ol>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <section class="main-panel">
+        <div class="game-panel-top">
+          <div><h2 id="title">準備開始推理？</h2></div>
+          <button class="peek-btn" id="peekBtn" type="button" aria-label="按住查看猜測紀錄"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg><span>紀錄</span></button>
+        </div>
+        <div class="peek-pop" id="peekPop" aria-hidden="true"></div>
+
+        <div class="stats-row">
+          <div class="stat-card"><span class="stat-icon purple">◎</span><div><small>目前猜測</small><strong id="count">— <em>次</em></strong></div></div>
+          <div class="stat-card"><span class="stat-icon blue">◷</span><div><small>挑戰時間</small><strong id="time">00:00</strong></div></div>
+          <div class="stat-card"><span class="stat-icon gold">♧</span><div><small>最佳紀錄</small><strong id="best">— <em>次</em></strong></div></div>
+        </div>
+
+        <div class="guess-area">
+          <div class="guess-title"><span class="field-label">輸入你的答案</span></div>
+          <div class="digit-slots" id="slots" aria-label="輸入的數字"></div>
+          <div class="msg" id="msg" role="status"></div>
+          <div class="keypad" id="keypad" aria-label="數字鍵盤外觀">
+            <button type="button">1</button><button type="button">2</button><button type="button">3</button>
+            <button type="button">4</button><button type="button">5</button><button type="button">6</button>
+            <button type="button">7</button><button type="button">8</button><button type="button">9</button>
+            <button class="key-muted" type="button">⌫</button><button type="button">0</button><button class="key-muted" type="button">清除</button>
+          </div>
+          <button class="submit-button" id="submit" type="button">送出猜測 <span>↗</span></button>
+          <button class="reveal-button" id="reveal" type="button">公布答案</button>
+        </div>
+      </section>
+
+      <aside class="history-panel">
+        <div class="history-head">
+          <h2 class="history-title">猜測紀錄</h2>
+          <button class="sort-button" id="sortBtn" type="button" aria-label="切換排序"><span class="sort-icon">↓</span><span id="sortText">最新在上</span></button>
+        </div>
+        <div class="history-list" id="history">
+          <div class="empty-state" id="empty">
+            <div class="empty-graphic"><span>?</span><i></i><b></b></div>
+            <strong>還沒有猜測紀錄</strong>
+            <p>輸入你的第一組數字，開始破解謎題吧！</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <h2 id="modalTitle">遊戲參數設定</h2>
+      <div class="set-list">
+        <div class="set-row">
+          <span class="set-label"><span class="set-name">數字位數</span><small>最少 4 位，最多 10 位</small></span>
+          <div class="stepper">
+            <button type="button" id="lenDown" aria-label="減少位數">−</button>
+            <output id="lenOut">4</output>
+            <button type="button" id="lenUp" aria-label="增加位數">+</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <span class="set-label"><span class="set-name">電腦的答案</span><small>答案裡的數字會不會重複</small></span>
+          <div class="segment" id="repSeg">
+            <button type="button" class="active" data-rep="0">不重複</button>
+            <button type="button" data-rep="1">可重複</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <span class="set-label"><span class="set-name">你的猜測</span><small>你輸入時能不能用重複數字</small></span>
+          <div class="segment" id="guessSeg">
+            <button type="button" class="active" data-g="0">不重複</button>
+            <button type="button" data-g="1">可重複</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <span class="set-label"><span class="set-name">特殊 B 計分<button type="button" class="info-btn" id="dupBInfoBtn" aria-label="玩法說明" aria-expanded="false" aria-controls="dupBInfo">i</button></span><small>進階玩法，不確定就維持關閉</small></span>
+          <div class="segment" id="dupBSeg">
+            <button type="button" class="active" data-d="0">關閉</button>
+            <button type="button" data-d="1">開啟</button>
+          </div>
+        </div>
+        <div class="info-panel" id="dupBInfo" aria-hidden="true">
+          <div class="info-inner"><div class="info-box">
+          <b>特殊 B 計分（重複數字都算 B）</b>
+          <p>標準計分下，B 的數量不會超過你猜測中該數字出現的次數。開啟後，只要你猜的數字有出現在答案中，答案裡重複的每一個該數字都會計入 B。</p>
+          <p>例：答案 1120，猜 8912<br>標準計分 → <strong>2B</strong>　特殊計分 → <strong>3B</strong></p>
+          <p class="info-note">只有「答案可重複」時才會有差異。</p>
+          </div></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="ghost-button" id="cancelModal" type="button" hidden>取消</button>
+        <button class="submit-button modal-start" id="startBtn" type="button">開始遊戲</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal" id="confirmModal" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-card confirm-card">
+      <h2 id="confirmTitle">確定要公布答案嗎？</h2>
+      <p class="confirm-text">公布後本局會直接結束，且不會計入最佳紀錄。</p>
+      <div class="modal-actions">
+        <button class="ghost-button" id="confirmNo" type="button">先不要</button>
+        <button class="submit-button modal-start danger-button" id="confirmYes" type="button">確定公布</button>
+      </div>
+    </div>
+  </div>
+  <script src="../../js/protect.js"></script>
+  <script src="../../js/minihub-sdk.js"></script>
+  <script src="../../js/notice.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
