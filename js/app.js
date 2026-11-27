@@ -1119,7 +1119,8 @@
       const wasIn = signedIn;
       signedIn = false; setAccount(null); paintLogin();
       ["profileModal", "acctModal", "logoutModal", "nameModal", "pwModal", "linkModal", "deleteModal"].forEach(closeModal);
-      if (wasIn) toast("已登出");
+      if (e.detail.kicked) { if (current) closeGame(); }   // 被停用：關閉正在玩的遊戲回首頁（提示訊息由 firebase.js 顯示）
+      else if (wasIn) toast("已登出");
       return;
     }
     if (profile) {                     // 老玩家

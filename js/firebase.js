@@ -21,7 +21,7 @@ const bump = (r, w) => { use.reads += r; use.writes += w; document.dispatchEvent
 const emit = detail => document.dispatchEvent(new CustomEvent("minihub:auth", { detail }));
 const ms = t => (t && t.toMillis ? t.toMillis() : null);
 const norm = d => ({ name: d.name, gameUid: d.gameUid, email: d.email, createdAt: ms(d.createdAt), nameChangedAt: ms(d.nameChangedAt), lastLoginAt: ms(d.lastLoginAt), publicName: typeof d.publicName === "boolean" ? d.publicName : null, joinRank: typeof d.joinRank === "boolean" ? d.joinRank : null, prefs: d.prefs && typeof d.prefs === "object" ? d.prefs : null,
-  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, disabled: d.disabled === true, banned: d.banned === true, lastCheckinAt: ms(d.lastCheckinAt), rankBonus: d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {} });
+  mPoints: Number(d.mPoints) || 0, streak: Number(d.streak) || 0, disabled: d.disabled === true, banned: d.banned === true, rankHidden: d.rankHidden === true, lastCheckinAt: ms(d.lastCheckinAt), rankBonus: d.rankBonus && typeof d.rankBonus === "object" ? d.rankBonus : {} });
 
 // 「上次登入」：每次新的登入（分頁關閉後重開 / 登出後再登入）記錄一次；畫面顯示的是「這次登入之前」的那一次
 const SS = (k, v) => { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) {} return null; };
@@ -87,7 +87,7 @@ function boot() {
     try { await S.setPersistence(auth, S.browserSessionPersistence); } catch (e) {}   // 登入狀態只保留到分頁關閉
     F = { auth, db, ...S, ...FS };
     S.onAuthStateChanged(auth, async user => {
-      if (!user) return emit({ user: null });
+      if (!user) { stopStatus(); return emit({ user: null }); }
       const g = gate;
       if (g && !(await g)) return;   // 大小寫不符：已在 signInPw 內登出，這裡不處理
       if (!user.email) {   // 帳號必須有電子郵件（例如 GitHub 設為私人且無公開信箱時會沒有）
@@ -99,21 +99,13 @@ function boot() {
       const u = { uid: user.uid, email: user.email, photoURL: user.photoURL || "", account: isPwUser(user) ? (user.displayName || regName || "帳號") : "", provider: provKey(user) };
       try {
         const profile = await loadProfile(user.uid);
-        if (profile && profile.banned) {   // 違規帳號：永久停用，不可登入、不可刪除
-          SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
-          emit({ user: null });
-          try { await S.signOut(auth); } catch (e) {}
-          if (window.MiniHubToast) window.MiniHubToast("此帳號因違規已永久停用，無法登入");
-          return;
+        if (profile && profile.banned) return kick(user.uid, true, false);     // 違規帳號：永久停用，不可登入、不可刪除
+        if (profile && profile.disabled) return kick(user.uid, false, false);  // 已停用的帳號：不讓進入，直接登出（資料全部保留）
+        if (profile) {
+          profile.prevLoginAt = await recordLogin(user.uid, profile);
+          watchStatus(user.uid);   // 登入期間若被後台停用，立即登出
+          if (profile.rankHidden) restoreRanks(user.uid, profile).catch(() => {});   // 解除停用後第一次登入：把排行榜成績補回去
         }
-        if (profile && profile.disabled) {   // 已停用的帳號：不讓進入，直接登出
-          SS("mh_logged_" + user.uid, null); SS("mh_prev_" + user.uid, null);
-          emit({ user: null });
-          try { await S.signOut(auth); } catch (e) {}
-          if (window.MiniHubToast) window.MiniHubToast("此帳號已停用，無法登入");
-          return;
-        }
-        if (profile) profile.prevLoginAt = await recordLogin(user.uid, profile);
         emit({ user: u, profile });
       }
       catch (error) { emit({ user: u, error }); }
@@ -122,6 +114,53 @@ function boot() {
   })();
   bootP.catch(() => { bootP = null; });   // 載入失敗（例如離線）→ 下次可重試
   return bootP;
+}
+
+/* ---------- 停用帳號（後台控制） ----------
+   users/{uid}.disabled = true  → 後台停用：不能登入、登入中會被即時登出；所有資料保留，只是不再出現在排行榜。
+   users/{uid}.banned   = true  → 違規永久停用：同上，且不可自行刪除。
+   users/{uid}.rankHidden = true → 後台停用時一併標記「排行榜成績已被隱藏」（後台同時刪除 games/{遊戲}/ranks[_模式]/{uid}）；
+                                   解除停用（disabled = false）後玩家第一次登入，會依個人最高（bests）自動補回排行榜並清除此標記。 */
+let statusOff = null;
+const stopStatus = () => { if (statusOff) { try { statusOff(); } catch (e) {} statusOff = null; } };
+async function kick(uid, banned, midSession) {
+  stopStatus();
+  SS("mh_logged_" + uid, null); SS("mh_prev_" + uid, null);
+  emit({ user: null, kicked: banned ? "banned" : "disabled" });
+  try { await F.signOut(F.auth); } catch (e) {}
+  const t = banned ? "此帳號因違規已永久停用，" : "此帳號已被停用，";
+  const tl = banned ? "此帳號因違規已永久停用，" : "此帳號已停用，";
+  if (window.MiniHubToast) window.MiniHubToast(midSession ? t + "已自動登出" : tl + "無法登入");
+}
+// 登入期間即時監聽自己的玩家資料：被後台停用 / 違規停用就立刻登出（約 1 次讀取 + 每次變動 1 次）
+function watchStatus(uid) {
+  stopStatus();
+  if (!SAVE_PROFILE) return;
+  statusOff = F.onSnapshot(F.doc(F.db, "users", uid), s => {
+    if (!s.exists() || !F.auth.currentUser || F.auth.currentUser.uid !== uid) return;
+    if (!s.metadata.hasPendingWrites) bump(1, 0);
+    const d = s.data();
+    if (d.banned === true || d.disabled === true) kick(uid, d.banned === true, true);
+  }, () => {});
+}
+// 解除停用後補回排行榜：個人最高（bests）一直都在，inRank = true 的才補；清除 rankHidden 失敗（規則不允許）時，下次登入會再補一次（結果相同）
+async function restoreRanks(uid, profile) {
+  if (!SAVE_PROFILE || SS("mh_rr_" + uid)) return;
+  const jobs = [];
+  eachBoard((g, m) => jobs.push((async () => {
+    try {
+      bump(1, 0);
+      const b = await F.getDoc(F.doc(colB(g, m), uid));
+      const d = b.exists() ? b.data() : null;
+      if (!d || !d.inRank || !(Number(d.score) > 0)) return;
+      const ex = d.extra && typeof d.extra === "object" && Object.keys(d.extra).length ? { extra: d.extra } : {};
+      bump(0, 1);
+      await F.setDoc(F.doc(colR(g, m), uid), { score: Number(d.score), name: String(d.name || "").slice(0, 40), ...ex, updatedAt: F.serverTimestamp() });
+    } catch (e) { /* 這個榜補不回去就略過，不影響其他榜 */ }
+  })()));
+  await Promise.all(jobs);
+  SS("mh_rr_" + uid, "1");
+  try { bump(0, 1); await F.updateDoc(F.doc(F.db, "users", uid), { rankHidden: false }); profile.rankHidden = false; } catch (e) {}
 }
 
 async function recordLogin(uid, profile) {
@@ -161,6 +200,7 @@ async function createProfile({ name, gameUid, publicName, joinRank, prefs }) {
   });
   // 交易已成功＝資料已建立；之後的讀取失敗（規則 / 網路）不應讓畫面顯示「建立失敗」
   try { await recordLogin(user.uid, null); } catch (e) {}          // 首次登入也記一筆，下次登入時才有「上次」可顯示
+  watchStatus(user.uid);
   try { return await loadProfile(user.uid); }
   catch (e) { return { name, gameUid, email: user.email, createdAt: Date.now(), nameChangedAt: null, publicName: !!publicName, joinRank: !!joinRank, prefs: prefs || null, prevLoginAt: null, mPoints: SIGNUP_BONUS, streak: 0, lastCheckinAt: null }; }
 }
@@ -304,7 +344,20 @@ async function deleteAccount(pw) {
     const pid = ((user.providerData[0] || {}).providerId) || "google.com";
     await F.reauthenticateWithPopup(user, makeProvider(F, pid === "github.com" ? "github" : "google"));   // 需在點擊後立即呼叫，才不會被瀏覽器擋彈窗
   }
+  stopStatus();
   if (SAVE_PROFILE) {
+    // 多人賓果 / OOXX 連線：自己的卡片、完成通知、主持的房間（含旁觀資料）。查詢或刪除失敗（規則不允許等）不影響帳號刪除。
+    const sweep = async (q, also) => {
+      try {
+        const s = await F.getDocs(q); bump(s.size || 1, 0);
+        for (const d of s.docs) { if (also) await also(d); bump(0, 1); await F.deleteDoc(d.ref); }
+      } catch (e) {}
+    };
+    const lob = k => F.collection(F.db, "games", "bingo-lobby", k);
+    await sweep(F.query(lob("cards"), F.where("uid", "==", user.uid)));
+    await sweep(F.query(lob("claims"), F.where("uid", "==", user.uid)));
+    await sweep(F.query(lob("rooms"), F.where("hostUid", "==", user.uid)), d => F.deleteDoc(liveRef(d.id)).catch(() => {}));
+    await sweep(F.query(ooxxCol(), F.where("hostUid", "==", user.uid)));
     const batch = F.writeBatch(F.db);
     let n = 1;
     eachBoard((g, m) => { batch.delete(F.doc(colB(g, m), user.uid)); batch.delete(F.doc(colR(g, m), user.uid)); n += 2; });
@@ -702,6 +755,7 @@ window.MiniHubAuth = {
   signOut: async () => {
     if (!F) return;
     const u = F.auth.currentUser;
+    stopStatus();
     if (u) { SS("mh_logged_" + u.uid, null); SS("mh_prev_" + u.uid, null); }
     return F.signOut(F.auth);
   },
