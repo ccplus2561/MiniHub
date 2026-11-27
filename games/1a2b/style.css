@@ -371,14 +371,3 @@ button { font: inherit; color: inherit; }
   .peek-res .rb { color: #ffd98a; background: #ffc86a1f; }
   .peek-empty { padding: 14px; text-align: center; color: #9fb1dd; font-size: 14px; }
 }
-
-/* 排行榜（MiniHub） */
-.board-note { color: #c3cde6; font-size: 13px; line-height: 1.5; }
-.rank-box { display: grid; gap: 6px; }
-.rank-title { color: #b9d7ff; font-size: 13px; font-weight: 700; letter-spacing: .06em; }
-.rank-list { list-style: none; margin: 0; padding: 0; font-size: 15px; }
-.rank-list li { display: grid; grid-template-columns: 40px 1fr auto; gap: 8px; padding: 3px 0; }
-.rank-list li.me { color: #ffd98a; font-weight: 700; }
-.rank-list li.empty { color: #8aa3bd; }
-.rank-list .sc { font-weight: 700; }
-.rank-box[hidden], .board-note[hidden], #boardGroup[hidden] { display: none; }

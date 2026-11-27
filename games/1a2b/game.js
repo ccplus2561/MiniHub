@@ -9,7 +9,8 @@
   };
   const $q = (s) => document.querySelector(s);
   const MH = window.MiniHub;   // 大廳共用 SDK（單獨開啟頁面時也有安全預設值）
-  const GAME = "1a2b";
+  // 音效（audio.js）：開關與音量跟著大廳的音效按鈕；音訊失敗不影響遊戲
+  const sound = new Proxy({}, { get: (_, k) => (...a) => { try { window.GameAudio && window.GameAudio[k](...a); } catch (_) { /* 略過 */ } } });
   let len = 4, repeat = false, guessRep = false, started = false, pLen = 4, pRep = false, pGuess = false;
   let dupB = false, pDupB = false;
   let answer = [], input = [], records = [], over = false, won = false, total = 0, nextId = 1, sortDesc = true;
@@ -97,8 +98,7 @@
   function bestKey() { return "1a2b-best-" + len + (repeat ? "r" : "u") + (guessRep ? "g" : "n") + (dupB ? "x" : ""); }
 
   function renderBest() {
-    let b = parseInt(store.get(bestKey()), 10) || 0;
-    if (ranked() && bd.logged && bd.best > 0 && (!b || bd.best < b)) b = bd.best;
+    const b = parseInt(store.get(bestKey()), 10) || 0;
     el.best.innerHTML = b ? b + " <em>次</em>" : "— <em>次</em>";
   }
 
@@ -196,10 +196,11 @@
   function press(d) {
     if (over) return;
     const t = sel >= 0 ? sel : firstEmpty();
-    if (t < 0) { say("已經填滿了，可點格子修改", "warn"); return; }
-    if (locks[t]) { say("第 " + (t + 1) + " 格已鎖定，長按可解鎖", "warn"); return; }
-    if (!guessRep && input.some((v, i) => i !== t && v === d)) { say("數字不可重複", "warn"); return; }
+    if (t < 0) { say("已經填滿了，可點格子修改", "warn"); sound.deny(); return; }
+    if (locks[t]) { say("第 " + (t + 1) + " 格已鎖定，長按可解鎖", "warn"); sound.deny(); return; }
+    if (!guessRep && input.some((v, i) => i !== t && v === d)) { say("數字不可重複", "warn"); sound.deny(); return; }
     say("");
+    sound.key(d);
     startTimer();
     input[t] = d; lastIdx = t; sel = -1;
     renderSlots();
@@ -211,12 +212,14 @@
     let t = sel;
     if (t < 0) { for (let i = len - 1; i >= 0; i--) if (input[i] !== null && !locks[i]) { t = i; break; } }
     if (t < 0) return;
-    if (locks[t]) { say("第 " + (t + 1) + " 格已鎖定，長按可解鎖", "warn"); return; }
+    if (locks[t]) { say("第 " + (t + 1) + " 格已鎖定，長按可解鎖", "warn"); sound.deny(); return; }
+    sound.back();
     input[t] = null; lastIdx = -1; say(""); renderSlots();
   }
 
   function clearAll() {
     if (over) return;
+    sound.clear();
     input = input.map((v, i) => (locks[i] ? v : null));
     sel = -1; lastIdx = -1; say(""); renderSlots();
   }
@@ -232,8 +235,9 @@
     pressEl = n; n.classList.add("pressing");
     lpTimer = setTimeout(() => {
       lpTimer = null; lpFired = true;
-      if (input[i] === null) { say("請先輸入數字再鎖定", "warn"); cancelLP(); return; }
+      if (input[i] === null) { say("請先輸入數字再鎖定", "warn"); sound.deny(); cancelLP(); return; }
       locks[i] = !locks[i];
+      if (locks[i]) sound.lock(); else sound.unlock();
       if (navigator.vibrate) { try { navigator.vibrate(30); } catch (_) {} }
       say(locks[i] ? "第 " + (i + 1) + " 格已鎖定（不代表數字正確）" : "第 " + (i + 1) + " 格已解鎖", locks[i] ? "ok" : "");
       cancelLP(); renderSlots();
@@ -247,12 +251,13 @@
     if (!n || over) return;
     const i = +n.dataset.i;
     sel = sel === i ? -1 : i;
+    sound.select();
     say(""); renderSlots();
   });
 
   function submit() {
-    if (over) { canStart().then((ok) => { if (ok) newGame(); }); return; }
-    if (input.some((v) => v === null)) { say("請輸入 " + len + " 個" + (guessRep ? "" : "不同") + "數字", "warn"); return; }
+    if (over) { canStart().then((ok) => { if (ok) { sound.start(); newGame(); } }); return; }
+    if (input.some((v) => v === null)) { say("請輸入 " + len + " 個" + (guessRep ? "" : "不同") + "數字", "warn"); sound.deny(); return; }
     const guess = input.slice();
     const { a, b } = judge(guess);
     total++;
@@ -260,15 +265,15 @@
     input = input.map((v, i) => (locks[i] ? v : null)); // 鎖定的格子送出後保留
     sel = -1; lastIdx = -1;
     say("");
+    if (a !== len) sound.guess(a, b);
     if (a === len) {
-      over = true; won = true;
+      over = true; won = true; sound.win();
       input = guess.slice(); locks.fill(false); // 猜對後保持顯示答案
       stopTimer(); tick();
       el.title.textContent = "答對了！共猜 " + total + " 次";
       const key = bestKey(), prev = parseInt(store.get(key), 10);
       if (!prev || total < prev) { store.set(key, String(total)); say("新紀錄！", "ok"); }
       else say("太棒了！", "ok");
-      if (ranked()) board.submit(total);   // 猜測次數（越少越好）；只有刷新個人最佳才會寫入
       el.submit.firstChild.textContent = "再玩一局 ";
       el.reveal.disabled = true;
       renderBest();
@@ -301,6 +306,7 @@
     if (!btn) return;
     const row = btn.closest(".record");
     if (!row || row.classList.contains("leaving")) return;
+    sound.back();
     row.classList.add("leaving");
     setTimeout(() => {
       const i = records.findIndex((r) => String(r.id) === row.dataset.id);
@@ -360,9 +366,17 @@
   confirmModal.addEventListener("click", (e) => { if (e.target === confirmModal) closeConfirm(); });
   $("confirmYes").addEventListener("click", () => { closeConfirm(); reveal(); });
 
+  // 其餘按鈕（設定、選項、排序、公布答案、取消…）統一的按鈕音效；數字鍵盤、送出、開始、確定公布、刪除紀錄已各自有專屬音效
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b || b.disabled) return;
+    if (b.closest("#keypad") || b.closest("#history") || ["submit", "startBtn", "confirmYes"].includes(b.id)) return;
+    sound.click();
+  });
+
   function reveal() {
     if (over) return;
-    over = true;
+    over = true; sound.lose();
     stopTimer();
     input = answer.slice(); locks.fill(false); sel = -1;
     el.title.textContent = "答案公布：" + answer.join("");
@@ -418,7 +432,7 @@
     canStart().then((ok) => {
       if (!ok) return;
       len = pLen; repeat = pRep; guessRep = pGuess; dupB = pRep ? pDupB : false; started = true;
-      closeModal(); board.setMode("l" + len); newGame();
+      closeModal(); sound.start(); newGame();
     });
   });
   $("cancelModal").addEventListener("click", closeModal);
@@ -443,42 +457,6 @@
     else if (e.key === "Escape") clearAll();
   });
 
-  // ---- 個人最佳 / 排行榜（登入後；只計「不重複答案＋不重複猜測＋特殊 B 關閉」，依位數分榜） ----
-  const ranked = () => !repeat && !guessRep && !dupB;
-  let bd = { logged: false, rankOn: false, myName: "", uid: "", best: 0, top: [], myRank: 0, supported: false };
-  const board = MH.board(GAME, { top: 3, mode: "l4", onUpdate: (st) => { bd = st; paintBoard(); renderBest(); } });
-
-  function paintBoard() {
-    const grp = $("boardGroup");
-    grp.hidden = !(bd.supported && bd.logged);
-    if (grp.hidden) return;
-    const ok = ranked();
-    $("boardNote").hidden = ok;
-    $("boardNote").textContent = "目前規則不計入排行榜（僅「不重複答案、不重複猜測、特殊 B 關閉」計入）";
-    $("meBest").textContent = ok && bd.best > 0 ? bd.best + " 次" : "—";
-    $("rankTitle").textContent = len + " 位排行榜";
-    const box = $("rankBox"), ul = $("rankList");
-    box.hidden = !(ok && bd.rankOn);
-    if (box.hidden) return;
-    ul.textContent = "";
-    const add = (rank, name, sc, cls) => {
-      const li = document.createElement("li"); if (cls) li.className = cls;
-      [rank, name, sc].forEach((t, i) => { const e = document.createElement("span"); if (i === 2) e.className = "sc"; e.textContent = t; li.appendChild(e); });
-      ul.appendChild(li);
-    };
-    for (let i = 0; i < 3; i++) {
-      const r = bd.top[i];
-      if (!r) add("#" + (i + 1), "—", "", "empty");
-      else if (r.uid === bd.uid) add("#" + (i + 1), bd.myName, r.score + " 次", "me");
-      else add("#" + (i + 1), r.name || "*", r.score + " 次");
-    }
-    if (!bd.top.some((r) => r.uid === bd.uid)) {   // 沒進前 3：多顯示自己目前的名次
-      if (bd.best > 0) add(bd.myRank ? "#" + bd.myRank : "#?", bd.myName, bd.best + " 次", "me");
-      else add("—", bd.myName, "尚無成績", "me");
-    }
-  }
-
   newGame();
   openModal();
-  board.refresh();
 })();
