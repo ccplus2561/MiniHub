@@ -457,6 +457,16 @@
     else if (e.key === "Escape") clearAll();
   });
 
+  // 底部鍵盤快捷提示：大廳開啟「鍵盤快捷鍵」且不是純觸控裝置才顯示
+  const touchOnly = matchMedia("(hover: none) and (pointer: coarse)").matches;
+  function applyKbd() {
+    const on = MH.kbdOn() && !touchOnly;
+    $("kbd").hidden = !on;
+    document.body.classList.toggle("has-kbd", on);
+  }
+  MH.onChange(applyKbd);
+  applyKbd();
+
   newGame();
   openModal();
 })();

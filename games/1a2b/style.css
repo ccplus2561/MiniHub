@@ -22,9 +22,7 @@ button { font: inherit; color: inherit; }
 .ambient { position: fixed; width: 360px; height: 360px; border-radius: 50%; filter: blur(110px); opacity: .13; pointer-events: none; }
 .ambient-one { background: #7958ff; top: 18%; left: -230px; }
 .ambient-two { background: #1679c8; right: -230px; top: 48%; }
-.app-shell { width: min(1400px, calc(100% - 40px)); height: 100vh; margin: 0 auto; position: relative; z-index: 1; display: flex; flex-direction: column; }
-.hero { text-align: center; padding: 22px 0 16px; }
-.hero h1 { margin: 0; font-size: clamp(32px, 4vw, 44px); letter-spacing: -.045em; font-weight: 800; }
+.app-shell { width: min(1400px, calc(100% - 40px)); height: 100vh; padding-top: 16px; padding-bottom: var(--kbd-h, 0px); margin: 0 auto; position: relative; z-index: 1; display: flex; flex-direction: column; }
 .game-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr) 340px; gap: 16px; align-items: stretch; flex: 1; min-height: 0; padding-bottom: 20px; }
 .side-panel, .main-panel, .history-panel { min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); box-shadow: 0 18px 60px #00000025; backdrop-filter: blur(18px); }
 .side-panel { padding: 22px 18px; }
@@ -88,7 +86,6 @@ button { font: inherit; color: inherit; }
 }
 @media (max-width: 520px) {
   .app-shell { width: min(100% - 28px, 1400px); }
-  .hero h1 { font-size: 30px; }
   .main-panel { padding: 18px 12px; }
   .stats-row { gap: 6px; }
   .stat-card { gap: 6px; padding: 8px 6px; }
@@ -197,11 +194,10 @@ button { font: inherit; color: inherit; }
 :root { --pink: #ff8fc7; --gold: #ffd98a; }
 
 /* 標題與文字漸層 */
-.hero h1, .panel-heading h2, .game-panel-top h2, .history-title {
+.panel-heading h2, .game-panel-top h2, .history-title {
   background: linear-gradient(95deg, #ffffff 0%, #c9bcff 45%, #8fd3ff 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-.hero h1 { background-size: 200% 100%; animation: titleShift 8s ease-in-out infinite alternate; }
 .field-label { color: #b9d7ff; }
 .cfg-line b { background: linear-gradient(90deg, #c9bcff, #8fd3ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .rule-line b#ruleTitle { color: #c9bcff; }
@@ -371,3 +367,10 @@ button { font: inherit; color: inherit; }
   .peek-res .rb { color: #ffd98a; background: #ffc86a1f; }
   .peek-empty { padding: 14px; text-align: center; color: #9fb1dd; font-size: 14px; }
 }
+
+/* 底部鍵盤快捷提示（大廳開啟「鍵盤快捷鍵」且非純觸控裝置才顯示） */
+body.has-kbd { --kbd-h: 48px; }
+#kbd { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; height: 48px; display: flex; align-items: center; justify-content: flex-end; gap: 28px; padding: 0 28px; font-size: 16px; color: #9fb2dc; white-space: nowrap; background: linear-gradient(0deg, #060b1ceb, #060b1c80); border-top: 1px solid #ffffff1f; }
+#kbd[hidden] { display: none; }
+#kbd kbd { display: inline-block; min-width: 28px; margin-right: 4px; padding: 1px 9px; text-align: center; border-radius: 8px; font: 700 14px/22px system-ui, sans-serif; color: #0a1128; background: #9fb2dc; }
+@media (max-width: 700px) { #kbd { gap: 16px; padding: 0 12px; font-size: 14px; } }
