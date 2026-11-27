@@ -23,7 +23,7 @@ button { font: inherit; color: inherit; }
 .ambient-one { background: #7958ff; top: 18%; left: -230px; }
 .ambient-two { background: #1679c8; right: -230px; top: 48%; }
 .app-shell { width: min(1400px, calc(100% - 40px)); height: 100vh; padding-top: 16px; padding-bottom: var(--kbd-h, 0px); margin: 0 auto; position: relative; z-index: 1; display: flex; flex-direction: column; }
-.game-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr) 340px; gap: 16px; align-items: stretch; flex: 1; min-height: 0; padding-bottom: 20px; }
+.game-layout { display: grid; grid-template-columns: 290px minmax(0, 1fr) 440px; gap: 16px; align-items: stretch; flex: 1; min-height: 0; padding-bottom: 20px; }
 .side-panel, .main-panel, .history-panel { min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); box-shadow: 0 18px 60px #00000025; backdrop-filter: blur(18px); }
 .side-panel { padding: 22px 18px; }
 .main-panel { padding: 22px 24px 18px; }
@@ -71,7 +71,7 @@ button { font: inherit; color: inherit; }
 .empty-state p { margin: 6px 0 0; color: #c3cde6; font-size: 15px; text-align: center; padding: 0 12px; }
 
 @media (max-width: 1100px) {
-  .game-layout { grid-template-columns: 260px minmax(0, 1fr) 280px; }
+  .game-layout { grid-template-columns: 260px minmax(0, 1fr) 360px; }
   .digit-slot { width: 56px; height: 60px; }
 }
 @media (max-width: 900px) {
